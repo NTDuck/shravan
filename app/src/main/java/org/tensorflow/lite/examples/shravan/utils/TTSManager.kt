@@ -33,6 +33,10 @@ class TTSManager(context: Context) : TextToSpeech.OnInitListener {
         }
     }
 
+    fun isSpeaking(): Boolean {
+        return tts?.isSpeaking ?: false
+    }
+
     fun stop() {
         tts?.stop()
     }
