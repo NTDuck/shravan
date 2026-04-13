@@ -29,7 +29,7 @@ fun CameraScreen(
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
 
     LaunchedEffect(Unit) {
-        ttsManager.speak("Camera Screen")
+        ttsManager.speak("Object Detection")
     }
 
     Surface(
@@ -70,8 +70,9 @@ fun CameraScreen(
                         style = Stroke(width = 2.dp.toPx())
                     )
                     
-                    // Draw label with native canvas for better accessibility
+                    // Draw label centered above the box
                     drawContext.canvas.nativeCanvas.apply {
+                        val labelText = "${recognition.title} ${(recognition.confidence * 100).toInt()}%"
                         val paint = android.graphics.Paint().apply {
                             this.color = android.graphics.Color.argb(
                                 (color.alpha * 255).toInt(),
@@ -81,13 +82,13 @@ fun CameraScreen(
                             )
                             this.textSize = 16.sp.toPx()
                             this.isFakeBoldText = true
+                            this.textAlign = android.graphics.Paint.Align.CENTER
                         }
-                        drawText(
-                            "${recognition.title} ${(recognition.confidence * 100).toInt()}%",
-                            left,
-                            if (top > 20f) top - 5f else top + 20f,
-                            paint
-                        )
+                        
+                        val xPos = left + width / 2
+                        val yPos = if (top > 30f) top - 10f else top + 30f
+                        
+                        drawText(labelText, xPos, yPos, paint)
                     }
                 }
             }

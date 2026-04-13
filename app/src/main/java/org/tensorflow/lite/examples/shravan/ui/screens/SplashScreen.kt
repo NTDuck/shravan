@@ -17,7 +17,7 @@ import org.tensorflow.lite.examples.shravan.utils.TTSManager
 @Composable
 fun SplashScreen(onTimeout: () -> Unit, ttsManager: TTSManager) {
     LaunchedEffect(Unit) {
-        ttsManager.speak("Splash Screen")
+        ttsManager.speak("Home")
         delay(3000)
         onTimeout()
     }

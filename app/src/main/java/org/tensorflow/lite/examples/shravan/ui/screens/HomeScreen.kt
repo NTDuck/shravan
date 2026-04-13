@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
@@ -17,7 +18,7 @@ fun HomeScreen(
     ttsManager: TTSManager
 ) {
     LaunchedEffect(Unit) {
-        ttsManager.speak("Home Screen")
+        ttsManager.speak("Home")
     }
 
     Surface(
@@ -39,9 +40,10 @@ fun HomeScreen(
             ) {
                 Text(
                     text = "Object Detection",
-                    fontSize = 48.sp, // x2 (was 24)
+                    fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
-                    lineHeight = 56.sp
+                    lineHeight = 56.sp,
+                    textAlign = TextAlign.Center
                 )
             }
             
@@ -55,10 +57,11 @@ fun HomeScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Text(
-                    text = "OCR", // Label changed simply to OCR
-                    fontSize = 48.sp, // x2 (was 24)
+                    text = "OCR",
+                    fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
-                    lineHeight = 56.sp
+                    lineHeight = 56.sp,
+                    textAlign = TextAlign.Center
                 )
             }
         }
