@@ -29,7 +29,7 @@ fun CameraScreen(
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
 
     LaunchedEffect(Unit) {
-        ttsManager.speak("Object Detection")
+        ttsManager.speak("Object Detection", isVietnamese = false)
     }
 
     Surface(
