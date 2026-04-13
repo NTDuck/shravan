@@ -1,17 +1,15 @@
 package org.tensorflow.lite.examples.shravan
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -30,6 +28,28 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val context = LocalContext.current
                 val ttsManager = remember { TTSManager(context) }
+
+                var hasCameraPermission by remember {
+                    mutableStateOf(
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA
+                        ) == PackageManager.PERMISSION_GRANTED
+                    )
+                }
+
+                val launcher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission(),
+                    onResult = { granted ->
+                        hasCameraPermission = granted
+                    }
+                )
+
+                LaunchedEffect(Unit) {
+                    if (!hasCameraPermission) {
+                        launcher.launch(Manifest.permission.CAMERA)
+                    }
+                }
 
                 DisposableEffect(Unit) {
                     onDispose {
@@ -53,22 +73,26 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable("camera") {
-                        CameraScreen(
-                            onBack = { 
-                                ttsManager.stop()
-                                navController.popBackStack() 
-                            },
-                            ttsManager = ttsManager
-                        )
+                        if (hasCameraPermission) {
+                            CameraScreen(
+                                onBack = { 
+                                    ttsManager.stop()
+                                    navController.popBackStack() 
+                                },
+                                ttsManager = ttsManager
+                            )
+                        }
                     }
                     composable("ocr") {
-                        OCRScreen(
-                            onBack = { 
-                                ttsManager.stop()
-                                navController.popBackStack() 
-                            },
-                            ttsManager = ttsManager
-                        )
+                        if (hasCameraPermission) {
+                            OCRScreen(
+                                onBack = { 
+                                    ttsManager.stop()
+                                    navController.popBackStack() 
+                                },
+                                ttsManager = ttsManager
+                            )
+                        }
                     }
                 }
             }
