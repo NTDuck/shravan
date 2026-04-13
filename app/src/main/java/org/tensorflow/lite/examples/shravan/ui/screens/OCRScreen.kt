@@ -9,10 +9,8 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
-import org.tensorflow.lite.examples.shravan.ui.components.ShravanTopAppBar
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OCRScreen(
     onBack: () -> Unit,
@@ -20,19 +18,20 @@ fun OCRScreen(
 ) {
     val recognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
     var lastSpokenText by remember { mutableStateOf("") }
+    var lastSpeakTime by remember { mutableStateOf(0L) }
 
     LaunchedEffect(Unit) {
         ttsManager.speak("OCR Screen")
     }
 
-    Scaffold(
-        topBar = { ShravanTopAppBar("OCR / Text Reader") }
-    ) { paddingValues ->
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
+                .padding(4.dp)
         ) {
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
@@ -43,9 +42,15 @@ fun OCRScreen(
                         recognizer.process(image)
                             .addOnSuccessListener { visionText ->
                                 val text = visionText.text
+                                val currentTime = System.currentTimeMillis()
+                                
+                                // Only speak if text is different AND either TTS is not speaking OR enough time has passed
                                 if (text.isNotBlank() && text != lastSpokenText) {
-                                    lastSpokenText = text
-                                    ttsManager.speak(text)
+                                    if (!ttsManager.isSpeaking() || (currentTime - lastSpeakTime > 5000)) {
+                                        lastSpokenText = text
+                                        lastSpeakTime = currentTime
+                                        ttsManager.speak(text)
+                                    }
                                 }
                             }
                             .addOnCompleteListener {

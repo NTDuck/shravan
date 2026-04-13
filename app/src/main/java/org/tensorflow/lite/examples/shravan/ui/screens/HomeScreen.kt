@@ -8,10 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.tensorflow.lite.examples.shravan.ui.components.ShravanTopAppBar
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onCameraClick: () -> Unit,
@@ -22,21 +20,21 @@ fun HomeScreen(
         ttsManager.speak("Home Screen")
     }
 
-    Scaffold(
-        topBar = { ShravanTopAppBar("Shravan") }
-    ) { paddingValues ->
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
+                .padding(4.dp)
         ) {
             Button(
                 onClick = onCameraClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 2.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
@@ -51,7 +49,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 2.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {

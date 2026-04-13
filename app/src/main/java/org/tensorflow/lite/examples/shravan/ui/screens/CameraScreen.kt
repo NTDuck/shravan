@@ -10,15 +10,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.tensorflow.lite.examples.shravan.tflite.Classifier
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
-import org.tensorflow.lite.examples.shravan.ui.components.ShravanTopAppBar
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraScreen(
     onBack: () -> Unit,
@@ -31,14 +31,20 @@ fun CameraScreen(
         ttsManager.speak("Camera Screen")
     }
 
-    Scaffold(
-        topBar = { ShravanTopAppBar("Object Detection") }
-    ) { paddingValues ->
+    // Color palette for different classes
+    val colors = listOf(
+        Color.Red, Color.Green, Color.Blue, Color.Cyan, Color.Magenta, Color.Yellow, 
+        Color(0xFFFF5722), Color(0xFF4CAF50), Color(0xFF2196F3), Color(0xFFFFEB3B)
+    )
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
+                .padding(4.dp)
         ) {
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
@@ -50,17 +56,43 @@ fun CameraScreen(
             Canvas(modifier = Modifier.fillMaxSize()) {
                 recognitions.forEach { recognition ->
                     val rect = recognition.location
-                    // YOLO input is 416x416, we need to scale to canvas size
-                    // This is a simplification; a proper Matrix transform would be better
                     val scaleX = size.width / 416f
                     val scaleY = size.height / 416f
+                    
+                    val color = colors[recognition.detectedClass % colors.size]
+                    
+                    val left = rect.left * scaleX
+                    val top = rect.top * scaleY
+                    val width = rect.width() * scaleX
+                    val height = rect.height() * scaleY
 
+                    // Draw bounding box (thinner)
                     drawRect(
-                        color = Color.Red,
-                        topLeft = Offset(rect.left * scaleX, rect.top * scaleY),
-                        size = Size(rect.width() * scaleX, rect.height() * scaleY),
-                        style = Stroke(width = 4.dp.toPx())
+                        color = color,
+                        topLeft = Offset(left, top),
+                        size = Size(width, height),
+                        style = Stroke(width = 2.dp.toPx())
                     )
+                    
+                    // Draw label
+                    drawContext.canvas.nativeCanvas.apply {
+                        val paint = android.graphics.Paint().apply {
+                            this.color = android.graphics.Color.argb(
+                                (color.alpha * 255).toInt(),
+                                (color.red * 255).toInt(),
+                                (color.green * 255).toInt(),
+                                (color.blue * 255).toInt()
+                            )
+                            this.textSize = 14.sp.toPx()
+                            this.isFakeBoldText = true
+                        }
+                        drawText(
+                            "${recognition.title} ${(recognition.confidence * 100).toInt()}%",
+                            left,
+                            if (top > 20f) top - 5f else top + 20f,
+                            paint
+                        )
+                    }
                 }
             }
         }
