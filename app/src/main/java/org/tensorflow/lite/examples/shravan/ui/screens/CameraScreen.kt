@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import org.tensorflow.lite.examples.shravan.tflite.Classifier
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
+import org.tensorflow.lite.examples.shravan.ui.theme.DimmedPalette
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
 
 @Composable
@@ -30,12 +31,6 @@ fun CameraScreen(
     LaunchedEffect(Unit) {
         ttsManager.speak("Camera Screen")
     }
-
-    // Color palette for different classes
-    val colors = listOf(
-        Color.Red, Color.Green, Color.Blue, Color.Cyan, Color.Magenta, Color.Yellow, 
-        Color(0xFFFF5722), Color(0xFF4CAF50), Color(0xFF2196F3), Color(0xFFFFEB3B)
-    )
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -59,7 +54,8 @@ fun CameraScreen(
                     val scaleX = size.width / 416f
                     val scaleY = size.height / 416f
                     
-                    val color = colors[recognition.detectedClass % colors.size]
+                    // Use dimmed palette
+                    val color = DimmedPalette[recognition.detectedClass % DimmedPalette.size]
                     
                     val left = rect.left * scaleX
                     val top = rect.top * scaleY
@@ -74,7 +70,7 @@ fun CameraScreen(
                         style = Stroke(width = 2.dp.toPx())
                     )
                     
-                    // Draw label
+                    // Draw label with native canvas for better accessibility
                     drawContext.canvas.nativeCanvas.apply {
                         val paint = android.graphics.Paint().apply {
                             this.color = android.graphics.Color.argb(
@@ -83,7 +79,7 @@ fun CameraScreen(
                                 (color.green * 255).toInt(),
                                 (color.blue * 255).toInt()
                             )
-                            this.textSize = 14.sp.toPx()
+                            this.textSize = 16.sp.toPx()
                             this.isFakeBoldText = true
                         }
                         drawText(

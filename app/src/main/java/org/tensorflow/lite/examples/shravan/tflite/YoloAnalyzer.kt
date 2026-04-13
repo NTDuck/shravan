@@ -19,7 +19,8 @@ class YoloAnalyzer(
         DetectorFactory.getDetector(context.assets, "yolov5s-fp16.tflite")
     }
 
-    private val queue: Queue<String> = LinkedList()
+    // Keep track of what we've already spoken in this session
+    private val spokenObjects = mutableSetOf<String>()
 
     override fun analyze(image: ImageProxy) {
         val bitmap = ImageUtils.toBitmap(image)
@@ -28,7 +29,6 @@ class YoloAnalyzer(
             return
         }
 
-        // Rotate and scale bitmap to match detector input
         val matrix = Matrix()
         matrix.postRotate(image.imageInfo.rotationDegrees.toFloat())
         val rotatedBitmap = Bitmap.createBitmap(
@@ -39,23 +39,18 @@ class YoloAnalyzer(
         )
 
         val results = detector.recognizeImage(scaledBitmap)
-        
-        // Filter results with confidence > 0.5
         val filteredResults = results.filter { it.confidence > 0.5f }
 
-        // TTS Logic: Speak the object name if it's new
+        // TTS Logic: Only speak if we haven't spoken this object name in this session
         filteredResults.forEach { result ->
-            if (!queue.contains(result.title)) {
-                if (queue.size >= 2) {
-                    queue.poll()
-                }
-                queue.add(result.title)
-                ttsManager.speak(result.title, isQueued = true)
+            val title = result.title
+            if (!spokenObjects.contains(title)) {
+                spokenObjects.add(title)
+                ttsManager.speak(title, isQueued = true)
             }
         }
 
         onResults(filteredResults)
-        
         image.close()
     }
 }

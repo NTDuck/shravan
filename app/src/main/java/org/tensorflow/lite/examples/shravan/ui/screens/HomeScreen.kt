@@ -39,8 +39,9 @@ fun HomeScreen(
             ) {
                 Text(
                     text = "Object Detection",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 48.sp, // x2 (was 24)
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 56.sp
                 )
             }
             
@@ -54,9 +55,10 @@ fun HomeScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Text(
-                    text = "OCR / Text Reader",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "OCR", // Label changed simply to OCR
+                    fontSize = 48.sp, // x2 (was 24)
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 56.sp
                 )
             }
         }
