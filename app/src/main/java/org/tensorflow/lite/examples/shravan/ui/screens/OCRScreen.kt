@@ -22,7 +22,7 @@ fun OCRScreen(
     val spokenTextSet = remember { mutableSetOf<String>() }
 
     LaunchedEffect(Unit) {
-        ttsManager.speak("OCR Screen")
+        ttsManager.speak("OCR")
     }
 
     // Clear buffer when exiting
