@@ -49,13 +49,18 @@ fun OCRScreen(
                         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                         recognizer.process(image)
                             .addOnSuccessListener { visionText ->
-                                // Split into lines or blocks to enqueue
                                 visionText.textBlocks.forEach { block ->
-                                    val text = block.text.trim()
-                                    if (text.isNotBlank() && !spokenTextSet.contains(text)) {
-                                        spokenTextSet.add(text)
-                                        // Enqueue text so it's not interrupted
-                                        ttsManager.speak(text, isQueued = true)
+                                    val text = block.text.trim().lowercase()
+                                    if (text.length > 3) { // Ignore very short fragments
+                                        // Check if this text or a very similar one was already spoken
+                                        val alreadySpoken = spokenTextSet.any { 
+                                            it.contains(text) || text.contains(it) 
+                                        }
+                                        
+                                        if (!alreadySpoken) {
+                                            spokenTextSet.add(text)
+                                            ttsManager.speak(block.text.trim(), isQueued = true)
+                                        }
                                     }
                                 }
                             }
