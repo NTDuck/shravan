@@ -18,7 +18,7 @@ fun HomeScreen(
     ttsManager: TTSManager
 ) {
     LaunchedEffect(Unit) {
-        ttsManager.speak("Home")
+        ttsManager.speak("Home", isVietnamese = false)
     }
 
     Surface(

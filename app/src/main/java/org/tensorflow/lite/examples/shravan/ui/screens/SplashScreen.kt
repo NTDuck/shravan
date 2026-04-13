@@ -29,7 +29,7 @@ fun SplashScreen(onTimeout: () -> Unit, ttsManager: TTSManager) {
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.sharvan_logo),
+            painter = painterResource(id = R.drawable.ic_launcher),
             contentDescription = "Logo"
         )
     }

@@ -7,6 +7,8 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import org.tensorflow.lite.examples.shravan.utils.ImageUtils
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.util.*
 
 class YoloAnalyzer(
@@ -19,7 +21,22 @@ class YoloAnalyzer(
         DetectorFactory.getDetector(context.assets, "yolov5s-fp16.tflite")
     }
 
-    // Keep track of what we've already spoken in this session
+    private val labelsVi: List<String> by lazy {
+        val labels = mutableListOf<String>()
+        try {
+            val reader = BufferedReader(InputStreamReader(context.assets.open("coco_vi.txt")))
+            var line: String? = reader.readLine()
+            while (line != null) {
+                labels.add(line)
+                line = reader.readLine()
+            }
+            reader.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        labels
+    }
+
     private val spokenObjects = mutableSetOf<String>()
 
     override fun analyze(image: ImageProxy) {
@@ -41,12 +58,14 @@ class YoloAnalyzer(
         val results = detector.recognizeImage(scaledBitmap)
         val filteredResults = results.filter { it.confidence > 0.5f }
 
-        // TTS Logic: Only speak if we haven't spoken this object name in this session
         filteredResults.forEach { result ->
             val title = result.title
             if (!spokenObjects.contains(title)) {
                 spokenObjects.add(title)
-                ttsManager.speak(title, isQueued = true)
+                
+                // Use Vietnamese title if available
+                val viTitle = if (result.detectedClass < labelsVi.size) labelsVi[result.detectedClass] else title
+                ttsManager.speak(viTitle, isQueued = true, isVietnamese = true)
             }
         }
 
