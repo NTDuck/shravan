@@ -17,11 +17,19 @@ fun OCRScreen(
     ttsManager: TTSManager
 ) {
     val recognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
-    var lastSpokenText by remember { mutableStateOf("") }
-    var lastSpeakTime by remember { mutableStateOf(0L) }
+    
+    // Set to keep track of unique text already enqueued/spoken in this session
+    val spokenTextSet = remember { mutableSetOf<String>() }
 
     LaunchedEffect(Unit) {
         ttsManager.speak("OCR Screen")
+    }
+
+    // Clear buffer when exiting
+    DisposableEffect(Unit) {
+        onDispose {
+            ttsManager.stop()
+        }
     }
 
     Surface(
@@ -41,15 +49,13 @@ fun OCRScreen(
                         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                         recognizer.process(image)
                             .addOnSuccessListener { visionText ->
-                                val text = visionText.text
-                                val currentTime = System.currentTimeMillis()
-                                
-                                // Only speak if text is different AND either TTS is not speaking OR enough time has passed
-                                if (text.isNotBlank() && text != lastSpokenText) {
-                                    if (!ttsManager.isSpeaking() || (currentTime - lastSpeakTime > 5000)) {
-                                        lastSpokenText = text
-                                        lastSpeakTime = currentTime
-                                        ttsManager.speak(text)
+                                // Split into lines or blocks to enqueue
+                                visionText.textBlocks.forEach { block ->
+                                    val text = block.text.trim()
+                                    if (text.isNotBlank() && !spokenTextSet.contains(text)) {
+                                        spokenTextSet.add(text)
+                                        // Enqueue text so it's not interrupted
+                                        ttsManager.speak(text, isQueued = true)
                                     }
                                 }
                             }
