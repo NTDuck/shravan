@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.tensorflow.lite.examples.detection;
+package org.tensorflow.lite.examples.shravan;
 
 import static com.google.common.truth.Truth.assertThat;
 import static java.lang.Math.abs;
@@ -39,10 +39,10 @@ import java.util.Scanner;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.tensorflow.lite.examples.detection.env.ImageUtils;
-import org.tensorflow.lite.examples.detection.tflite.Classifier;
-import org.tensorflow.lite.examples.detection.tflite.Classifier.Recognition;
-import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIModel;
+import org.tensorflow.lite.examples.shravan.env.ImageUtils;
+import org.tensorflow.lite.examples.shravan.tflite.Classifier;
+import org.tensorflow.lite.examples.shravan.tflite.Classifier.Recognition;
+import org.tensorflow.lite.examples.shravan.tflite.TFLiteObjectDetectionAPIModel;
 
 /** Golden test for Object Detection Reference app. */
 @RunWith(AndroidJUnit4.class)
