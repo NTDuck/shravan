@@ -1,4 +1,4 @@
-package org.tensorflow.lite.examples.detection.tflite;
+package org.tensorflow.lite.examples.shravan.tflite;
 
 import android.content.res.AssetManager;
 
