@@ -1,9 +1,14 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -12,13 +17,20 @@ import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
 import kotlin.math.min
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OCRScreen(
     onBack: () -> Unit,
     ttsManager: TTSManager
 ) {
+    val haptic = LocalHapticFeedback.current
     val recognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
     val spokenTextSet = remember { mutableStateOf(mutableSetOf<String>()) }
+
+    BackHandler {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        onBack()
+    }
 
     LaunchedEffect(Unit) {
         ttsManager.speak("OCR", isVietnamese = false)
@@ -39,6 +51,13 @@ fun OCRScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(4.dp)
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        ttsManager.speak("OCR", isVietnamese = false)
+                    }
+                )
         ) {
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),

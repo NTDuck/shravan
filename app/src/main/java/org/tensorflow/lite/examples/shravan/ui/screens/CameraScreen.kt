@@ -1,7 +1,9 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
-import android.graphics.RectF
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -11,7 +13,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.tensorflow.lite.examples.shravan.tflite.Classifier
@@ -20,13 +24,20 @@ import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
 import org.tensorflow.lite.examples.shravan.ui.theme.DimmedPalette
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CameraScreen(
     onBack: () -> Unit,
     ttsManager: TTSManager
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
+
+    BackHandler {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        onBack()
+    }
 
     LaunchedEffect(Unit) {
         ttsManager.speak("Object Detection", isVietnamese = false)
@@ -40,6 +51,13 @@ fun CameraScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(4.dp)
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        ttsManager.speak("Object Detection", isVietnamese = false)
+                    }
+                )
         ) {
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
