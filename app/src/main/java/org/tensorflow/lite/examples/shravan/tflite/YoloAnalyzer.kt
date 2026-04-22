@@ -8,7 +8,9 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import org.tensorflow.lite.examples.shravan.utils.HistoryManager
 import org.tensorflow.lite.examples.shravan.utils.ImageUtils
+import org.tensorflow.lite.examples.shravan.utils.SettingsManager
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -17,6 +19,8 @@ import java.util.*
 class YoloAnalyzer(
     private val context: Context,
     private val ttsManager: TTSManager,
+    private val settingsManager: SettingsManager,
+    private val historyManager: HistoryManager,
     private val onResults: (List<Classifier.Recognition>) -> Unit
 ) : ImageAnalysis.Analyzer {
 
@@ -66,7 +70,8 @@ class YoloAnalyzer(
         )
 
         val results = detector.recognizeImage(scaledBitmap)
-        val filteredResults = results.filter { it.confidence > 0.5f }
+        val confidenceThreshold = settingsManager.confidenceThreshold
+        val filteredResults = results.filter { it.confidence > confidenceThreshold }
 
         filteredResults.forEach { result ->
             val title = result.title
@@ -87,13 +92,16 @@ class YoloAnalyzer(
                 if (currentTime - lastAlert > ALERT_COOLDOWN) {
                     lastAlertTime[detectedClass] = currentTime
                     val viTitle = if (detectedClass < labelsVi.size) labelsVi[detectedClass] else title
-                    ttsManager.speak("$viTitle quá gần!", isQueued = false, isVietnamese = true)
+                    val alertTitle = if (settingsManager.useVietnamese) "$viTitle quá gần!" else "$title too close!"
+                    ttsManager.speak(alertTitle, isQueued = false, isVietnamese = settingsManager.useVietnamese)
                     
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
-                    } else {
-                        @Suppress("DEPRECATION")
-                        vibrator.vibrate(500)
+                    if (settingsManager.vibrationEnabled) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+                        } else {
+                            @Suppress("DEPRECATION")
+                            vibrator.vibrate(500)
+                        }
                     }
                 }
             }
@@ -101,9 +109,26 @@ class YoloAnalyzer(
             if (!spokenObjects.contains(title)) {
                 spokenObjects.add(title)
                 
-                // Use Vietnamese title if available
-                val viTitle = if (detectedClass < labelsVi.size) labelsVi[detectedClass] else title
-                ttsManager.speak(viTitle, isQueued = true, isVietnamese = true)
+                // Guidance: left, center, right
+                val centerX = location.centerX() / detector.inputSize
+                val positionGuidance = if (settingsManager.useVietnamese) {
+                    when {
+                        centerX < 0.33f -> "ở bên trái"
+                        centerX > 0.66f -> "ở bên phải"
+                        else -> "ở chính giữa"
+                    }
+                } else {
+                    when {
+                        centerX < 0.33f -> "on the left"
+                        centerX > 0.66f -> "on the right"
+                        else -> "in the center"
+                    }
+                }
+
+                val finalTitle = if (settingsManager.useVietnamese && detectedClass < labelsVi.size) labelsVi[detectedClass] else title
+                val announcement = "$finalTitle $positionGuidance"
+                ttsManager.speak(announcement, isQueued = true, isVietnamese = settingsManager.useVietnamese)
+                historyManager.addHistory("Object", announcement)
             }
         }
 

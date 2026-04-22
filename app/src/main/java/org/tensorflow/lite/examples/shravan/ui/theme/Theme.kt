@@ -9,6 +9,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.ui.graphics.Color
+
 private val LightColorScheme = lightColorScheme(
     primary = OrangePrimary,
     secondary = OrangeSecondary,
@@ -20,6 +23,19 @@ private val LightColorScheme = lightColorScheme(
     onTertiary = OnPrimary,
     onBackground = OnBackground,
     onSurface = OnSurface,
+)
+
+private val HighContrastColorScheme = darkColorScheme(
+    primary = Color.Yellow,
+    secondary = Color.Cyan,
+    tertiary = Color.Magenta,
+    background = Color.Black,
+    surface = Color.Black,
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onTertiary = Color.Black,
+    onBackground = Color.White,
+    onSurface = Color.White,
 )
 
 // Legible Typography for visually impaired (bold, clear sans-serif)
@@ -42,10 +58,13 @@ private val AppTypography = Typography(
 
 @Composable
 fun ShravanTheme(
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val colorScheme = if (darkTheme) HighContrastColorScheme else LightColorScheme
+    
     MaterialTheme(
-        colorScheme = LightColorScheme,
+        colorScheme = colorScheme,
         typography = AppTypography,
         content = content
     )

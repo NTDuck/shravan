@@ -13,21 +13,23 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import org.tensorflow.lite.examples.shravan.ui.screens.CameraScreen
-import org.tensorflow.lite.examples.shravan.ui.screens.HomeScreen
-import org.tensorflow.lite.examples.shravan.ui.screens.OCRScreen
-import org.tensorflow.lite.examples.shravan.ui.screens.SplashScreen
+import org.tensorflow.lite.examples.shravan.ui.screens.*
 import org.tensorflow.lite.examples.shravan.ui.theme.ShravanTheme
+import org.tensorflow.lite.examples.shravan.utils.HistoryManager
+import org.tensorflow.lite.examples.shravan.utils.SettingsManager
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ShravanTheme {
+            val context = LocalContext.current
+            val settingsManager = remember { SettingsManager(context) }
+            val historyManager = remember { HistoryManager(context) }
+            val ttsManager = remember { TTSManager(context) }
+            
+            ShravanTheme(darkTheme = settingsManager.highContrastMode) {
                 val navController = rememberNavController()
-                val context = LocalContext.current
-                val ttsManager = remember { TTSManager(context) }
 
                 var hasCameraPermission by remember {
                     mutableStateOf(
@@ -49,6 +51,7 @@ class MainActivity : ComponentActivity() {
                     if (!hasCameraPermission) {
                         launcher.launch(Manifest.permission.CAMERA)
                     }
+                    ttsManager.setSpeechRate(settingsManager.speechRate)
                 }
 
                 DisposableEffect(Unit) {
@@ -69,7 +72,24 @@ class MainActivity : ComponentActivity() {
                         HomeScreen(
                             onCameraClick = { navController.navigate("camera") },
                             onOCRClick = { navController.navigate("ocr") },
+                            onSettingsClick = { navController.navigate("settings") },
+                            onHistoryClick = { navController.navigate("history") },
+                            onHelpClick = { ttsManager.speak("Help screen coming soon", isVietnamese = false) },
+                            ttsManager = ttsManager,
+                            settingsManager = settingsManager
+                        )
+                    }
+                    composable("settings") {
+                        SettingsScreen(
+                            onBack = { navController.popBackStack() },
+                            settingsManager = settingsManager,
                             ttsManager = ttsManager
+                        )
+                    }
+                    composable("history") {
+                        HistoryScreen(
+                            onBack = { navController.popBackStack() },
+                            historyManager = historyManager
                         )
                     }
                     composable("camera") {
@@ -79,7 +99,9 @@ class MainActivity : ComponentActivity() {
                                     ttsManager.stop()
                                     navController.popBackStack() 
                                 },
-                                ttsManager = ttsManager
+                                ttsManager = ttsManager,
+                                settingsManager = settingsManager,
+                                historyManager = historyManager
                             )
                         }
                     }
@@ -90,7 +112,8 @@ class MainActivity : ComponentActivity() {
                                     ttsManager.stop()
                                     navController.popBackStack() 
                                 },
-                                ttsManager = ttsManager
+                                ttsManager = ttsManager,
+                                historyManager = historyManager
                             )
                         }
                     }
