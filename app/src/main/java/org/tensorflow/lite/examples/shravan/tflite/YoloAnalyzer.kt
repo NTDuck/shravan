@@ -70,8 +70,7 @@ class YoloAnalyzer(
         )
 
         val results = detector.recognizeImage(scaledBitmap)
-        val confidenceThreshold = settingsManager.confidenceThreshold
-        val filteredResults = results.filter { it.confidence > confidenceThreshold }
+        val filteredResults = results.filter { it.confidence > 0.5f }
 
         filteredResults.forEach { result ->
             val title = result.title

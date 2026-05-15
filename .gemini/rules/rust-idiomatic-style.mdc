@@ -1,0 +1,12 @@
+---
+description: Rules regarding idiomatic Rust code and naming conventions.
+globs: "**/*.rs"
+---
+
+# Rust Idiomatic Style
+
+- Follow `snake_case` for functions and variables, and `PascalCase` for types and traits.
+- Use `clippy` for linting and adhere to its recommendations.
+- Prefer iterator methods (`map`, `filter`, `fold`) over explicit `for` loops where readable.
+- Implement common traits like `Debug`, `Clone`, `Default`, `PartialEq` where they make sense.
+- Use `Match` statements for exhaustive pattern matching.

@@ -6,10 +6,33 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
+enum class ImpairmentLevel {
+    PartiallyImpaired,
+    TotallyImpaired
+}
+
 class SettingsManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("shravan_prefs", Context.MODE_PRIVATE)
 
-    var speechRate by mutableStateOf(prefs.getFloat("speech_rate", 1.25f))
+    var impairmentLevel by mutableStateOf(
+        prefs.getString("impairment_level", null)?.let { ImpairmentLevel.valueOf(it) }
+    )
+        private set
+
+    fun updateImpairmentLevel(level: ImpairmentLevel?) {
+        impairmentLevel = level
+        prefs.edit().putString("impairment_level", level?.name).apply()
+    }
+
+    var activeThemeIndex by mutableStateOf(prefs.getInt("active_theme_index", 3)) // Default: Neon Hazard
+        private set
+
+    fun updateActiveThemeIndex(index: Int) {
+        activeThemeIndex = index
+        prefs.edit().putInt("active_theme_index", index).apply()
+    }
+
+    var speechRate by mutableStateOf(prefs.getFloat("speech_rate", 1.0f))
         private set
 
     fun updateSpeechRate(value: Float) {
@@ -25,43 +48,13 @@ class SettingsManager(context: Context) {
         prefs.edit().putBoolean("vibration_enabled", value).apply()
     }
 
-    var confidenceThreshold by mutableStateOf(prefs.getFloat("confidence_threshold", 0.5f))
-        private set
-
-    fun updateConfidenceThreshold(value: Float) {
-        confidenceThreshold = value
-        prefs.edit().putFloat("confidence_threshold", value).apply()
-    }
-
-    var isContinuousScan by mutableStateOf(prefs.getBoolean("continuous_scan", true))
-        private set
-
-    fun updateContinuousScan(value: Boolean) {
-        isContinuousScan = value
-        prefs.edit().putBoolean("continuous_scan", value).apply()
-    }
-
-    var isFirstLaunch by mutableStateOf(prefs.getBoolean("is_first_launch", true))
-        private set
-
-    fun updateFirstLaunch(value: Boolean) {
-        isFirstLaunch = value
-        prefs.edit().putBoolean("is_first_launch", value).apply()
-    }
-
-    var highContrastMode by mutableStateOf(prefs.getBoolean("high_contrast", false))
-        private set
-
-    fun updateHighContrastMode(value: Boolean) {
-        highContrastMode = value
-        prefs.edit().putBoolean("high_contrast", value).apply()
-    }
-
-    var useVietnamese by mutableStateOf(prefs.getBoolean("use_vietnamese", false))
+    var useVietnamese by mutableStateOf(prefs.getBoolean("use_vietnamese", true))
         private set
 
     fun updateUseVietnamese(value: Boolean) {
         useVietnamese = value
         prefs.edit().putBoolean("use_vietnamese", value).apply()
     }
+
+    // Removed highContrastMode, confidenceThreshold, isContinuousScan, isFirstLaunch as they are not in the new specs
 }

@@ -1,125 +1,151 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
+import android.media.MediaPlayer
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.tensorflow.lite.examples.shravan.utils.SettingsManager
-import org.tensorflow.lite.examples.shravan.utils.TTSManager
+import kotlinx.coroutines.delay
+import org.tensorflow.lite.examples.shravan.utils.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onNavigateToThemes: () -> Unit,
     settingsManager: SettingsManager,
-    ttsManager: TTSManager
+    ttsManager: TTSManager,
+    hapticManager: HapticManager,
+    voiceCommandManager: VoiceCommandManager
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
+    val context = LocalContext.current
+    val useVietnamese = settingsManager.useVietnamese
+    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+            val lowerResult = result.lowercase()
+            if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
+                ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
+                if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                onBack()
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = if (useVietnamese) "Cài đặt" else "Settings",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        // Vibration Toggle
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(if (useVietnamese) "Cho phép rung" else "Enable vibration")
+            Switch(
+                checked = settingsManager.vibrationEnabled,
+                onCheckedChange = { 
+                    settingsManager.updateVibrationEnabled(it)
+                    if (it) hapticManager.triggerHaptic()
                 }
             )
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+
+        // Language Toggle
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Accessibility Settings", fontSize = 24.sp, style = MaterialTheme.typography.headlineMedium)
+            Text(if (useVietnamese) "Tiếng Việt" else "English")
+            Switch(
+                checked = useVietnamese,
+                onCheckedChange = { settingsManager.updateUseVietnamese(it) }
+            )
+        }
 
-            // Speech Rate
-            Column {
-                Text("Speech Rate: ${"%.2f".format(settingsManager.speechRate)}", fontSize = 18.sp)
-                Slider(
-                    value = settingsManager.speechRate,
-                    onValueChange = { 
-                        settingsManager.updateSpeechRate(it)
-                        ttsManager.setSpeechRate(it)
-                    },
-                    valueRange = 0.5f..2.5f,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        // Speech Rate Slider
+        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
+            Text(if (useVietnamese) "Tốc độ nói" else "Speech rate")
+            Slider(
+                value = settingsManager.speechRate,
+                onValueChange = { 
+                    settingsManager.updateSpeechRate(it)
+                    ttsManager.setSpeechRate(it)
+                },
+                valueRange = 0.5f..2.0f
+            )
+        }
 
-            // Confidence Threshold
-            Column {
-                Text("Confidence Threshold: ${(settingsManager.confidenceThreshold * 100).toInt()}%", fontSize = 18.sp)
-                Slider(
-                    value = settingsManager.confidenceThreshold,
-                    onValueChange = { 
-                        settingsManager.updateConfidenceThreshold(it)
-                    },
-                    valueRange = 0.1f..0.9f,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        // Themes Button
+        Button(
+            onClick = onNavigateToThemes,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text(if (useVietnamese) "Thay đổi màu sắc" else "Themes")
+        }
 
-            // Vibration Toggle
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Vibration Feedback", fontSize = 18.sp)
-                Switch(
-                    checked = settingsManager.vibrationEnabled,
-                    onCheckedChange = { 
-                        settingsManager.updateVibrationEnabled(it)
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Music Button
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+            IconButton(
+                onClick = {
+                    if (mediaPlayer == null) {
+                        try {
+                            val afd = context.assets.openFd("song.mp3")
+                            mediaPlayer = MediaPlayer().apply {
+                                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                                prepare()
+                                start()
+                                isLooping = true
+                            }
+                        } catch (e: Exception) {
+                            ttsManager.speak("Music file not found", isVietnamese = false)
+                        }
+                    } else {
+                        if (mediaPlayer?.isPlaying == true) {
+                            mediaPlayer?.pause()
+                        } else {
+                            mediaPlayer?.start()
+                        }
                     }
-                )
-            }
-
-            // High Contrast Toggle
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                },
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(Color.Magenta, CircleShape)
             ) {
-                Text("High Contrast Mode", fontSize = 18.sp)
-                Switch(
-                    checked = settingsManager.highContrastMode,
-                    onCheckedChange = { 
-                        settingsManager.updateHighContrastMode(it)
-                    }
+                Icon(
+                    Icons.Default.MusicNote,
+                    contentDescription = "Play Music",
+                    tint = Color.White
                 )
-            }
-
-            // Language Toggle
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Language: ${if (settingsManager.useVietnamese) "Tiếng Việt" else "English"}", fontSize = 18.sp)
-                Switch(
-                    checked = settingsManager.useVietnamese,
-                    onCheckedChange = { 
-                        settingsManager.updateUseVietnamese(it)
-                    }
-                )
-            }
-            
-            Button(
-                onClick = { ttsManager.speak("Test speech at this rate", isVietnamese = false) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Test Voice")
             }
         }
     }

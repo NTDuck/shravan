@@ -1,0 +1,12 @@
+---
+description: Rules regarding memory safety and ownership in Rust.
+globs: "**/*.rs"
+---
+
+# Rust Safety & Ownership
+
+- Prioritize safe Rust over `unsafe` blocks. If `unsafe` is necessary, document the safety invariants clearly.
+- Leverage the borrow checker: prefer references (`&T`, `&mut T`) over moving ownership unless necessary.
+- Use `Option` and `Result` for error handling instead of `panic!`.
+- Avoid unnecessary cloning; use `Cow` or references when appropriate.
+- Ensure all resources are properly managed via RAII.

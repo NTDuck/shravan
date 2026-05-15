@@ -2,41 +2,14 @@ package org.tensorflow.lite.examples.shravan.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.ui.graphics.Color
-
-private val LightColorScheme = lightColorScheme(
-    primary = OrangePrimary,
-    secondary = OrangeSecondary,
-    tertiary = OrangeTertiary,
-    background = SoftGray, // soft gray
-    surface = SurfaceColor,
-    onPrimary = OnPrimary,
-    onSecondary = OnSecondary,
-    onTertiary = OnPrimary,
-    onBackground = OnBackground,
-    onSurface = OnSurface,
-)
-
-private val HighContrastColorScheme = darkColorScheme(
-    primary = Color.Yellow,
-    secondary = Color.Cyan,
-    tertiary = Color.Magenta,
-    background = Color.Black,
-    surface = Color.Black,
-    onPrimary = Color.Black,
-    onSecondary = Color.Black,
-    onTertiary = Color.Black,
-    onBackground = Color.White,
-    onSurface = Color.White,
-)
 
 // Legible Typography for visually impaired (bold, clear sans-serif)
 private val AppTypography = Typography(
@@ -58,10 +31,24 @@ private val AppTypography = Typography(
 
 @Composable
 fun ShravanTheme(
-    darkTheme: Boolean = false,
+    themeIndex: Int,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) HighContrastColorScheme else LightColorScheme
+    val theme = ThemeCatalog.themes.getOrElse(themeIndex) { ThemeCatalog.themes[3] }
+    val colors = theme.colors
+
+    val colorScheme = lightColorScheme(
+        primary = colors[2],
+        secondary = colors[3],
+        tertiary = colors[1],
+        background = colors[4],
+        surface = colors[4],
+        onPrimary = colors[0],
+        onSecondary = colors[0],
+        onTertiary = colors[0],
+        onBackground = colors[0],
+        onSurface = colors[0],
+    )
     
     MaterialTheme(
         colorScheme = colorScheme,

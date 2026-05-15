@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -20,18 +19,15 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import org.tensorflow.lite.examples.shravan.tflite.Classifier
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
 import org.tensorflow.lite.examples.shravan.ui.theme.DimmedPalette
-import org.tensorflow.lite.examples.shravan.utils.HistoryManager
-import org.tensorflow.lite.examples.shravan.utils.SettingsManager
-import org.tensorflow.lite.examples.shravan.utils.TTSManager
+import org.tensorflow.lite.examples.shravan.utils.*
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -39,29 +35,33 @@ fun CameraScreen(
     onBack: () -> Unit,
     ttsManager: TTSManager,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager
+    historyManager: HistoryManager,
+    hapticManager: HapticManager,
+    voiceCommandManager: VoiceCommandManager
 ) {
     val context = LocalContext.current
-    val haptic = LocalHapticFeedback.current
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
     var isPaused by remember { mutableStateOf(false) }
     var statusText by remember { mutableStateOf("Initializing...") }
+    val useVietnamese = settingsManager.useVietnamese
 
     BackHandler {
-        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
         onBack()
     }
 
     LaunchedEffect(Unit) {
-        ttsManager.speak("Object Detection active", isVietnamese = false)
-        statusText = "Scanning for objects..."
-    }
-
-    LaunchedEffect(recognitions) {
-        if (recognitions.isEmpty() && !isPaused) {
-            statusText = "Scanning..."
-        } else if (!isPaused) {
-            statusText = "${recognitions.size} objects detected"
+        ttsManager.speak(if (useVietnamese) "Chụp ảnh" else "Camera", isVietnamese = useVietnamese)
+        statusText = "Scanning..."
+        
+        delay(2000)
+        voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+            val lowerResult = result.lowercase()
+            if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
+                ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
+                if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                onBack()
+            }
         }
     }
 
@@ -69,9 +69,7 @@ fun CameraScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
             if (!isPaused) {
                 CameraPreview(
                     modifier = Modifier.fillMaxSize(),
@@ -79,13 +77,6 @@ fun CameraScreen(
                         recognitions = results
                     }
                 )
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Paused", color = Color.White, fontSize = 32.sp)
-                }
             }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -94,70 +85,20 @@ fun CameraScreen(
                         val rect = recognition.location
                         val scaleX = size.width / 416f
                         val scaleY = size.height / 416f
-                        
                         val color = DimmedPalette[recognition.detectedClass % DimmedPalette.size]
                         
-                        val left = rect.left * scaleX
-                        val top = rect.top * scaleY
-                        val width = rect.width() * scaleX
-                        val height = rect.height() * scaleY
-
                         drawRect(
                             color = color,
-                            topLeft = Offset(left, top),
-                            size = Size(width, height),
+                            topLeft = Offset(rect.left * scaleX, rect.top * scaleY),
+                            size = Size(rect.width() * scaleX, rect.height() * scaleY),
                             style = Stroke(width = 2.dp.toPx())
                         )
-                        
-                        drawContext.canvas.nativeCanvas.apply {
-                            val labelText = "${recognition.title} ${(recognition.confidence * 100).toInt()}%"
-                            val paint = android.graphics.Paint().apply {
-                                this.color = android.graphics.Color.argb(
-                                    (color.alpha * 255).toInt(),
-                                    (color.red * 255).toInt(),
-                                    (color.green * 255).toInt(),
-                                    (color.blue * 255).toInt()
-                                )
-                                this.textSize = 16.sp.toPx()
-                                this.isFakeBoldText = true
-                                this.textAlign = android.graphics.Paint.Align.CENTER
-                            }
-                            
-                            val xPos = left + width / 2
-                            val yPos = if (top > 30f) top - 10f else top + 30f
-                            
-                            drawText(labelText, xPos, yPos, paint)
-                        }
                     }
                 }
             }
 
-            // Status Overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Surface(
-                    color = Color.Black.copy(alpha = 0.7f),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text(
-                        text = statusText,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        fontSize = 18.sp
-                    )
-                }
-            }
-
-            // Control Buttons
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 32.dp),
+                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(bottom = 32.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 ControlCircleButton(
@@ -165,20 +106,23 @@ fun CameraScreen(
                     label = if (isPaused) "Resume" else "Pause",
                     onClick = { 
                         isPaused = !isPaused 
-                        ttsManager.speak(if (isPaused) "Paused" else "Resumed", isVietnamese = false)
+                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
                     }
                 )
                 ControlCircleButton(
                     icon = Icons.Default.Refresh,
                     label = "Repeat",
-                    onClick = { ttsManager.repeatLast() }
+                    onClick = { 
+                        ttsManager.repeatLast() 
+                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                    }
                 )
                 ControlCircleButton(
                     icon = Icons.Default.Stop,
                     label = "Stop",
                     onClick = { 
-                        ttsManager.stop()
-                        onBack()
+                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                        onBack() 
                     }
                 )
             }
@@ -186,28 +130,18 @@ fun CameraScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ControlCircleButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     onClick: () -> Unit
 ) {
-    val haptic = LocalHapticFeedback.current
     Surface(
-        modifier = Modifier
-            .size(80.dp)
-            .combinedClickable(
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onClick()
-                },
-                onLongClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                }
-            ),
+        modifier = Modifier.size(80.dp).background(Color.Black.copy(alpha = 0.6f), androidx.compose.foundation.shape.CircleShape).padding(4.dp),
+        onClick = onClick,
         shape = androidx.compose.foundation.shape.CircleShape,
-        color = Color.Black.copy(alpha = 0.6f),
+        color = Color.Transparent,
         contentColor = Color.White
     ) {
         Box(contentAlignment = Alignment.Center) {

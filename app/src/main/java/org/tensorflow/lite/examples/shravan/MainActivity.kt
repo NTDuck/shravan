@@ -15,9 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.tensorflow.lite.examples.shravan.ui.screens.*
 import org.tensorflow.lite.examples.shravan.ui.theme.ShravanTheme
-import org.tensorflow.lite.examples.shravan.utils.HistoryManager
-import org.tensorflow.lite.examples.shravan.utils.SettingsManager
-import org.tensorflow.lite.examples.shravan.utils.TTSManager
+import org.tensorflow.lite.examples.shravan.utils.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,8 +25,10 @@ class MainActivity : ComponentActivity() {
             val settingsManager = remember { SettingsManager(context) }
             val historyManager = remember { HistoryManager(context) }
             val ttsManager = remember { TTSManager(context) }
+            val hapticManager = remember { HapticManager(context) }
+            val voiceCommandManager = remember { VoiceCommandManager(context) }
             
-            ShravanTheme(darkTheme = settingsManager.highContrastMode) {
+            ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
                 val navController = rememberNavController()
 
                 var hasCameraPermission by remember {
@@ -39,17 +39,31 @@ class MainActivity : ComponentActivity() {
                         ) == PackageManager.PERMISSION_GRANTED
                     )
                 }
+                
+                var hasRecordAudioPermission by remember {
+                    mutableStateOf(
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+                    )
+                }
 
                 val launcher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestPermission(),
-                    onResult = { granted ->
-                        hasCameraPermission = granted
+                    contract = ActivityResultContracts.RequestMultiplePermissions(),
+                    onResult = { permissions ->
+                        hasCameraPermission = permissions[Manifest.permission.CAMERA] ?: hasCameraPermission
+                        hasRecordAudioPermission = permissions[Manifest.permission.RECORD_AUDIO] ?: hasRecordAudioPermission
                     }
                 )
 
                 LaunchedEffect(Unit) {
-                    if (!hasCameraPermission) {
-                        launcher.launch(Manifest.permission.CAMERA)
+                    val permissionsNeeded = mutableListOf<String>()
+                    if (!hasCameraPermission) permissionsNeeded.add(Manifest.permission.CAMERA)
+                    if (!hasRecordAudioPermission) permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
+                    
+                    if (permissionsNeeded.isNotEmpty()) {
+                        launcher.launch(permissionsNeeded.toTypedArray())
                     }
                     ttsManager.setSpeechRate(settingsManager.speechRate)
                 }
@@ -57,39 +71,71 @@ class MainActivity : ComponentActivity() {
                 DisposableEffect(Unit) {
                     onDispose {
                         ttsManager.destroy()
+                        voiceCommandManager.destroy()
                     }
                 }
 
-                NavHost(navController = navController, startDestination = "splash") {
-                    composable("splash") {
-                        SplashScreen(onTimeout = {
-                            navController.navigate("home") {
-                                popUpTo("splash") { inclusive = true }
-                            }
-                        }, ttsManager = ttsManager)
-                    }
-                    composable("home") {
-                        HomeScreen(
-                            onCameraClick = { navController.navigate("camera") },
-                            onOCRClick = { navController.navigate("ocr") },
-                            onSettingsClick = { navController.navigate("settings") },
-                            onHistoryClick = { navController.navigate("history") },
-                            onHelpClick = { ttsManager.speak("Help screen coming soon", isVietnamese = false) },
+                val startDestination = when (settingsManager.impairmentLevel) {
+                    ImpairmentLevel.PartiallyImpaired -> "partially_home"
+                    ImpairmentLevel.TotallyImpaired -> "totally_home"
+                    null -> "setup"
+                }
+
+                NavHost(navController = navController, startDestination = startDestination) {
+                    composable("setup") {
+                        SetupHomeScreen(
+                            navController = navController,
+                            settingsManager = settingsManager,
                             ttsManager = ttsManager,
-                            settingsManager = settingsManager
+                            hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager
+                        )
+                    }
+                    composable("partially_home") {
+                        PartiallyImpairedHomeScreen(
+                            navController = navController,
+                            settingsManager = settingsManager,
+                            ttsManager = ttsManager,
+                            hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager
+                        )
+                    }
+                    composable("totally_home") {
+                        TotallyImpairedHomeScreen(
+                            navController = navController,
+                            settingsManager = settingsManager,
+                            ttsManager = ttsManager,
+                            hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager
                         )
                     }
                     composable("settings") {
                         SettingsScreen(
                             onBack = { navController.popBackStack() },
+                            onNavigateToThemes = { navController.navigate("themes") },
                             settingsManager = settingsManager,
-                            ttsManager = ttsManager
+                            ttsManager = ttsManager,
+                            hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager
+                        )
+                    }
+                    composable("themes") {
+                        ThemesScreen(
+                            onBack = { navController.popBackStack() },
+                            settingsManager = settingsManager,
+                            ttsManager = ttsManager,
+                            hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager
                         )
                     }
                     composable("history") {
                         HistoryScreen(
                             onBack = { navController.popBackStack() },
-                            historyManager = historyManager
+                            historyManager = historyManager,
+                            settingsManager = settingsManager,
+                            ttsManager = ttsManager,
+                            hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager
                         )
                     }
                     composable("camera") {
@@ -101,7 +147,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 ttsManager = ttsManager,
                                 settingsManager = settingsManager,
-                                historyManager = historyManager
+                                historyManager = historyManager,
+                                hapticManager = hapticManager,
+                                voiceCommandManager = voiceCommandManager
                             )
                         }
                     }
@@ -113,7 +161,10 @@ class MainActivity : ComponentActivity() {
                                     navController.popBackStack() 
                                 },
                                 ttsManager = ttsManager,
-                                historyManager = historyManager
+                                settingsManager = settingsManager,
+                                historyManager = historyManager,
+                                hapticManager = hapticManager,
+                                voiceCommandManager = voiceCommandManager
                             )
                         }
                     }
