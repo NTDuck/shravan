@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.ui.components.AccessibleButton
 import org.tensorflow.lite.examples.shravan.utils.*
 
@@ -26,20 +27,29 @@ fun SetupHomeScreen(
     val labelPartialEn = "Partially Impaired"
     val labelTotalEn = "Totally Impaired"
 
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         ttsManager.speak(
             if (useVietnamese) greetingVi else greetingEn,
             isVietnamese = useVietnamese,
             onComplete = {
-                // Delay 1s after TTS
-                interactionsEnabled = true
+                scope.launch {
+                    delay(1000)
+                    interactionsEnabled = true
+                }
             }
         )
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            voiceCommandManager.stopListening()
+        }
+    }
+
     LaunchedEffect(interactionsEnabled) {
         if (interactionsEnabled) {
-            delay(1000)
             voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains(labelPartialVi.lowercase()) || lowerResult.contains(labelPartialEn.lowercase())) {

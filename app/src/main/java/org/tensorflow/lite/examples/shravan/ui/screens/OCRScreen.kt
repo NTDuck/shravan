@@ -20,7 +20,9 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
+import org.tensorflow.lite.examples.shravan.ui.components.ControlCircleButton
 import org.tensorflow.lite.examples.shravan.utils.*
 import kotlin.math.min
 
@@ -39,21 +41,42 @@ fun OCRScreen(
     var isPaused by remember { mutableStateOf(false) }
     val useVietnamese = settingsManager.useVietnamese
 
+    val scope = rememberCoroutineScope()
+    var interactionsEnabled by remember { mutableStateOf(false) }
+
     BackHandler {
         if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
         onBack()
     }
 
     LaunchedEffect(Unit) {
-        ttsManager.speak(if (useVietnamese) "Đọc chữ" else "OCR", isVietnamese = useVietnamese)
-        
-        delay(2000)
-        voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
-            val lowerResult = result.lowercase()
-            if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
-                ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
-                if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
-                onBack()
+        ttsManager.speak(
+            if (useVietnamese) "Đọc chữ" else "OCR",
+            isVietnamese = useVietnamese,
+            onComplete = {
+                scope.launch {
+                    delay(1000)
+                    interactionsEnabled = true
+                }
+            }
+        )
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            voiceCommandManager.stopListening()
+        }
+    }
+
+    LaunchedEffect(interactionsEnabled) {
+        if (interactionsEnabled) {
+            voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+                val lowerResult = result.lowercase()
+                if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
+                    ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
+                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                    onBack()
+                }
             }
         }
     }
@@ -97,6 +120,7 @@ fun OCRScreen(
                 ControlCircleButton(
                     icon = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
                     label = if (isPaused) "Resume" else "Pause",
+                    enabled = interactionsEnabled,
                     onClick = { 
                         isPaused = !isPaused 
                         if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
@@ -105,6 +129,7 @@ fun OCRScreen(
                 ControlCircleButton(
                     icon = Icons.Default.Refresh,
                     label = "Repeat",
+                    enabled = interactionsEnabled,
                     onClick = { 
                         ttsManager.repeatLast() 
                         if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
@@ -113,6 +138,7 @@ fun OCRScreen(
                 ControlCircleButton(
                     icon = Icons.Default.Stop,
                     label = "Stop",
+                    enabled = interactionsEnabled,
                     onClick = { 
                         if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
                         onBack() 

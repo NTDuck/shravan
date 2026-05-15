@@ -18,14 +18,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.tflite.Classifier
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
+import org.tensorflow.lite.examples.shravan.ui.components.ControlCircleButton
 import org.tensorflow.lite.examples.shravan.ui.theme.DimmedPalette
 import org.tensorflow.lite.examples.shravan.utils.*
 
@@ -45,22 +46,43 @@ fun CameraScreen(
     var statusText by remember { mutableStateOf("Initializing...") }
     val useVietnamese = settingsManager.useVietnamese
 
+    val scope = rememberCoroutineScope()
+    var interactionsEnabled by remember { mutableStateOf(false) }
+
     BackHandler {
         if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
         onBack()
     }
 
     LaunchedEffect(Unit) {
-        ttsManager.speak(if (useVietnamese) "Chụp ảnh" else "Camera", isVietnamese = useVietnamese)
+        ttsManager.speak(
+            if (useVietnamese) "Chụp ảnh" else "Camera",
+            isVietnamese = useVietnamese,
+            onComplete = {
+                scope.launch {
+                    delay(1000)
+                    interactionsEnabled = true
+                }
+            }
+        )
         statusText = "Scanning..."
-        
-        delay(2000)
-        voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
-            val lowerResult = result.lowercase()
-            if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
-                ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
-                if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
-                onBack()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            voiceCommandManager.stopListening()
+        }
+    }
+
+    LaunchedEffect(interactionsEnabled) {
+        if (interactionsEnabled) {
+            voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+                val lowerResult = result.lowercase()
+                if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
+                    ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
+                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                    onBack()
+                }
             }
         }
     }
@@ -104,6 +126,7 @@ fun CameraScreen(
                 ControlCircleButton(
                     icon = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
                     label = if (isPaused) "Resume" else "Pause",
+                    enabled = interactionsEnabled,
                     onClick = { 
                         isPaused = !isPaused 
                         if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
@@ -112,6 +135,7 @@ fun CameraScreen(
                 ControlCircleButton(
                     icon = Icons.Default.Refresh,
                     label = "Repeat",
+                    enabled = interactionsEnabled,
                     onClick = { 
                         ttsManager.repeatLast() 
                         if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
@@ -120,32 +144,13 @@ fun CameraScreen(
                 ControlCircleButton(
                     icon = Icons.Default.Stop,
                     label = "Stop",
+                    enabled = interactionsEnabled,
                     onClick = { 
                         if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
                         onBack() 
                     }
                 )
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ControlCircleButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.size(80.dp).background(Color.Black.copy(alpha = 0.6f), androidx.compose.foundation.shape.CircleShape).padding(4.dp),
-        onClick = onClick,
-        shape = androidx.compose.foundation.shape.CircleShape,
-        color = Color.Transparent,
-        contentColor = Color.White
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = label, modifier = Modifier.size(40.dp))
         }
     }
 }

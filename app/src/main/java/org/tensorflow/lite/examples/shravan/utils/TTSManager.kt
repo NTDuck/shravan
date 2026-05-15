@@ -2,6 +2,8 @@ package org.tensorflow.lite.examples.shravan.utils
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
@@ -15,6 +17,7 @@ class TTSManager(context: Context) : TextToSpeech.OnInitListener {
     private var lastIsVietnamese: Boolean = false
     private var currentSpeechRate: Float = 1.0f
     private var onCompletionListener: (() -> Unit)? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     init {
         tts = TextToSpeech(context.applicationContext, this)
@@ -39,9 +42,17 @@ class TTSManager(context: Context) : TextToSpeech.OnInitListener {
         tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) {
-                onCompletionListener?.invoke()
+                mainHandler.post {
+                    onCompletionListener?.invoke()
+                    onCompletionListener = null
+                }
             }
-            override fun onError(utteranceId: String?) {}
+            override fun onError(utteranceId: String?) {
+                mainHandler.post {
+                    onCompletionListener?.invoke()
+                    onCompletionListener = null
+                }
+            }
         })
     }
 

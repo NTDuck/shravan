@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +25,12 @@ fun ThemesScreen(
     voiceCommandManager: VoiceCommandManager
 ) {
     val useVietnamese = settingsManager.useVietnamese
+
+    DisposableEffect(Unit) {
+        onDispose {
+            voiceCommandManager.stopListening()
+        }
+    }
 
     LaunchedEffect(Unit) {
         voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->

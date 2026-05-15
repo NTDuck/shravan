@@ -34,6 +34,7 @@ fun SettingsScreen(
             mediaPlayer?.stop()
             mediaPlayer?.release()
             mediaPlayer = null
+            voiceCommandManager.stopListening()
         }
     }
 
@@ -139,12 +140,12 @@ fun SettingsScreen(
                 },
                 modifier = Modifier
                     .size(64.dp)
-                    .background(Color.Magenta, CircleShape)
+                    .background(MaterialTheme.colorScheme.secondary, CircleShape)
             ) {
                 Icon(
                     Icons.Default.MusicNote,
                     contentDescription = "Play Music",
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onSecondary
                 )
             }
         }

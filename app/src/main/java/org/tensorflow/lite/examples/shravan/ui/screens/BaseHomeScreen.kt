@@ -1,5 +1,6 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
@@ -7,11 +8,14 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.ui.components.AccessibleButton
 import org.tensorflow.lite.examples.shravan.utils.*
 
@@ -63,6 +67,7 @@ fun BaseHomeScreen(
 ) {
     var interactionsEnabled by remember { mutableStateOf(false) }
     val useVietnamese = settingsManager.useVietnamese
+    val scope = rememberCoroutineScope()
 
     val greetingVi = "màn hình chính"
     val greetingEn = "home screen"
@@ -72,14 +77,22 @@ fun BaseHomeScreen(
             if (useVietnamese) greetingVi else greetingEn,
             isVietnamese = useVietnamese,
             onComplete = {
-                interactionsEnabled = true
+                scope.launch {
+                    delay(1000)
+                    interactionsEnabled = true
+                }
             }
         )
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            voiceCommandManager.stopListening()
+        }
+    }
+
     LaunchedEffect(interactionsEnabled) {
         if (interactionsEnabled) {
-            delay(1000)
             voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("cài đặt") || lowerResult.contains("settings")) {
@@ -151,18 +164,32 @@ fun BottomNavigationBar(
 
     NavigationBar {
         items.forEach { item ->
-            NavigationBarItem(
-                selected = false,
-                onClick = {
-                    if (enabled) {
-                        ttsManager.speak(item.speakLabel, isVietnamese = useVietnamese)
-                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
-                        item.route?.let { navController.navigate(it) }
-                    }
-                },
-                icon = { Icon(item.icon, contentDescription = item.label) },
-                label = { Text(item.label) }
-            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .pointerInput(enabled) {
+                        if (enabled) {
+                            detectTapGestures(
+                                onTap = {
+                                    ttsManager.speak(item.speakLabel, isVietnamese = useVietnamese)
+                                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                                    item.route?.let { navController.navigate(it) }
+                                },
+                                onLongPress = {
+                                    ttsManager.speak(item.speakLabel, isVietnamese = useVietnamese)
+                                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                                }
+                            )
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(item.icon, contentDescription = item.label)
+                    Text(item.label, style = MaterialTheme.typography.labelSmall)
+                }
+            }
         }
     }
 }
