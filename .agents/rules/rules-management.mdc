@@ -1,11 +1,11 @@
 ---
 description: Rule for managing MDC rules within the Gemini CLI environment.
-globs: .gemini/rules/*.mdc
+globs: .agents/rules/*.mdc
 ---
 
 # MDC Rule Management
 
-- All new MDC rules MUST be created within the `.gemini/rules/` directory.
+- All new MDC rules MUST be created within the `.agents/rules/` directory.
 - Each rule MUST be a separate markdown file with the `.mdc` extension.
 - Rules MUST follow the frontmatter format:
   ```yaml

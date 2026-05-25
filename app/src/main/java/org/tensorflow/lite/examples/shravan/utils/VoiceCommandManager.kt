@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -17,9 +19,12 @@ class VoiceCommandManager(private val context: Context) {
     private var onResult: ((String) -> Unit)? = null
     private var lastIsVietnamese = true
     private var shouldRetry = true
+    private val handler = Handler(Looper.getMainLooper())
 
     init {
-        createRecognizer()
+        handler.post {
+            createRecognizer()
+        }
     }
 
     private fun createRecognizer() {
@@ -40,17 +45,23 @@ class VoiceCommandManager(private val context: Context) {
                     Log.e("VoiceCommandManager", "Error: $error")
                     isListening = false
                     if (shouldRetry && (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)) {
-                        startListeningInternal()
+                        handler.post {
+                            startListeningInternal()
+                        }
                     }
                 }
                 override fun onResults(results: Bundle?) {
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     if (!matches.isNullOrEmpty()) {
-                        onResult?.invoke(matches[0])
+                        handler.post {
+                            onResult?.invoke(matches[0])
+                        }
                     }
                     isListening = false
                     if (shouldRetry) {
-                        startListeningInternal()
+                        handler.post {
+                            startListeningInternal()
+                        }
                     }
                 }
                 override fun onPartialResults(partialResults: Bundle?) {}
@@ -60,14 +71,20 @@ class VoiceCommandManager(private val context: Context) {
     }
 
     fun startListening(isVietnamese: Boolean = true, retry: Boolean = true, callback: (String) -> Unit) {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            Log.e("VoiceCommandManager", "RECORD_AUDIO permission not granted")
-            return
+        handler.post {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                Log.e("VoiceCommandManager", "RECORD_AUDIO permission not granted")
+                return@post
+            }
+            onResult = callback
+            lastIsVietnamese = isVietnamese
+            shouldRetry = retry
+
+            destroyRecognizerInternal()
+            createRecognizer()
+
+            startListeningInternal()
         }
-        onResult = callback
-        lastIsVietnamese = isVietnamese
-        shouldRetry = retry
-        startListeningInternal()
     }
 
     private fun startListeningInternal() {
@@ -81,14 +98,23 @@ class VoiceCommandManager(private val context: Context) {
     }
 
     fun stopListening() {
-        shouldRetry = false
-        speechRecognizer?.stopListening()
+        handler.post {
+            shouldRetry = false
+            speechRecognizer?.stopListening()
+            isListening = false
+        }
+    }
+
+    private fun destroyRecognizerInternal() {
+        speechRecognizer?.destroy()
+        speechRecognizer = null
         isListening = false
     }
 
     fun destroy() {
-        shouldRetry = false
-        speechRecognizer?.destroy()
-        speechRecognizer = null
+        handler.post {
+            shouldRetry = false
+            destroyRecognizerInternal()
+        }
     }
 }

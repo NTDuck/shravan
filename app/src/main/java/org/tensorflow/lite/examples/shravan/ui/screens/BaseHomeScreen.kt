@@ -95,7 +95,11 @@ fun BaseHomeScreen(
         if (interactionsEnabled) {
             voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
-                if (lowerResult.contains("cài đặt") || lowerResult.contains("settings")) {
+                if (lowerResult.contains("máy ảnh") || lowerResult.contains("chụp ảnh") || lowerResult.contains("camera")) {
+                    navController.navigate("camera")
+                } else if (lowerResult.contains("đọc chữ") || lowerResult.contains("ocr")) {
+                    navController.navigate("ocr")
+                } else if (lowerResult.contains("cài đặt") || lowerResult.contains("settings")) {
                     navController.navigate("settings")
                 } else if (lowerResult.contains("lịch sử") || lowerResult.contains("history")) {
                     navController.navigate("history")

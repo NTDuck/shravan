@@ -38,14 +38,14 @@ fun CameraPreview(
         modifier = modifier,
         update = { previewView ->
             cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
-
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
                 try {
+                    val cameraProvider = cameraProviderFuture.get()
+                    val preview = Preview.Builder().build().also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                    }
+
+                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
                     cameraProvider.unbindAll()
                     
                     if (imageAnalyzer != null) {
@@ -67,7 +67,7 @@ fun CameraPreview(
                         )
                     }
                 } catch (e: Exception) {
-                    Log.e("CameraPreview", "Use case binding failed", e)
+                    Log.e("CameraPreview", "Use case binding or provider retrieval failed", e)
                 }
             }, ContextCompat.getMainExecutor(context))
         }

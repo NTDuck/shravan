@@ -90,23 +90,24 @@ fun OCRScreen(
                 CameraPreview(
                     modifier = Modifier.fillMaxSize(),
                     imageAnalyzer = { imageProxy ->
-                        val mediaImage = imageProxy.image
-                        if (mediaImage != null) {
-                            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                            recognizer.process(image)
-                                .addOnSuccessListener { visionText ->
-                                    visionText.textBlocks.forEach { block ->
-                                        val originalText = block.text.trim()
-                                        val normalizedText = originalText.lowercase()
-                                        if (normalizedText.length > 3 && !spokenTextSet.value.contains(normalizedText)) {
-                                            spokenTextSet.value.add(normalizedText)
-                                            ttsManager.speak(originalText, isQueued = true, isVietnamese = containsVietnamese(originalText))
-                                            historyManager.addHistory("OCR", originalText)
-                                        }
+                        try {
+                            val mediaImage = imageProxy.image
+                            if (mediaImage != null) {
+                                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                                val visionText = com.google.android.gms.tasks.Tasks.await(recognizer.process(image))
+                                visionText.textBlocks.forEach { block ->
+                                    val originalText = block.text.trim()
+                                    val normalizedText = originalText.lowercase()
+                                    if (normalizedText.length > 3 && !spokenTextSet.value.contains(normalizedText)) {
+                                        spokenTextSet.value.add(normalizedText)
+                                        ttsManager.speak(originalText, isQueued = true, isVietnamese = containsVietnamese(originalText))
+                                        historyManager.addHistory("OCR", originalText)
                                     }
                                 }
-                                .addOnCompleteListener { imageProxy.close() }
-                        } else {
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("OCRScreen", "Error during OCR processing", e)
+                        } finally {
                             imageProxy.close()
                         }
                     }

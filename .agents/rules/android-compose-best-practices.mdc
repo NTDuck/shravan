@@ -20,7 +20,7 @@ globs: "**/*.kt"
 - Provide `contentDescription` for all interactive and informative UI elements.
 - Ensure minimum touch target sizes of 48x48dp.
 - Use Semantic properties to provide extra context to screen readers.
-- In this project, prioritize TTS and Haptic feedback as per `SPECS.md`.
+- In this project, prioritize TTS and Haptic feedback as per [SPECS.md](../specs/SPECS.md).
 
 ## Architecture
 - Strictly follow MVVM or MVI patterns.
