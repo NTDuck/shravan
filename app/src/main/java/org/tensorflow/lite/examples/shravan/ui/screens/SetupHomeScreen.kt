@@ -28,6 +28,7 @@ fun SetupHomeScreen(
     val labelTotalEn = "Totally Impaired"
 
     val scope = rememberCoroutineScope()
+    val voiceSessionId = remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(Unit) {
         ttsManager.speak(
@@ -44,19 +45,28 @@ fun SetupHomeScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            voiceCommandManager.stopListening()
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+            }
         }
     }
 
     LaunchedEffect(interactionsEnabled) {
         if (interactionsEnabled) {
-            voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+            voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains(labelPartialVi.lowercase()) || lowerResult.contains(labelPartialEn.lowercase())) {
-                    handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, hapticManager)
+                    interactionsEnabled = false
+                    handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, useVietnamese)
                 } else if (lowerResult.contains(labelTotalVi.lowercase()) || lowerResult.contains(labelTotalEn.lowercase())) {
-                    handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, hapticManager)
+                    interactionsEnabled = false
+                    handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, useVietnamese)
                 }
+            }
+        } else {
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+                voiceSessionId.value = null
             }
         }
     }
@@ -67,7 +77,8 @@ fun SetupHomeScreen(
             speakLabel = if (useVietnamese) labelPartialVi else labelPartialEn,
             enabled = interactionsEnabled,
             onClick = {
-                handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, hapticManager)
+                interactionsEnabled = false
+                handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, useVietnamese)
             },
             ttsManager = ttsManager,
             settingsManager = settingsManager,
@@ -79,7 +90,8 @@ fun SetupHomeScreen(
             speakLabel = if (useVietnamese) labelTotalVi else labelTotalEn,
             enabled = interactionsEnabled,
             onClick = {
-                handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, hapticManager)
+                interactionsEnabled = false
+                handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, useVietnamese)
             },
             ttsManager = ttsManager,
             settingsManager = settingsManager,
@@ -94,14 +106,20 @@ private fun handleSelection(
     settingsManager: SettingsManager,
     navController: NavController,
     ttsManager: TTSManager,
-    hapticManager: HapticManager
+    useVietnamese: Boolean
 ) {
     settingsManager.updateImpairmentLevel(level)
     val route = when (level) {
         ImpairmentLevel.PartiallyImpaired -> "partially_home"
         ImpairmentLevel.TotallyImpaired -> "totally_home"
     }
-    navController.navigate(route) {
-        popUpTo("setup") { inclusive = true }
+    val labelVi = if (level == ImpairmentLevel.PartiallyImpaired) "Khiếm thị một phần" else "Khiếm thị hoàn toàn"
+    val labelEn = if (level == ImpairmentLevel.PartiallyImpaired) "Partially Impaired" else "Totally Impaired"
+    val textToSpeak = if (useVietnamese) labelVi else labelEn
+    
+    ttsManager.speak(textToSpeak, isVietnamese = useVietnamese) {
+        navController.navigate(route) {
+            popUpTo("setup") { inclusive = true }
+        }
     }
 }

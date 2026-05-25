@@ -19,6 +19,14 @@ class TTSManager(context: Context) : TextToSpeech.OnInitListener {
     private var onCompletionListener: (() -> Unit)? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
+    private data class PendingSpeakRequest(
+        val text: String,
+        val isQueued: Boolean,
+        val isVietnamese: Boolean,
+        val onComplete: (() -> Unit)?
+    )
+    private val pendingRequests = mutableListOf<PendingSpeakRequest>()
+
     init {
         tts = TextToSpeech(context.applicationContext, this)
     }
@@ -32,9 +40,23 @@ class TTSManager(context: Context) : TextToSpeech.OnInitListener {
                 tts?.setSpeechRate(currentSpeechRate)
                 setupProgressListener()
                 isInitialized = true
+                mainHandler.post {
+                    val requestsToPlay = ArrayList(pendingRequests)
+                    pendingRequests.clear()
+                    for (request in requestsToPlay) {
+                        speak(request.text, request.isQueued, request.isVietnamese, request.onComplete)
+                    }
+                }
             }
         } else {
             Log.e("TTSManager", "Initialization Failed!")
+            mainHandler.post {
+                val requestsToPlay = ArrayList(pendingRequests)
+                pendingRequests.clear()
+                for (request in requestsToPlay) {
+                    request.onComplete?.invoke()
+                }
+            }
         }
     }
 
@@ -74,7 +96,11 @@ class TTSManager(context: Context) : TextToSpeech.OnInitListener {
     }
 
     fun speak(text: String, isQueued: Boolean = false, isVietnamese: Boolean = false, onComplete: (() -> Unit)? = null) {
-        if (isInitialized && text.isNotBlank()) {
+        if (text.isBlank()) {
+            onComplete?.invoke()
+            return
+        }
+        if (isInitialized) {
             this.onCompletionListener = onComplete
             lastSpokenText = text
             lastIsVietnamese = isVietnamese
@@ -85,7 +111,7 @@ class TTSManager(context: Context) : TextToSpeech.OnInitListener {
             }
             tts?.speak(text, queueMode, params, "id")
         } else {
-            onComplete?.invoke()
+            pendingRequests.add(PendingSpeakRequest(text, isQueued, isVietnamese, onComplete))
         }
     }
 

@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.utils.*
 
 @Composable
@@ -28,23 +29,48 @@ fun SettingsScreen(
     val context = LocalContext.current
     val useVietnamese = settingsManager.useVietnamese
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    var interactionsEnabled by remember { mutableStateOf(false) }
+    val voiceSessionId = remember { mutableStateOf<Int?>(null) }
+    val scope = rememberCoroutineScope()
 
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer?.stop()
             mediaPlayer?.release()
             mediaPlayer = null
-            voiceCommandManager.stopListening()
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+            }
         }
     }
 
     LaunchedEffect(Unit) {
-        voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
-            val lowerResult = result.lowercase()
-            if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
-                ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
-                if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
-                onBack()
+        ttsManager.speak(
+            if (useVietnamese) "Cài đặt" else "Settings",
+            isVietnamese = useVietnamese,
+            onComplete = {
+                scope.launch {
+                    delay(1000)
+                    interactionsEnabled = true
+                }
+            }
+        )
+    }
+
+    LaunchedEffect(interactionsEnabled) {
+        if (interactionsEnabled) {
+            voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+                val lowerResult = result.lowercase()
+                if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
+                    ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
+                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                    onBack()
+                }
+            }
+        } else {
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+                voiceSessionId.value = null
             }
         }
     }
@@ -70,6 +96,7 @@ fun SettingsScreen(
             Text(if (useVietnamese) "Cho phép rung" else "Enable vibration")
             Switch(
                 checked = settingsManager.vibrationEnabled,
+                enabled = interactionsEnabled,
                 onCheckedChange = { 
                     settingsManager.updateVibrationEnabled(it)
                     if (it) hapticManager.triggerHaptic()
@@ -86,6 +113,7 @@ fun SettingsScreen(
             Text(if (useVietnamese) "Tiếng Việt" else "English")
             Switch(
                 checked = useVietnamese,
+                enabled = interactionsEnabled,
                 onCheckedChange = { settingsManager.updateUseVietnamese(it) }
             )
         }
@@ -95,6 +123,7 @@ fun SettingsScreen(
             Text(if (useVietnamese) "Tốc độ nói" else "Speech rate")
             Slider(
                 value = settingsManager.speechRate,
+                enabled = interactionsEnabled,
                 onValueChange = { 
                     settingsManager.updateSpeechRate(it)
                     ttsManager.setSpeechRate(it)
@@ -106,6 +135,7 @@ fun SettingsScreen(
         // Themes Button
         Button(
             onClick = onNavigateToThemes,
+            enabled = interactionsEnabled,
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             shape = MaterialTheme.shapes.medium
         ) {
@@ -138,9 +168,13 @@ fun SettingsScreen(
                         }
                     }
                 },
+                enabled = interactionsEnabled,
                 modifier = Modifier
                     .size(64.dp)
-                    .background(MaterialTheme.colorScheme.secondary, CircleShape)
+                    .background(
+                        if (interactionsEnabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                        CircleShape
+                    )
             ) {
                 Icon(
                     Icons.Default.MusicNote,

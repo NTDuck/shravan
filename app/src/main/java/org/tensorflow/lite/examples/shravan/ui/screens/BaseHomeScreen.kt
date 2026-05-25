@@ -68,6 +68,7 @@ fun BaseHomeScreen(
     var interactionsEnabled by remember { mutableStateOf(false) }
     val useVietnamese = settingsManager.useVietnamese
     val scope = rememberCoroutineScope()
+    val voiceSessionId = remember { mutableStateOf<Int?>(null) }
 
     val greetingVi = "màn hình chính"
     val greetingEn = "home screen"
@@ -87,13 +88,15 @@ fun BaseHomeScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            voiceCommandManager.stopListening()
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+            }
         }
     }
 
     LaunchedEffect(interactionsEnabled) {
         if (interactionsEnabled) {
-            voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+            voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("máy ảnh") || lowerResult.contains("chụp ảnh") || lowerResult.contains("camera")) {
                     navController.navigate("camera")
@@ -104,6 +107,11 @@ fun BaseHomeScreen(
                 } else if (lowerResult.contains("lịch sử") || lowerResult.contains("history")) {
                     navController.navigate("history")
                 }
+            }
+        } else {
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+                voiceSessionId.value = null
             }
         }
     }

@@ -4,14 +4,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.utils.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -28,20 +28,45 @@ fun HistoryScreen(
     val useVietnamese = settingsManager.useVietnamese
     val historyItems = historyManager.getHistory()
     val dateFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    var interactionsEnabled by remember { mutableStateOf(false) }
+    val voiceSessionId = remember { mutableStateOf<Int?>(null) }
+    val scope = rememberCoroutineScope()
 
     DisposableEffect(Unit) {
         onDispose {
-            voiceCommandManager.stopListening()
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+            }
         }
     }
 
     LaunchedEffect(Unit) {
-        voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
-            val lowerResult = result.lowercase()
-            if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
-                ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
-                if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
-                onBack()
+        ttsManager.speak(
+            if (useVietnamese) "Lịch sử" else "History",
+            isVietnamese = useVietnamese,
+            onComplete = {
+                scope.launch {
+                    delay(1000)
+                    interactionsEnabled = true
+                }
+            }
+        )
+    }
+
+    LaunchedEffect(interactionsEnabled) {
+        if (interactionsEnabled) {
+            voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+                val lowerResult = result.lowercase()
+                if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
+                    ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
+                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                    onBack()
+                }
+            }
+        } else {
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+                voiceSessionId.value = null
             }
         }
     }

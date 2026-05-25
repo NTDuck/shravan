@@ -48,6 +48,7 @@ fun CameraScreen(
 
     val scope = rememberCoroutineScope()
     var interactionsEnabled by remember { mutableStateOf(false) }
+    val voiceSessionId = remember { mutableStateOf<Int?>(null) }
 
     BackHandler {
         if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
@@ -70,19 +71,26 @@ fun CameraScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            voiceCommandManager.stopListening()
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+            }
         }
     }
 
     LaunchedEffect(interactionsEnabled) {
         if (interactionsEnabled) {
-            voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+            voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
                     ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
                     if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
                     onBack()
                 }
+            }
+        } else {
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+                voiceSessionId.value = null
             }
         }
     }
