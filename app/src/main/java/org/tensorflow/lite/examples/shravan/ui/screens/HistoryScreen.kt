@@ -59,7 +59,7 @@ fun HistoryScreen(
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
                     ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
-                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     onBack()
                 }
             }

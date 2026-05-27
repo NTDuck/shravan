@@ -56,7 +56,7 @@ fun ThemesScreen(
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
                     ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
-                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     onBack()
                 }
             }
@@ -91,7 +91,7 @@ fun ThemesScreen(
                     onClick = {
                         settingsManager.updateActiveThemeIndex(index)
                         ttsManager.speak(theme.name, isVietnamese = false)
-                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     }
                 )
             }

@@ -25,7 +25,7 @@ class SettingsManagerTest {
         assertNull(settingsManager.impairmentLevel)
         assertEquals(3, settingsManager.activeThemeIndex)
         assertEquals(1.0f, settingsManager.speechRate)
-        assertTrue(settingsManager.vibrationEnabled)
+        assertTrue(settingsManager.hapticsEnabled)
         assertTrue(settingsManager.useVietnamese)
     }
 
@@ -46,7 +46,7 @@ class SettingsManagerTest {
 
     @Test
     fun testUpdateVibration() {
-        settingsManager.updateVibrationEnabled(false)
-        assertFalse(settingsManager.vibrationEnabled)
+        settingsManager.hapticsEnabled = false
+        assertFalse(settingsManager.hapticsEnabled)
     }
 }

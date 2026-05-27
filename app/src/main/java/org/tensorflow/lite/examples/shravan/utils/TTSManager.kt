@@ -9,7 +9,7 @@ import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import java.util.Locale
 
-class TTSManager(context: Context) : TextToSpeech.OnInitListener {
+class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var isInitialized = false
     private val localeVi = Locale("vi", "VN")
@@ -106,8 +106,14 @@ class TTSManager(context: Context) : TextToSpeech.OnInitListener {
             lastIsVietnamese = isVietnamese
             setLanguage(isVietnamese)
             val queueMode = if (isQueued) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH
+            
+            // Set speakerphone on for VOICE_CALL stream
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            audioManager.isSpeakerphoneOn = true
+            
             val params = Bundle().apply {
                 putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "id")
+                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_VOICE_CALL)
             }
             tts?.speak(text, queueMode, params, "id")
         } else {

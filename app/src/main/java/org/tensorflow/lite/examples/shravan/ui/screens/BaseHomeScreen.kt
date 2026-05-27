@@ -185,12 +185,12 @@ fun BottomNavigationBar(
                             detectTapGestures(
                                 onTap = {
                                     ttsManager.speak(item.speakLabel, isVietnamese = useVietnamese)
-                                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                                     item.route?.let { navController.navigate(it) }
                                 },
                                 onLongPress = {
                                     ttsManager.speak(item.speakLabel, isVietnamese = useVietnamese)
-                                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                                 }
                             )
                         }

@@ -1,187 +1,143 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
-import android.media.MediaPlayer
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import org.tensorflow.lite.examples.shravan.R
 import org.tensorflow.lite.examples.shravan.utils.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onBack: () -> Unit,
-    onNavigateToThemes: () -> Unit,
-    settingsManager: SettingsManager,
     ttsManager: TTSManager,
     hapticManager: HapticManager,
-    voiceCommandManager: VoiceCommandManager
+    settingsManager: SettingsManager,
+    onReset: () -> Unit
 ) {
-    val context = LocalContext.current
-    val useVietnamese = settingsManager.useVietnamese
-    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
-    var interactionsEnabled by remember { mutableStateOf(false) }
-    val voiceSessionId = remember { mutableStateOf<Int?>(null) }
-    val scope = rememberCoroutineScope()
+    var languageExpanded by remember { mutableStateOf(false) }
+    var flashExpanded by remember { mutableStateOf(false) }
+    var resetClickCount by remember { mutableStateOf(0) }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
-            mediaPlayer = null
-            voiceSessionId.value?.let {
-                voiceCommandManager.stopListening(it)
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        ttsManager.speak(
-            if (useVietnamese) "Cài đặt" else "Settings",
-            isVietnamese = useVietnamese,
-            onComplete = {
-                scope.launch {
-                    delay(1000)
-                    interactionsEnabled = true
-                }
-            }
-        )
-    }
-
-    LaunchedEffect(interactionsEnabled) {
-        if (interactionsEnabled) {
-            voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
-                val lowerResult = result.lowercase()
-                if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
-                    ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
-                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
-                    onBack()
-                }
-            }
-        } else {
-            voiceSessionId.value?.let {
-                voiceCommandManager.stopListening(it)
-                voiceSessionId.value = null
-            }
-        }
-    }
+    val languages = listOf("English" to false, "Tiếng Việt" to true)
+    val flashes = listOf(
+        stringResource(R.string.flash_auto) to "auto",
+        stringResource(R.string.flash_on) to "on",
+        stringResource(R.string.flash_off) to "off"
+    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = if (useVietnamese) "Cài đặt" else "Settings",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
+        Text(stringResource(R.string.nav_settings), style = MaterialTheme.typography.headlineMedium)
 
-        // Vibration Toggle
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+        // Language
+        ExposedDropdownMenuBox(
+            expanded = languageExpanded,
+            onExpandedChange = { languageExpanded = !languageExpanded }
         ) {
-            Text(if (useVietnamese) "Cho phép rung" else "Enable vibration")
-            Switch(
-                checked = settingsManager.vibrationEnabled,
-                enabled = interactionsEnabled,
-                onCheckedChange = { 
-                    settingsManager.updateVibrationEnabled(it)
-                    if (it) hapticManager.triggerHaptic()
+            OutlinedTextField(
+                value = if (settingsManager.useVietnamese) "Tiếng Việt" else "English",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(stringResource(R.string.settings_language)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = languageExpanded) },
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = languageExpanded,
+                onDismissRequest = { languageExpanded = false }
+            ) {
+                languages.forEach { (label, isVi) ->
+                    DropdownMenuItem(
+                        text = { Text(label) },
+                        onClick = {
+                            settingsManager.useVietnamese = isVi
+                            ttsManager.setLanguage(isVi)
+                            languageExpanded = false
+                        }
+                    )
                 }
-            )
+            }
         }
 
-        // Language Toggle
+        // Haptics
         Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(if (useVietnamese) "Tiếng Việt" else "English")
+            Text(stringResource(R.string.settings_haptics))
             Switch(
-                checked = useVietnamese,
-                enabled = interactionsEnabled,
-                onCheckedChange = { settingsManager.updateUseVietnamese(it) }
+                checked = settingsManager.hapticsEnabled,
+                onCheckedChange = { settingsManager.hapticsEnabled = it }
             )
         }
 
-        // Speech Rate Slider
-        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
-            Text(if (useVietnamese) "Tốc độ nói" else "Speech rate")
+        // Speech Rate
+        Column {
+            Text(stringResource(R.string.settings_speech_rate) + ": ${"%.1f".format(settingsManager.speechRate)}x")
             Slider(
                 value = settingsManager.speechRate,
-                enabled = interactionsEnabled,
                 onValueChange = { 
-                    settingsManager.updateSpeechRate(it)
+                    settingsManager.speechRate = it
                     ttsManager.setSpeechRate(it)
                 },
-                valueRange = 0.5f..2.0f
+                valueRange = 0.5f..2.0f,
+                steps = 14
             )
         }
 
-        // Themes Button
-        Button(
-            onClick = onNavigateToThemes,
-            enabled = interactionsEnabled,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            shape = MaterialTheme.shapes.medium
+        // Flash
+        ExposedDropdownMenuBox(
+            expanded = flashExpanded,
+            onExpandedChange = { flashExpanded = !flashExpanded }
         ) {
-            Text(if (useVietnamese) "Thay đổi màu sắc" else "Themes")
+            OutlinedTextField(
+                value = flashes.find { it.second == settingsManager.flashMode }?.first ?: stringResource(R.string.flash_auto),
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(stringResource(R.string.settings_flash)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = flashExpanded) },
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = flashExpanded,
+                onDismissRequest = { flashExpanded = false }
+            ) {
+                flashes.forEach { (label, mode) ->
+                    DropdownMenuItem(
+                        text = { Text(label) },
+                        onClick = {
+                            settingsManager.flashMode = mode
+                            flashExpanded = false
+                        }
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Music Button
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-            IconButton(
-                onClick = {
-                    if (mediaPlayer == null) {
-                        try {
-                            val afd = context.assets.openFd("song.mp3")
-                            mediaPlayer = MediaPlayer().apply {
-                                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                                prepare()
-                                start()
-                                isLooping = true
-                            }
-                        } catch (e: Exception) {
-                            ttsManager.speak("Music file not found", isVietnamese = false)
-                        }
-                    } else {
-                        if (mediaPlayer?.isPlaying == true) {
-                            mediaPlayer?.pause()
-                        } else {
-                            mediaPlayer?.start()
-                        }
-                    }
-                },
-                enabled = interactionsEnabled,
-                modifier = Modifier
-                    .size(64.dp)
-                    .background(
-                        if (interactionsEnabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
-                        CircleShape
-                    )
-            ) {
-                Icon(
-                    Icons.Default.MusicNote,
-                    contentDescription = "Play Music",
-                    tint = MaterialTheme.colorScheme.onSecondary
-                )
-            }
+        // Reset
+        Button(
+            onClick = {
+                resetClickCount++
+                if (resetClickCount >= 7) {
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    onReset()
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+        ) {
+            Text(stringResource(R.string.settings_reset) + if (resetClickCount > 0) " ($resetClickCount/7)" else "")
         }
     }
 }

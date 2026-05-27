@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Shravan</string>
+    <string name="welcome_text">Chào mừng bạn đến với Shravan. Vui lòng nói yêu cầu của bạn: bạn bị khiếm thị một phần hay hoàn toàn?</string>
+    <string name="nav_explore">Khám phá</string>
+    <string name="nav_find">Tìm kiếm</string>
+    <string name="nav_ocr">Đọc chữ</string>
+    <string name="nav_currency">Tiền tệ</string>
+    <string name="nav_settings">Cài đặt</string>
+    <string name="nav_history">Lịch sử</string>
+    <string name="settings_language">Ngôn ngữ</string>
+    <string name="settings_haptics">Rung</string>
+    <string name="settings_speech_rate">Tốc độ nói</string>
+    <string name="settings_flash">Đèn chớp</string>
+    <string name="settings_reset">Khôi phục cài đặt gốc</string>
+    <string name="flash_auto">Tự động</string>
+    <string name="flash_on">Bật</string>
+    <string name="flash_off">Tắt</string>
+    <string name="lang_en">English</string>
+    <string name="lang_vi">Tiếng Việt</string>
+</resources>

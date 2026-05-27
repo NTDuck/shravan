@@ -21,16 +21,20 @@ class HistoryManager(context: Context) {
     fun getHistory(): List<HistoryItem> {
         val raw = prefs.getString("history_data", "") ?: ""
         if (raw.isBlank()) return emptyList()
-        return raw.split("|||").mapNotNull {
-            val parts = it.split(":::")
+        return raw.split("|ITEM|").mapNotNull {
+            val parts = it.split("|PART|")
             if (parts.size >= 3) {
-                HistoryItem(parts[0], parts[1], parts[2].toLong())
+                try {
+                    HistoryItem(parts[0], parts[1], parts[2].toLong())
+                } catch (e: Exception) {
+                    null
+                }
             } else null
         }
     }
 
     private fun saveHistory(history: List<HistoryItem>) {
-        val raw = history.joinToString("|||") { "${it.type}:::${it.content}:::${it.timestamp}" }
+        val raw = history.joinToString("|ITEM|") { "${it.type}|PART|${it.content}|PART|${it.timestamp}" }
         prefs.edit().putString("history_data", raw).apply()
     }
 

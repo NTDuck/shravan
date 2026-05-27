@@ -1,8 +1,10 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -18,14 +20,15 @@ fun SetupHomeScreen(
     voiceCommandManager: VoiceCommandManager
 ) {
     var interactionsEnabled by remember { mutableStateOf(false) }
+    var isScreenDimmed by remember { mutableStateOf(true) } // Dimmed during welcome text
     val useVietnamese = settingsManager.useVietnamese
 
-    val greetingVi = "Xin chào. Chọn chế độ: khiếm thị một phần hoặc khiếm thị hoàn toàn?"
-    val greetingEn = "Hello! Choose mode: Partially Impaired or Totally Impaired?"
-    val labelPartialVi = "Khiếm thị một phần"
-    val labelTotalVi = "Khiếm thị hoàn toàn"
-    val labelPartialEn = "Partially Impaired"
-    val labelTotalEn = "Totally Impaired"
+    val greetingVi = "Chào mừng bạn đến với Shravan. Vui lòng nói yêu cầu của bạn: bạn bị khiếm thị một phần hay hoàn toàn?"
+    val greetingEn = "Welcome to Shravan. Please speak your intent: are you partially blind or totally blind?"
+    val labelPartialVi = "một phần"
+    val labelTotalVi = "hoàn toàn"
+    val labelPartialEn = "partially"
+    val labelTotalEn = "totally"
 
     val scope = rememberCoroutineScope()
     val voiceSessionId = remember { mutableStateOf<Int?>(null) }
@@ -36,7 +39,8 @@ fun SetupHomeScreen(
             isVietnamese = useVietnamese,
             onComplete = {
                 scope.launch {
-                    delay(1000)
+                    isScreenDimmed = false
+                    delay(500)
                     interactionsEnabled = true
                 }
             }
@@ -57,9 +61,11 @@ fun SetupHomeScreen(
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains(labelPartialVi.lowercase()) || lowerResult.contains(labelPartialEn.lowercase())) {
                     interactionsEnabled = false
+                    isScreenDimmed = true
                     handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, useVietnamese)
                 } else if (lowerResult.contains(labelTotalVi.lowercase()) || lowerResult.contains(labelTotalEn.lowercase())) {
                     interactionsEnabled = false
+                    isScreenDimmed = true
                     handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, useVietnamese)
                 }
             }
@@ -71,33 +77,37 @@ fun SetupHomeScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        AccessibleButton(
-            label = if (useVietnamese) labelPartialVi else labelPartialEn,
-            speakLabel = if (useVietnamese) labelPartialVi else labelPartialEn,
-            enabled = interactionsEnabled,
-            onClick = {
-                interactionsEnabled = false
-                handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, useVietnamese)
-            },
-            ttsManager = ttsManager,
-            settingsManager = settingsManager,
-            hapticManager = hapticManager,
-            modifier = Modifier.weight(1f).fillMaxWidth()
-        )
-        AccessibleButton(
-            label = if (useVietnamese) labelTotalVi else labelTotalEn,
-            speakLabel = if (useVietnamese) labelTotalVi else labelTotalEn,
-            enabled = interactionsEnabled,
-            onClick = {
-                interactionsEnabled = false
-                handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, useVietnamese)
-            },
-            ttsManager = ttsManager,
-            settingsManager = settingsManager,
-            hapticManager = hapticManager,
-            modifier = Modifier.weight(1f).fillMaxWidth()
-        )
+    Box(modifier = Modifier.fillMaxSize().background(if (isScreenDimmed) Color.Black.copy(alpha = 0.8f) else Color.Transparent)) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            AccessibleButton(
+                label = if (useVietnamese) "Khiếm thị một phần" else "Partially Blind",
+                speakLabel = if (useVietnamese) "Khiếm thị một phần" else "Partially Blind",
+                enabled = interactionsEnabled,
+                onClick = {
+                    interactionsEnabled = false
+                    isScreenDimmed = true
+                    handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, useVietnamese)
+                },
+                ttsManager = ttsManager,
+                settingsManager = settingsManager,
+                hapticManager = hapticManager,
+                modifier = Modifier.weight(1f).fillMaxWidth()
+            )
+            AccessibleButton(
+                label = if (useVietnamese) "Khiếm thị hoàn toàn" else "Totally Blind",
+                speakLabel = if (useVietnamese) "Khiếm thị hoàn toàn" else "Totally Blind",
+                enabled = interactionsEnabled,
+                onClick = {
+                    interactionsEnabled = false
+                    isScreenDimmed = true
+                    handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, useVietnamese)
+                },
+                ttsManager = ttsManager,
+                settingsManager = settingsManager,
+                hapticManager = hapticManager,
+                modifier = Modifier.weight(1f).fillMaxWidth()
+            )
+        }
     }
 }
 
@@ -109,16 +119,12 @@ private fun handleSelection(
     useVietnamese: Boolean
 ) {
     settingsManager.updateImpairmentLevel(level)
-    val route = when (level) {
-        ImpairmentLevel.PartiallyImpaired -> "partially_home"
-        ImpairmentLevel.TotallyImpaired -> "totally_home"
-    }
-    val labelVi = if (level == ImpairmentLevel.PartiallyImpaired) "Khiếm thị một phần" else "Khiếm thị hoàn toàn"
-    val labelEn = if (level == ImpairmentLevel.PartiallyImpaired) "Partially Impaired" else "Totally Impaired"
+    val labelVi = if (level == ImpairmentLevel.PartiallyImpaired) "Đã nhận: Khiếm thị một phần" else "Đã nhận: Khiếm thị hoàn toàn"
+    val labelEn = if (level == ImpairmentLevel.PartiallyImpaired) "Received: Partially Blind" else "Received: Totally Blind"
     val textToSpeak = if (useVietnamese) labelVi else labelEn
     
     ttsManager.speak(textToSpeak, isVietnamese = useVietnamese) {
-        navController.navigate(route) {
+        navController.navigate("main") {
             popUpTo("setup") { inclusive = true }
         }
     }

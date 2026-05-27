@@ -34,7 +34,8 @@ fun OCRScreen(
     settingsManager: SettingsManager,
     historyManager: HistoryManager,
     hapticManager: HapticManager,
-    voiceCommandManager: VoiceCommandManager
+    voiceCommandManager: VoiceCommandManager,
+    isActive: Boolean = true
 ) {
     val recognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
     val spokenTextSet = remember { mutableStateOf(mutableSetOf<String>()) }
@@ -46,7 +47,7 @@ fun OCRScreen(
     val voiceSessionId = remember { mutableStateOf<Int?>(null) }
 
     BackHandler {
-        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
         onBack()
     }
 
@@ -77,7 +78,7 @@ fun OCRScreen(
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
                     ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
-                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     onBack()
                 }
             }
@@ -94,9 +95,10 @@ fun OCRScreen(
         color = MaterialTheme.colorScheme.background
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            if (!isPaused) {
+            if (!isPaused && isActive) {
                 CameraPreview(
                     modifier = Modifier.fillMaxSize(),
+                    zoomRatio = 0.6f,
                     imageAnalyzer = { imageProxy ->
                         try {
                             val mediaImage = imageProxy.image
@@ -118,39 +120,6 @@ fun OCRScreen(
                         } finally {
                             imageProxy.close()
                         }
-                    }
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(bottom = 32.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                ControlCircleButton(
-                    icon = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                    label = if (isPaused) "Resume" else "Pause",
-                    enabled = interactionsEnabled,
-                    onClick = { 
-                        isPaused = !isPaused 
-                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
-                    }
-                )
-                ControlCircleButton(
-                    icon = Icons.Default.Refresh,
-                    label = "Repeat",
-                    enabled = interactionsEnabled,
-                    onClick = { 
-                        ttsManager.repeatLast() 
-                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
-                    }
-                )
-                ControlCircleButton(
-                    icon = Icons.Default.Stop,
-                    label = "Stop",
-                    enabled = interactionsEnabled,
-                    onClick = { 
-                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
-                        onBack() 
                     }
                 )
             }

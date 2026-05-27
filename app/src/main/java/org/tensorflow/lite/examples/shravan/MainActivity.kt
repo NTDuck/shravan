@@ -7,12 +7,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.core.view.WindowCompat
 import org.tensorflow.lite.examples.shravan.ui.screens.*
 import org.tensorflow.lite.examples.shravan.ui.theme.ShravanTheme
 import org.tensorflow.lite.examples.shravan.utils.*
@@ -20,6 +23,9 @@ import org.tensorflow.lite.examples.shravan.utils.*
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
         setContent {
             val context = LocalContext.current
             val settingsManager = remember { SettingsManager(context) }
@@ -75,13 +81,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                val startDestination = when (settingsManager.impairmentLevel) {
-                    ImpairmentLevel.PartiallyImpaired -> "partially_home"
-                    ImpairmentLevel.TotallyImpaired -> "totally_home"
-                    null -> "setup"
-                }
+                val startDestination = if (settingsManager.impairmentLevel == null) "setup" else "main"
 
-                NavHost(navController = navController, startDestination = startDestination) {
+                NavHost(
+                    navController = navController, 
+                    startDestination = startDestination
+                ) {
                     composable("setup") {
                         SetupHomeScreen(
                             navController = navController,
@@ -91,80 +96,22 @@ class MainActivity : ComponentActivity() {
                             voiceCommandManager = voiceCommandManager
                         )
                     }
-                    composable("partially_home") {
-                        PartiallyImpairedHomeScreen(
-                            navController = navController,
-                            settingsManager = settingsManager,
-                            ttsManager = ttsManager,
-                            hapticManager = hapticManager,
-                            voiceCommandManager = voiceCommandManager
-                        )
-                    }
-                    composable("totally_home") {
-                        TotallyImpairedHomeScreen(
-                            navController = navController,
-                            settingsManager = settingsManager,
-                            ttsManager = ttsManager,
-                            hapticManager = hapticManager,
-                            voiceCommandManager = voiceCommandManager
-                        )
-                    }
-                    composable("settings") {
-                        SettingsScreen(
-                            onBack = { navController.popBackStack() },
-                            onNavigateToThemes = { navController.navigate("themes") },
-                            settingsManager = settingsManager,
-                            ttsManager = ttsManager,
-                            hapticManager = hapticManager,
-                            voiceCommandManager = voiceCommandManager
-                        )
-                    }
-                    composable("themes") {
-                        ThemesScreen(
-                            onBack = { navController.popBackStack() },
-                            settingsManager = settingsManager,
-                            ttsManager = ttsManager,
-                            hapticManager = hapticManager,
-                            voiceCommandManager = voiceCommandManager
-                        )
-                    }
-                    composable("history") {
-                        HistoryScreen(
-                            onBack = { navController.popBackStack() },
-                            historyManager = historyManager,
-                            settingsManager = settingsManager,
-                            ttsManager = ttsManager,
-                            hapticManager = hapticManager,
-                            voiceCommandManager = voiceCommandManager
-                        )
-                    }
-                    composable("camera") {
-                        if (hasCameraPermission) {
-                            CameraScreen(
-                                onBack = { 
-                                    ttsManager.stop()
-                                    navController.popBackStack() 
-                                },
-                                ttsManager = ttsManager,
+                    composable("main") {
+                        if (hasCameraPermission && hasRecordAudioPermission) {
+                            MainScreen(
                                 settingsManager = settingsManager,
-                                historyManager = historyManager,
-                                hapticManager = hapticManager,
-                                voiceCommandManager = voiceCommandManager
-                            )
-                        }
-                    }
-                    composable("ocr") {
-                        if (hasCameraPermission) {
-                            OCRScreen(
-                                onBack = { 
-                                    ttsManager.stop()
-                                    navController.popBackStack() 
-                                },
                                 ttsManager = ttsManager,
-                                settingsManager = settingsManager,
-                                historyManager = historyManager,
                                 hapticManager = hapticManager,
-                                voiceCommandManager = voiceCommandManager
+                                voiceCommandManager = voiceCommandManager,
+                                historyManager = historyManager,
+                                onReset = {
+                                    settingsManager.clearAll()
+                                    historyManager.clearHistory()
+                                    // Normally we should restart the app, but for now navigate to setup
+                                    navController.navigate("setup") {
+                                        popUpTo(0)
+                                    }
+                                }
                             )
                         }
                     }

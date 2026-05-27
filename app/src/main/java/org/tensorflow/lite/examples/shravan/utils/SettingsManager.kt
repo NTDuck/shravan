@@ -17,44 +17,58 @@ class SettingsManager(context: Context) {
     var impairmentLevel by mutableStateOf(
         prefs.getString("impairment_level", null)?.let { ImpairmentLevel.valueOf(it) }
     )
-        private set
 
     fun updateImpairmentLevel(level: ImpairmentLevel?) {
         impairmentLevel = level
         prefs.edit().putString("impairment_level", level?.name).apply()
     }
 
-    var activeThemeIndex by mutableStateOf(prefs.getInt("active_theme_index", 3)) // Default: Neon Hazard
-        private set
+    var activeThemeIndex by mutableStateOf(prefs.getInt("active_theme_index", 3))
 
     fun updateActiveThemeIndex(index: Int) {
         activeThemeIndex = index
         prefs.edit().putInt("active_theme_index", index).apply()
     }
 
-    var speechRate by mutableStateOf(prefs.getFloat("speech_rate", 1.0f))
-        private set
+    private var _speechRate = mutableStateOf(prefs.getFloat("speech_rate", 1.0f))
+    var speechRate: Float
+        get() = _speechRate.value
+        set(value) {
+            _speechRate.value = value
+            prefs.edit().putFloat("speech_rate", value).apply()
+        }
 
-    fun updateSpeechRate(value: Float) {
-        speechRate = value
-        prefs.edit().putFloat("speech_rate", value).apply()
+    private var _hapticsEnabled = mutableStateOf(prefs.getBoolean("haptics_enabled", true))
+    var hapticsEnabled: Boolean
+        get() = _hapticsEnabled.value
+        set(value) {
+            _hapticsEnabled.value = value
+            prefs.edit().putBoolean("haptics_enabled", value).apply()
+        }
+
+    private var _useVietnamese = mutableStateOf(prefs.getBoolean("use_vietnamese", false))
+    var useVietnamese: Boolean
+        get() = _useVietnamese.value
+        set(value) {
+            _useVietnamese.value = value
+            prefs.edit().putBoolean("use_vietnamese", value).apply()
+        }
+
+    private var _flashMode = mutableStateOf(prefs.getString("flash_mode", "auto") ?: "auto")
+    var flashMode: String
+        get() = _flashMode.value
+        set(value) {
+            _flashMode.value = value
+            prefs.edit().putString("flash_mode", value).apply()
+        }
+
+    fun clearAll() {
+        prefs.edit().clear().apply()
+        impairmentLevel = null
+        activeThemeIndex = 3
+        speechRate = 1.0f
+        hapticsEnabled = true
+        useVietnamese = false
+        flashMode = "auto"
     }
-
-    var vibrationEnabled by mutableStateOf(prefs.getBoolean("vibration_enabled", true))
-        private set
-
-    fun updateVibrationEnabled(value: Boolean) {
-        vibrationEnabled = value
-        prefs.edit().putBoolean("vibration_enabled", value).apply()
-    }
-
-    var useVietnamese by mutableStateOf(prefs.getBoolean("use_vietnamese", true))
-        private set
-
-    fun updateUseVietnamese(value: Boolean) {
-        useVietnamese = value
-        prefs.edit().putBoolean("use_vietnamese", value).apply()
-    }
-
-    // Removed highContrastMode, confidenceThreshold, isContinuousScan, isFirstLaunch as they are not in the new specs
 }

@@ -21,11 +21,12 @@ class YoloAnalyzer(
     private val ttsManager: TTSManager,
     private val settingsManager: SettingsManager,
     private val historyManager: HistoryManager,
+    private val modelName: String = "yolov5s-fp16.tflite",
     private val onResults: (List<Classifier.Recognition>) -> Unit
 ) : ImageAnalysis.Analyzer {
 
     private val detector: YoloV5Classifier by lazy {
-        DetectorFactory.getDetector(context.assets, "yolov5s-fp16.tflite")
+        DetectorFactory.getDetector(context.assets, modelName)
     }
 
     private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
@@ -35,20 +36,21 @@ class YoloAnalyzer(
     private val GROWTH_THRESHOLD = 0.15f
     private val SIZE_THRESHOLD = 0.4f
 
-    private val labelsVi: List<String> by lazy {
-        val labels = mutableListOf<String>()
+    private val labels: List<String> by lazy {
+        val labelsList = mutableListOf<String>()
+        val filename = if (modelName == "currency.tflite") "currency_labels.txt" else "coco_vi.txt"
         try {
-            val reader = BufferedReader(InputStreamReader(context.assets.open("coco_vi.txt")))
+            val reader = BufferedReader(InputStreamReader(context.assets.open(filename)))
             var line: String? = reader.readLine()
             while (line != null) {
-                labels.add(line)
+                labelsList.add(line)
                 line = reader.readLine()
             }
             reader.close()
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        labels
+        labelsList
     }
 
     private val spokenObjects = mutableSetOf<String>()
@@ -70,11 +72,11 @@ class YoloAnalyzer(
             )
 
             val results = detector.recognizeImage(scaledBitmap)
-            val filteredResults = results.filter { it.confidence > 0.5f }
+            val filteredResults = results.filter { it.confidence > 0.4f }
 
             filteredResults.forEach { result ->
-                val title = result.title
                 val detectedClass = result.detectedClass
+                val title = if (detectedClass < labels.size) labels[detectedClass] else result.title
                 
                 // Proximity Detection logic
                 val location = result.location
@@ -90,11 +92,10 @@ class YoloAnalyzer(
                 if (normalizedArea > SIZE_THRESHOLD && (normalizedArea - prevArea) > GROWTH_THRESHOLD) {
                     if (currentTime - lastAlert > ALERT_COOLDOWN) {
                         lastAlertTime[detectedClass] = currentTime
-                        val viTitle = if (detectedClass < labelsVi.size) labelsVi[detectedClass] else title
-                        val alertTitle = if (settingsManager.useVietnamese) "$viTitle quá gần!" else "$title too close!"
+                        val alertTitle = if (settingsManager.useVietnamese) "$title quá gần!" else "$title too close!"
                         ttsManager.speak(alertTitle, isQueued = false, isVietnamese = settingsManager.useVietnamese)
                         
-                        if (settingsManager.vibrationEnabled) {
+                        if (settingsManager.hapticsEnabled) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                 vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
                             } else {
@@ -108,24 +109,7 @@ class YoloAnalyzer(
                 if (!spokenObjects.contains(title)) {
                     spokenObjects.add(title)
                     
-                    // Guidance: left, center, right
-                    val centerX = location.centerX() / detector.inputSize
-                    val positionGuidance = if (settingsManager.useVietnamese) {
-                        when {
-                            centerX < 0.33f -> "ở bên trái"
-                            centerX > 0.66f -> "ở bên phải"
-                            else -> "ở chính giữa"
-                        }
-                    } else {
-                        when {
-                            centerX < 0.33f -> "on the left"
-                            centerX > 0.66f -> "on the right"
-                            else -> "in the center"
-                        }
-                    }
-
-                    val finalTitle = if (settingsManager.useVietnamese && detectedClass < labelsVi.size) labelsVi[detectedClass] else title
-                    val announcement = "$finalTitle $positionGuidance"
+                    val announcement = title
                     ttsManager.speak(announcement, isQueued = true, isVietnamese = settingsManager.useVietnamese)
                     historyManager.addHistory("Object", announcement)
                 }

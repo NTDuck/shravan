@@ -19,6 +19,7 @@ import java.util.concurrent.Executors
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
+    zoomRatio: Float = 1.0f,
     imageAnalyzer: ImageAnalysis.Analyzer? = null
 ) {
     val context = LocalContext.current
@@ -33,6 +34,7 @@ fun CameraPreview(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
+                scaleType = PreviewView.ScaleType.FILL_CENTER
             }
         },
         modifier = modifier,
@@ -53,18 +55,20 @@ fun CameraPreview(
                             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                             .build()
                         analysis.setAnalyzer(cameraExecutor, imageAnalyzer)
-                        cameraProvider.bindToLifecycle(
+                        val camera = cameraProvider.bindToLifecycle(
                             lifecycleOwner,
                             cameraSelector,
                             preview,
                             analysis
                         )
+                        camera.cameraControl.setZoomRatio(zoomRatio)
                     } else {
-                        cameraProvider.bindToLifecycle(
+                        val camera = cameraProvider.bindToLifecycle(
                             lifecycleOwner,
                             cameraSelector,
                             preview
                         )
+                        camera.cameraControl.setZoomRatio(zoomRatio)
                     }
                 } catch (e: Exception) {
                     Log.e("CameraPreview", "Use case binding or provider retrieval failed", e)
@@ -75,6 +79,7 @@ fun CameraPreview(
 
     DisposableEffect(Unit) {
         onDispose {
+            cameraProviderFuture.get().unbindAll()
             cameraExecutor.shutdown()
         }
     }

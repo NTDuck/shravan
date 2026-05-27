@@ -51,7 +51,7 @@ fun CameraScreen(
     val voiceSessionId = remember { mutableStateOf<Int?>(null) }
 
     BackHandler {
-        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
         onBack()
     }
 
@@ -83,7 +83,7 @@ fun CameraScreen(
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
                     ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
-                    if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     onBack()
                 }
             }
@@ -137,7 +137,7 @@ fun CameraScreen(
                     enabled = interactionsEnabled,
                     onClick = { 
                         isPaused = !isPaused 
-                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     }
                 )
                 ControlCircleButton(
@@ -146,7 +146,7 @@ fun CameraScreen(
                     enabled = interactionsEnabled,
                     onClick = { 
                         ttsManager.repeatLast() 
-                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     }
                 )
                 ControlCircleButton(
@@ -154,7 +154,7 @@ fun CameraScreen(
                     label = "Stop",
                     enabled = interactionsEnabled,
                     onClick = { 
-                        if (settingsManager.vibrationEnabled) hapticManager.triggerHaptic()
+                        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                         onBack() 
                     }
                 )
