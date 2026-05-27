@@ -24,8 +24,57 @@ fun CameraPreview(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    
+    var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+    var previewView by remember { mutableStateOf<PreviewView?>(null) }
+
+    LaunchedEffect(context) {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+        cameraProviderFuture.addListener({
+            try {
+                cameraProvider = cameraProviderFuture.get()
+            } catch (e: Exception) {
+                Log.e("CameraPreview", "Failed to get camera provider", e)
+            }
+        }, ContextCompat.getMainExecutor(context))
+    }
+
+    LaunchedEffect(cameraProvider, imageAnalyzer, zoomRatio, previewView) {
+        val provider = cameraProvider ?: return@LaunchedEffect
+        val view = previewView ?: return@LaunchedEffect
+        try {
+            provider.unbindAll()
+
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(view.surfaceProvider)
+            }
+
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            val camera = if (imageAnalyzer != null) {
+                val analysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                analysis.setAnalyzer(cameraExecutor, imageAnalyzer)
+                provider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    analysis
+                )
+            } else {
+                provider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview
+                )
+            }
+            camera.cameraControl.setZoomRatio(zoomRatio)
+        } catch (e: Exception) {
+            Log.e("CameraPreview", "Use case binding failed", e)
+        }
+    }
 
     AndroidView(
         factory = { ctx ->
@@ -35,51 +84,19 @@ fun CameraPreview(
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
                 scaleType = PreviewView.ScaleType.FILL_CENTER
+                previewView = this
             }
         },
-        modifier = modifier,
-        update = { previewView ->
-            cameraProviderFuture.addListener({
-                try {
-                    val cameraProvider = cameraProviderFuture.get()
-                    val preview = Preview.Builder().build().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
-                    }
-
-                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                    cameraProvider.unbindAll()
-                    
-                    if (imageAnalyzer != null) {
-                        val analysis = ImageAnalysis.Builder()
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                            .build()
-                        analysis.setAnalyzer(cameraExecutor, imageAnalyzer)
-                        val camera = cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            analysis
-                        )
-                        camera.cameraControl.setZoomRatio(zoomRatio)
-                    } else {
-                        val camera = cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview
-                        )
-                        camera.cameraControl.setZoomRatio(zoomRatio)
-                    }
-                } catch (e: Exception) {
-                    Log.e("CameraPreview", "Use case binding or provider retrieval failed", e)
-                }
-            }, ContextCompat.getMainExecutor(context))
-        }
+        modifier = modifier
     )
 
     DisposableEffect(Unit) {
         onDispose {
-            cameraProviderFuture.get().unbindAll()
+            try {
+                cameraProvider.unbindAll()
+            } catch (e: Exception) {
+                Log.e("CameraPreview", "Error unbinding on dispose", e)
+            }
             cameraExecutor.shutdown()
         }
     }

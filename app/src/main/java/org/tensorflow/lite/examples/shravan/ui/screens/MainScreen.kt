@@ -61,7 +61,9 @@ fun MainScreen(
                         label = { Text(stringResource(screen.first)) },
                         selected = pagerState.currentPage == index,
                         colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                            indicatorColor = Color.Transparent,
+                            selectedIconColor = Color.White,
+                            selectedTextColor = Color.White,
                             unselectedIconColor = Color.Gray,
                             unselectedTextColor = Color.Gray
                         ),
@@ -94,10 +96,10 @@ fun MainScreen(
                 2 -> OCRScreen(onBack = {}, ttsManager = ttsManager, settingsManager = settingsManager, historyManager = historyManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)
                 3 -> CurrencyScreen(ttsManager, hapticManager, voiceCommandManager, settingsManager, historyManager, isActive = isActive)
                 4 -> Box(modifier = Modifier.padding(innerPadding)) {
-                    SettingsScreen(ttsManager, hapticManager, settingsManager, onReset)
+                    SettingsScreen(ttsManager, hapticManager, settingsManager, onReset, isActive = isActive)
                 }
                 5 -> Box(modifier = Modifier.padding(innerPadding)) {
-                    HistoryScreen(onBack = {}, historyManager = historyManager, settingsManager = settingsManager, ttsManager = ttsManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager)
+                    HistoryScreen(onBack = {}, historyManager = historyManager, settingsManager = settingsManager, ttsManager = ttsManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)
                 }
             }
         }

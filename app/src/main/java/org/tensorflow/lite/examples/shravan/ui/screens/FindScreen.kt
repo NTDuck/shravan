@@ -72,10 +72,15 @@ fun FindScreen(
                 }
                 ttsManager.speak("Looking for $activeMode")
             }
+        } else {
+            voiceSessionId?.let {
+                voiceCommandManager.stopListening(it)
+                voiceSessionId = null
+            }
         }
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(isActive) {
         onDispose {
             voiceSessionId?.let { voiceCommandManager.stopListening(it) }
         }

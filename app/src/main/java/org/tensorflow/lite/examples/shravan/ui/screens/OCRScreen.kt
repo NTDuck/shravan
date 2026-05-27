@@ -51,20 +51,24 @@ fun OCRScreen(
         onBack()
     }
 
-    LaunchedEffect(Unit) {
-        ttsManager.speak(
-            if (useVietnamese) "Đọc chữ" else "OCR",
-            isVietnamese = useVietnamese,
-            onComplete = {
-                scope.launch {
-                    delay(1000)
-                    interactionsEnabled = true
+    LaunchedEffect(isActive) {
+        if (isActive) {
+            ttsManager.speak(
+                if (useVietnamese) "Đọc chữ" else "OCR",
+                isVietnamese = useVietnamese,
+                onComplete = {
+                    scope.launch {
+                        delay(1000)
+                        interactionsEnabled = true
+                    }
                 }
-            }
-        )
+            )
+        } else {
+            interactionsEnabled = false
+        }
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(isActive) {
         onDispose {
             voiceSessionId.value?.let {
                 voiceCommandManager.stopListening(it)
@@ -72,8 +76,8 @@ fun OCRScreen(
         }
     }
 
-    LaunchedEffect(interactionsEnabled) {
-        if (interactionsEnabled) {
+    LaunchedEffect(interactionsEnabled, isActive) {
+        if (interactionsEnabled && isActive) {
             voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {

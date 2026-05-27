@@ -16,7 +16,8 @@ fun SettingsScreen(
     ttsManager: TTSManager,
     hapticManager: HapticManager,
     settingsManager: SettingsManager,
-    onReset: () -> Unit
+    onReset: () -> Unit,
+    isActive: Boolean = true
 ) {
     var languageExpanded by remember { mutableStateOf(false) }
     var flashExpanded by remember { mutableStateOf(false) }

@@ -24,62 +24,49 @@ class VoiceCommandManager(private val context: Context) {
 
     init {
         handler.post {
-            createRecognizer(0)
+            if (SpeechRecognizer.isRecognitionAvailable(context)) {
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
+                setupListener()
+            }
         }
     }
 
-    private fun createRecognizer(sessionId: Int) {
-        if (SpeechRecognizer.isRecognitionAvailable(context)) {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
-            speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-                override fun onReadyForSpeech(params: Bundle?) {
-                    if (sessionId != currentSessionId) return
-                    Log.d("VoiceCommandManager", "Ready for speech (Session: $sessionId)")
-                    isListening = true
+    private fun setupListener() {
+        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(params: Bundle?) {
+                Log.d("VoiceCommandManager", "Ready for speech (Session: $currentSessionId)")
+                isListening = true
+            }
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onEndOfSpeech() {
+                isListening = false
+            }
+            override fun onError(error: Int) {
+                Log.e("VoiceCommandManager", "Error: $error (Session: $currentSessionId)")
+                isListening = false
+                if (shouldRetry && (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)) {
+                    handler.post { startListeningInternal() }
                 }
-                override fun onBeginningOfSpeech() {}
-                override fun onRmsChanged(rmsdB: Float) {}
-                override fun onBufferReceived(buffer: ByteArray?) {}
-                override fun onEndOfSpeech() {
-                    if (sessionId != currentSessionId) return
-                    isListening = false
+            }
+            override fun onResults(results: Bundle?) {
+                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                if (!matches.isNullOrEmpty()) {
+                    onResult?.invoke(matches[0])
                 }
-                override fun onError(error: Int) {
-                    if (sessionId != currentSessionId) return
-                    Log.e("VoiceCommandManager", "Error: $error (Session: $sessionId)")
-                    isListening = false
-                    if (shouldRetry && (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)) {
-                        handler.post {
-                            startListeningInternal(sessionId)
-                        }
-                    }
+                isListening = false
+                if (shouldRetry) {
+                    handler.post { startListeningInternal() }
                 }
-                override fun onResults(results: Bundle?) {
-                    if (sessionId != currentSessionId) return
-                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    if (!matches.isNullOrEmpty()) {
-                        handler.post {
-                            if (sessionId == currentSessionId) {
-                                onResult?.invoke(matches[0])
-                            }
-                        }
-                    }
-                    isListening = false
-                    if (shouldRetry) {
-                        handler.post {
-                            startListeningInternal(sessionId)
-                        }
-                    }
-                }
-                override fun onPartialResults(partialResults: Bundle?) {}
-                override fun onEvent(eventType: Int, params: Bundle?) {}
-            })
-        }
+            }
+            override fun onPartialResults(partialResults: Bundle?) {}
+            override fun onEvent(eventType: Int, params: Bundle?) {}
+        })
     }
 
     fun startListening(isVietnamese: Boolean = true, retry: Boolean = true, callback: (String) -> Unit): Int {
         currentSessionId++
-        val sessionId = currentSessionId
         handler.post {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                 Log.e("VoiceCommandManager", "RECORD_AUDIO permission not granted")
@@ -89,16 +76,13 @@ class VoiceCommandManager(private val context: Context) {
             lastIsVietnamese = isVietnamese
             shouldRetry = retry
 
-            destroyRecognizerInternal()
-            createRecognizer(sessionId)
-
-            startListeningInternal(sessionId)
+            speechRecognizer?.cancel() // Stop any ongoing session before starting a new one
+            startListeningInternal()
         }
-        return sessionId
+        return currentSessionId
     }
 
-    private fun startListeningInternal(sessionId: Int) {
-        if (sessionId != currentSessionId) return
+    private fun startListeningInternal() {
         if (isListening) return
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -108,12 +92,18 @@ class VoiceCommandManager(private val context: Context) {
         speechRecognizer?.startListening(intent)
     }
 
+    fun stopCurrentSession() {
+        handler.post {
+            shouldRetry = false
+            speechRecognizer?.cancel()
+            isListening = false
+        }
+    }
+
     fun stopListening(sessionId: Int) {
         handler.post {
             if (sessionId == currentSessionId) {
-                shouldRetry = false
-                speechRecognizer?.stopListening()
-                isListening = false
+                stopCurrentSession()
             }
         }
     }
