@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Shravan</string>
     <string name="welcome_text">Chào mừng bạn đến với Shravan. Vui lòng nói yêu cầu của bạn: bạn bị khiếm thị một phần hay hoàn toàn?</string>
-    <string name="nav_explore">Màn hình Khám phá</string>
+    <string name="nav_explore">Khám phá</string>
     <string name="nav_find">Tìm kiếm</string>
     <string name="nav_ocr">Đọc chữ</string>
     <string name="nav_currency">Tiền tệ</string>

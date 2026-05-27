@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.R
 import org.tensorflow.lite.examples.shravan.utils.*
@@ -54,7 +55,10 @@ fun MainScreen(
     Scaffold(
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = Color.Black,
+                tonalElevation = 0.dp
+            ) {
                 screens.forEachIndexed { index, screen ->
                     NavigationBarItem(
                         icon = { Icon(screen.second, contentDescription = stringResource(screen.first)) },

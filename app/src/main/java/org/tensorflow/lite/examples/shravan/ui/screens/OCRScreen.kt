@@ -37,7 +37,16 @@ fun OCRScreen(
     voiceCommandManager: VoiceCommandManager,
     isActive: Boolean = true
 ) {
-    val recognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
+    val recognizer = remember(isActive) { 
+        if (isActive) TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) else null 
+    }
+    
+    DisposableEffect(recognizer) {
+        onDispose {
+            recognizer?.close()
+        }
+    }
+
     val spokenTextSet = remember { mutableStateOf(mutableSetOf<String>()) }
     var isPaused by remember { mutableStateOf(false) }
     val useVietnamese = settingsManager.useVietnamese
@@ -108,8 +117,8 @@ fun OCRScreen(
                             val mediaImage = imageProxy.image
                             if (mediaImage != null) {
                                 val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                                val visionText = com.google.android.gms.tasks.Tasks.await(recognizer.process(image))
-                                visionText.textBlocks.forEach { block ->
+                                val visionText = recognizer?.let { com.google.android.gms.tasks.Tasks.await(it.process(image)) }
+                                visionText?.textBlocks?.forEach { block ->
                                     val originalText = block.text.trim()
                                     val normalizedText = originalText.lowercase()
                                     if (normalizedText.length > 3 && !spokenTextSet.value.contains(normalizedText)) {

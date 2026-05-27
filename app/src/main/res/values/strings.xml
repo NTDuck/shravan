@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Shravan</string>
     <string name="welcome_text">Welcome to Shravan. Please speak your intent: are you partially blind or totally blind?</string>
-    <string name="nav_explore">Explore Screen</string>
+    <string name="nav_explore">Explore</string>
     <string name="nav_find">Find</string>
     <string name="nav_ocr">OCR</string>
     <string name="nav_currency">Currency</string>

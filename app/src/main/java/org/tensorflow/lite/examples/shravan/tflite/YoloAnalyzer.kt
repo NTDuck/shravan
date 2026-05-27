@@ -53,7 +53,8 @@ class YoloAnalyzer(
         labelsList
     }
 
-    private val spokenObjects = mutableSetOf<String>()
+    private val lastSeenTime = mutableMapOf<String, Long>()
+    private val DEBOUNCE_TIME = 2000L
 
     override fun analyze(image: ImageProxy) {
         try {
@@ -72,11 +73,15 @@ class YoloAnalyzer(
             )
 
             val results = detector.recognizeImage(scaledBitmap)
-            val filteredResults = results.filter { it.confidence > 0.4f }
+            val filteredResults = results.filter { it.confidence > 0.25f }
+
+            val currentTime = System.currentTimeMillis()
+            val currentTitles = mutableSetOf<String>()
 
             filteredResults.forEach { result ->
                 val detectedClass = result.detectedClass
                 val title = if (detectedClass < labels.size) labels[detectedClass] else result.title
+                currentTitles.add(title)
                 
                 // Proximity Detection logic
                 val location = result.location
@@ -86,7 +91,6 @@ class YoloAnalyzer(
                 val prevArea = lastAreas[detectedClass] ?: 0f
                 lastAreas[detectedClass] = normalizedArea
                 
-                val currentTime = System.currentTimeMillis()
                 val lastAlert = lastAlertTime[detectedClass] ?: 0L
                 
                 if (normalizedArea > SIZE_THRESHOLD && (normalizedArea - prevArea) > GROWTH_THRESHOLD) {
@@ -106,14 +110,17 @@ class YoloAnalyzer(
                     }
                 }
 
-                if (!spokenObjects.contains(title)) {
-                    spokenObjects.add(title)
-                    
+                val lastSeen = lastSeenTime[title] ?: 0L
+                if (currentTime - lastSeen > DEBOUNCE_TIME) {
                     val announcement = title
                     ttsManager.speak(announcement, isQueued = true, isVietnamese = settingsManager.useVietnamese)
                     historyManager.addHistory("Object", announcement)
                 }
+                lastSeenTime[title] = currentTime
             }
+
+            // Clean up old entries to prevent memory leak
+            lastSeenTime.entries.removeIf { currentTime - it.value > 5000L }
 
             onResults(filteredResults)
         } catch (e: Exception) {

@@ -38,14 +38,20 @@ fun ExploreScreen(
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
     val textMeasurer = rememberTextMeasurer()
 
+    val analyzer = remember(isActive) {
+        if (isActive) {
+            YoloAnalyzer(context, ttsManager, settingsManager, historyManager) { results ->
+                recognitions = results
+            }
+        } else null
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         if (isActive) {
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
                 zoomRatio = 0.6f,
-                imageAnalyzer = YoloAnalyzer(context, ttsManager, settingsManager, historyManager) { results ->
-                    recognitions = results
-                }
+                imageAnalyzer = analyzer
             )
 
             Canvas(modifier = Modifier.fillMaxSize()) {

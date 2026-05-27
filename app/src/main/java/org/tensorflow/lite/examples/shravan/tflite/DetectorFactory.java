@@ -47,7 +47,7 @@ public class DetectorFactory {
             };
         }
         else if (modelFilename.equals("currency.tflite")) {
-            labelFilename = "file:///android_asset/currency_labels.txt";
+            labelFilename = "file:///android_asset/coco_vi.txt"; // Use 80 classes to match placeholder model
             isQuantized = false;
             inputSize = 416;
             output_width = new int[]{40, 20, 10};

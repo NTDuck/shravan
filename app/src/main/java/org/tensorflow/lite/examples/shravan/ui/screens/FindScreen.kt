@@ -48,6 +48,25 @@ fun FindScreen(
     val scope = rememberCoroutineScope()
     var voiceSessionId by remember { mutableStateOf<Int?>(null) }
 
+    val analyzer = remember(isActive) {
+        if (isActive) {
+            YoloAnalyzer(context, ttsManager, settingsManager, historyManager) { results ->
+                if (activeMode != null) {
+                    recognitions = results.filter { 
+                        when (activeMode) {
+                            "seatings & tables" -> it.title.lowercase() in listOf("chair", "dining table", "couch", "bàn", "ghế")
+                            "doors & windows" -> it.title.lowercase() in listOf("door", "window", "cửa")
+                            "person & vehicles" -> it.title.lowercase() in listOf("person", "car", "bus", "truck", "motorcycle", "người", "xe")
+                            else -> false
+                        }
+                    }
+                } else {
+                    recognitions = emptyList()
+                }
+            }
+        } else null
+    }
+
     LaunchedEffect(activeMode, isActive) {
         if (isActive) {
             if (activeMode == null) {
@@ -109,20 +128,7 @@ fun FindScreen(
                 CameraPreview(
                     modifier = Modifier.fillMaxSize(),
                     zoomRatio = 0.6f,
-                    imageAnalyzer = YoloAnalyzer(context, ttsManager, settingsManager, historyManager) { results ->
-                        if (activeMode != null) {
-                            recognitions = results.filter { 
-                                when (activeMode) {
-                                    "seatings & tables" -> it.title.lowercase() in listOf("chair", "dining table", "couch", "bàn", "ghế")
-                                    "doors & windows" -> it.title.lowercase() in listOf("door", "window", "cửa")
-                                    "person & vehicles" -> it.title.lowercase() in listOf("person", "car", "bus", "truck", "motorcycle", "người", "xe")
-                                    else -> false
-                                }
-                            }
-                        } else {
-                            recognitions = emptyList()
-                        }
-                    }
+                    imageAnalyzer = analyzer
                 )
 
                 if (isMonotone) {

@@ -16,6 +16,10 @@ import androidx.core.content.ContextCompat
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+object CameraExecutorManager {
+    val executor: ExecutorService = Executors.newSingleThreadExecutor()
+}
+
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
@@ -24,7 +28,8 @@ fun CameraPreview(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    val cameraExecutor = CameraExecutorManager.executor
+
     
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
@@ -40,23 +45,41 @@ fun CameraPreview(
         }, ContextCompat.getMainExecutor(context))
     }
 
+    var previewUseCase by remember { mutableStateOf<Preview?>(null) }
+    var analysisUseCase by remember { mutableStateOf<ImageAnalysis?>(null) }
+
     LaunchedEffect(cameraProvider, imageAnalyzer, zoomRatio, previewView) {
         val provider = cameraProvider ?: return@LaunchedEffect
         val view = previewView ?: return@LaunchedEffect
         try {
-            provider.unbindAll()
+            // Unbind previous specific use cases for this instance if any
+            previewUseCase?.let { provider.unbind(it) }
+            analysisUseCase?.let { provider.unbind(it) }
 
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(view.surfaceProvider)
             }
+            previewUseCase = preview
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
+            Log.d("CameraPreview", "Binding use cases to lifecycle")
             val camera = if (imageAnalyzer != null) {
                 val analysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                 analysis.setAnalyzer(cameraExecutor, imageAnalyzer)
+                analysisUseCase = analysis
+                
+                // Unbind all before binding just in case to clear any zombie bindings, 
+                // but wait, if another screen bound it, unbindAll will kill theirs.
+                // It's safer to just bind ours. However, CameraX allows binding multiple if they fit,
+                // or fails. Usually unbindAll() is called before bindToLifecycle in single-screen apps.
+                // Let's rely on unbindAll() only if we know we are the active screen, OR just unbind our own.
+                // Actually, if we use HorizontalPager, both screens might try to bind to the SAME lifecycleOwner.
+                // It's best to unbindAll() just before binding new ones in LaunchedEffect because we are taking over.
+                provider.unbindAll() 
+                
                 provider.bindToLifecycle(
                     lifecycleOwner,
                     cameraSelector,
@@ -64,6 +87,7 @@ fun CameraPreview(
                     analysis
                 )
             } else {
+                provider.unbindAll()
                 provider.bindToLifecycle(
                     lifecycleOwner,
                     cameraSelector,
@@ -90,14 +114,15 @@ fun CameraPreview(
         modifier = modifier
     )
 
-    DisposableEffect(Unit) {
+    DisposableEffect(cameraProvider) {
         onDispose {
             try {
-                cameraProvider?.unbindAll()
+                analysisUseCase?.clearAnalyzer()
+                previewUseCase?.let { cameraProvider?.unbind(it) }
+                analysisUseCase?.let { cameraProvider?.unbind(it) }
             } catch (e: Exception) {
                 Log.e("CameraPreview", "Error unbinding on dispose", e)
             }
-            cameraExecutor.shutdown()
         }
     }
 }
