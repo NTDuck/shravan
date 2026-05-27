@@ -93,7 +93,7 @@ fun CameraPreview(
     DisposableEffect(Unit) {
         onDispose {
             try {
-                cameraProvider.unbindAll()
+                cameraProvider?.unbindAll()
             } catch (e: Exception) {
                 Log.e("CameraPreview", "Error unbinding on dispose", e)
             }
