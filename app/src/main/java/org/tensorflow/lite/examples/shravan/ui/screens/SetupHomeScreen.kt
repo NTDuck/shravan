@@ -95,7 +95,7 @@ fun SetupHomeScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(if (isScreenDimmed) Color.Black.copy(alpha = 0.8f) else Color.Transparent)) {
+    Box(modifier = Modifier.fillMaxSize().background(if (isScreenDimmed) Color.Black.copy(alpha = 0.8f) else Color(0xFF333333))) {
         Column(modifier = Modifier.fillMaxSize()) {
             AccessibleButton(
                 label = labelPartial,

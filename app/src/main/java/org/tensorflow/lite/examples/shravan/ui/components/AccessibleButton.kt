@@ -7,8 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.tensorflow.lite.examples.shravan.utils.HapticManager
 import org.tensorflow.lite.examples.shravan.utils.SettingsManager
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
@@ -51,8 +53,8 @@ fun AccessibleButton(
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimary
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 24.sp),
+                color = Color.White
             )
         }
     }

@@ -63,10 +63,13 @@ fun FindScreen(
     val analyzer = remember(isActive) {
         if (isActive) {
             YoloAnalyzer(context, ttsManager, settingsManager, historyManager) { results ->
-                if (activeMode != null) {
-                    recognitions = results
-                } else {
-                    recognitions = emptyList()
+                recognitions = results
+            }.apply {
+                this.allowedClasses = when (activeMode) {
+                    "seatings & tables" -> listOf("chair", "dining table", "couch", "bàn", "ghế")
+                    "doors & windows" -> listOf("door", "window", "cửa")
+                    "person & vehicles" -> listOf("person", "car", "bus", "truck", "motorcycle", "người", "xe")
+                    else -> emptyList()
                 }
             }
         } else null
@@ -200,7 +203,7 @@ fun FindScreen(
         }
         
         Row(
-            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(bottom = 32.dp, start = 16.dp, end = 16.dp),
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(bottom = 120.dp, start = 16.dp, end = 16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {

@@ -21,6 +21,7 @@ import org.tensorflow.lite.examples.shravan.utils.*
 fun SettingsScreen(
     ttsManager: TTSManager,
     hapticManager: HapticManager,
+    voiceCommandManager: VoiceCommandManager,
     settingsManager: SettingsManager,
     onReset: () -> Unit,
     isActive: Boolean = true
@@ -36,16 +37,35 @@ fun SettingsScreen(
         stringResource(R.string.flash_off) to "off"
     )
 
+    LaunchedEffect(isActive) {
+        if (!isActive) {
+            resetClickCount = 0
+        }
+    }
+
+    DisposableEffect(isActive) {
+        var sessionId: Int? = null
+        if (isActive) {
+            sessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) {}
+        }
+        onDispose {
+            sessionId?.let { voiceCommandManager.stopListening(it) }
+        }
+    }
+
+    val redAlpha = (resetClickCount * 0.14f).coerceIn(0f, 1f)
+    val bgColor = if (resetClickCount > 0) Color.Red.copy(alpha = redAlpha) else Color(0xFF222222)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF222222))
+            .background(bgColor)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Text(
             text = stringResource(R.string.nav_settings), 
-            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold, fontSize = 22.5.sp),
             color = Color.White,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
@@ -71,11 +91,11 @@ fun SettingsScreen(
             DropdownMenu(
                 expanded = languageExpanded,
                 onDismissRequest = { languageExpanded = false },
-                modifier = Modifier.fillMaxWidth(0.9f).background(Color(0xFF333333))
+                modifier = Modifier.fillMaxWidth().background(Color(0xFF333333))
             ) {
                 languages.forEach { (label, isVi) ->
                     DropdownMenuItem(
-                        text = { Text(label, color = Color.White) },
+                        text = { Text(label, color = if (settingsManager.useVietnamese == isVi) Color.Yellow else Color.White, fontSize = 18.sp) },
                         onClick = {
                             settingsManager.useVietnamese = isVi
                             ttsManager.setLanguage(isVi)
@@ -133,11 +153,11 @@ fun SettingsScreen(
             DropdownMenu(
                 expanded = flashExpanded,
                 onDismissRequest = { flashExpanded = false },
-                modifier = Modifier.fillMaxWidth(0.9f).background(Color(0xFF333333))
+                modifier = Modifier.fillMaxWidth().background(Color(0xFF333333))
             ) {
                 flashes.forEach { (label, mode) ->
                     DropdownMenuItem(
-                        text = { Text(label, color = Color.White) },
+                        text = { Text(label, color = if (settingsManager.flashMode == mode) Color.Yellow else Color.White, fontSize = 18.sp) },
                         onClick = {
                             settingsManager.flashMode = mode
                             flashExpanded = false
@@ -156,12 +176,13 @@ fun SettingsScreen(
                 if (resetClickCount >= 7) {
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     onReset()
+                    resetClickCount = 0
                 }
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            colors = ButtonDefaults.buttonColors(containerColor = if (resetClickCount > 0) Color.Transparent else MaterialTheme.colorScheme.error)
         ) {
-            Text(stringResource(R.string.settings_reset) + if (resetClickCount > 0) " ($resetClickCount/7)" else "", fontSize = 18.sp, color = Color.White)
+            Text(stringResource(R.string.settings_reset), fontSize = 18.sp, color = Color.White)
         }
     }
 }

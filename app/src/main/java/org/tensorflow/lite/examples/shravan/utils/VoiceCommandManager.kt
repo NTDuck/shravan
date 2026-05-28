@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 class VoiceCommandManager(private val context: Context) {
     private var speechRecognizer: SpeechRecognizer? = null
     private var isListening = false
+    var onGlobalIntent: ((String) -> Boolean)? = null
     private var onResult: ((String) -> Unit)? = null
     private var onPartialResult: ((String) -> Unit)? = null
     private var lastIsVietnamese = true
@@ -64,7 +65,10 @@ class VoiceCommandManager(private val context: Context) {
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
-                    onResult?.invoke(matches[0])
+                    val result = matches[0]
+                    if (onGlobalIntent?.invoke(result) != true) {
+                        onResult?.invoke(result)
+                    }
                 }
                 isListening = false
                 if (shouldRetry) {
@@ -74,7 +78,10 @@ class VoiceCommandManager(private val context: Context) {
             override fun onPartialResults(partialResults: Bundle?) {
                 val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
-                    onPartialResult?.invoke(matches[0])
+                    val result = matches[0]
+                    if (onGlobalIntent?.invoke(result) != true) {
+                        onPartialResult?.invoke(result)
+                    }
                 }
             }
             override fun onEvent(eventType: Int, params: Bundle?) {}

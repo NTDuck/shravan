@@ -109,7 +109,7 @@ fun HistoryScreen(
         Box(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
             Text(
                 text = historyGreeting,
-                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold, fontSize = 22.5.sp),
                 color = Color.White,
                 modifier = Modifier.align(Alignment.Center)
             )

@@ -100,35 +100,6 @@ class YoloAnalyzer(
                     val title = if (detectedClass < labels.size) labels[detectedClass] else result.title
                     currentTitles.add(title)
                     
-                    // Proximity Detection logic
-                    val location = result.location
-                    val area = location.width() * location.height()
-                    val normalizedArea = area / (detector.inputSize * detector.inputSize)
-                    
-                    val prevArea = lastAreas[detectedClass] ?: 0f
-                    lastAreas[detectedClass] = normalizedArea
-                    
-                    val lastAlert = lastAlertTime[detectedClass] ?: 0L
-                    
-                    if (normalizedArea > SIZE_THRESHOLD && (normalizedArea - prevArea) > GROWTH_THRESHOLD) {
-                        if (currentTime - lastAlert > ALERT_COOLDOWN) {
-                            lastAlertTime[detectedClass] = currentTime
-                            val alertTitle = context.getString(org.tensorflow.lite.examples.shravan.R.string.too_close, title)
-                            ttsManager.speak(alertTitle, isQueued = false, isVietnamese = settingsManager.useVietnamese)
-                            
-                            if (settingsManager.hapticsEnabled) {
-                                vibrator?.let { v ->
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                        v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
-                                    } else {
-                                        @Suppress("DEPRECATION")
-                                        v.vibrate(500)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
                     val lastSeen = lastSeenTime[title] ?: 0L
                     if (currentTime - lastSeen > DEBOUNCE_TIME) {
                         val announcement = title

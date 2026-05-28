@@ -64,20 +64,24 @@ fun MainScreen(
     }
 
     // Centralized Voice Navigation Listener
-    DisposableEffect(Unit) {
-        val sessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) { result ->
+    DisposableEffect(settingsManager.useVietnamese) {
+        voiceCommandManager.onGlobalIntent = { result ->
             val lowerResult = result.lowercase()
-            navKeywords.find { lowerResult.contains(it.first) }?.let { matched ->
+            val matched = navKeywords.find { lowerResult.contains(it.first) }
+            if (matched != null) {
                 if (pagerState.currentPage != matched.second) {
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     coroutineScope.launch {
                         pagerState.animateScrollToPage(matched.second)
                     }
                 }
+                true // handled
+            } else {
+                false // not handled
             }
         }
         onDispose {
-            voiceCommandManager.stopListening(sessionId)
+            voiceCommandManager.onGlobalIntent = null
         }
     }
 
@@ -89,8 +93,8 @@ fun MainScreen(
             ) {
                 screens.forEachIndexed { index, screen ->
                     NavigationBarItem(
-                        icon = { Icon(screen.second, contentDescription = stringResource(screen.first), modifier = Modifier.size(20.dp)) },
-                        label = { Text(stringResource(screen.first), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
+                        icon = { Icon(screen.second, contentDescription = stringResource(screen.first), modifier = Modifier.size(32.dp)) },
+                        label = null,
                         selected = pagerState.currentPage == index,
                         colors = NavigationBarItemDefaults.colors(
                             indicatorColor = Color.Transparent,
@@ -127,7 +131,7 @@ fun MainScreen(
                 2 -> OCRScreen(onBack = {}, ttsManager = ttsManager, settingsManager = settingsManager, historyManager = historyManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)
                 3 -> CurrencyScreen(ttsManager, hapticManager, voiceCommandManager, settingsManager, historyManager, isActive = isActive)
                 4 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
-                    SettingsScreen(ttsManager, hapticManager, settingsManager, onReset, isActive = isActive)
+                    SettingsScreen(ttsManager, hapticManager, voiceCommandManager, settingsManager, onReset, isActive = isActive)
                 }
                 5 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
                     HistoryScreen(onBack = {}, historyManager = historyManager, settingsManager = settingsManager, ttsManager = ttsManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)

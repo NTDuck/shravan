@@ -47,9 +47,14 @@ fun ExploreScreen(
         } else null
     }
 
-    DisposableEffect(analyzer) {
+    DisposableEffect(isActive) {
+        var sessionId: Int? = null
+        if (isActive) {
+            sessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) {}
+        }
         onDispose {
             analyzer?.close()
+            sessionId?.let { voiceCommandManager.stopListening(it) }
         }
     }
 
