@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -60,89 +61,94 @@ class MainActivity : ComponentActivity() {
             }
             
             ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
-                val navController = rememberNavController()
-
-                var hasCameraPermission by remember {
-                    mutableStateOf(
-                        ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.CAMERA
-                        ) == PackageManager.PERMISSION_GRANTED
-                    )
-                }
-                
-                var hasRecordAudioPermission by remember {
-                    mutableStateOf(
-                        ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.RECORD_AUDIO
-                        ) == PackageManager.PERMISSION_GRANTED
-                    )
-                }
-
-                val launcher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestMultiplePermissions(),
-                    onResult = { permissions ->
-                        hasCameraPermission = permissions[Manifest.permission.CAMERA] ?: hasCameraPermission
-                        hasRecordAudioPermission = permissions[Manifest.permission.RECORD_AUDIO] ?: hasRecordAudioPermission
-                    }
-                )
-
-                LaunchedEffect(Unit) {
-                    val permissionsNeeded = mutableListOf<String>()
-                    if (!hasCameraPermission) permissionsNeeded.add(Manifest.permission.CAMERA)
-                    if (!hasRecordAudioPermission) permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
-                    
-                    if (permissionsNeeded.isNotEmpty()) {
-                        launcher.launch(permissionsNeeded.toTypedArray())
-                    }
-                    ttsManager.setSpeechRate(settingsManager.speechRate)
-                }
-
-                DisposableEffect(Unit) {
-                    onDispose {
-                        ttsManager.destroy()
-                        voiceCommandManager.destroy()
-                    }
-                }
-
-                val startDestination = if (settingsManager.impairmentLevel == null) "setup" else "main"
-
-                NavHost(
-                    navController = navController, 
-                    startDestination = startDestination
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.background
                 ) {
-                    composable("setup") {
-                        SetupHomeScreen(
-                            navController = navController,
-                            settingsManager = settingsManager,
-                            ttsManager = ttsManager,
-                            hapticManager = hapticManager,
-                            voiceCommandManager = voiceCommandManager
+                    val navController = rememberNavController()
+
+                    var hasCameraPermission by remember {
+                        mutableStateOf(
+                            ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.CAMERA
+                            ) == PackageManager.PERMISSION_GRANTED
                         )
                     }
-                    composable("main") {
-                        if (hasCameraPermission && hasRecordAudioPermission) {
-                            MainScreen(
+                    
+                    var hasRecordAudioPermission by remember {
+                        mutableStateOf(
+                            ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.RECORD_AUDIO
+                            ) == PackageManager.PERMISSION_GRANTED
+                        )
+                    }
+
+                    val launcher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.RequestMultiplePermissions(),
+                        onResult = { permissions ->
+                            hasCameraPermission = permissions[Manifest.permission.CAMERA] ?: hasCameraPermission
+                            hasRecordAudioPermission = permissions[Manifest.permission.RECORD_AUDIO] ?: hasRecordAudioPermission
+                        }
+                    )
+
+                    LaunchedEffect(Unit) {
+                        val permissionsNeeded = mutableListOf<String>()
+                        if (!hasCameraPermission) permissionsNeeded.add(Manifest.permission.CAMERA)
+                        if (!hasRecordAudioPermission) permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
+                        
+                        if (permissionsNeeded.isNotEmpty()) {
+                            launcher.launch(permissionsNeeded.toTypedArray())
+                        }
+                        ttsManager.setSpeechRate(settingsManager.speechRate)
+                    }
+
+                    DisposableEffect(Unit) {
+                        onDispose {
+                            ttsManager.destroy()
+                            voiceCommandManager.destroy()
+                        }
+                    }
+
+                    val startDestination = if (settingsManager.impairmentLevel == null) "setup" else "main"
+
+                    NavHost(
+                        navController = navController, 
+                        startDestination = startDestination
+                    ) {
+                        composable("setup") {
+                            SetupHomeScreen(
+                                navController = navController,
                                 settingsManager = settingsManager,
                                 ttsManager = ttsManager,
                                 hapticManager = hapticManager,
-                                voiceCommandManager = voiceCommandManager,
-                                historyManager = historyManager,
-                                onReset = {
-                                    settingsManager.clearAll()
-                                    historyManager.clearHistory()
-                                    navController.navigate("setup") {
-                                        popUpTo(navController.graph.id) {
-                                            inclusive = true
+                                voiceCommandManager = voiceCommandManager
+                            )
+                        }
+                        composable("main") {
+                            if (hasCameraPermission && hasRecordAudioPermission) {
+                                MainScreen(
+                                    settingsManager = settingsManager,
+                                    ttsManager = ttsManager,
+                                    hapticManager = hapticManager,
+                                    voiceCommandManager = voiceCommandManager,
+                                    historyManager = historyManager,
+                                    onReset = {
+                                        settingsManager.clearAll()
+                                        historyManager.clearHistory()
+                                        navController.navigate("setup") {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                inclusive = true
+                                            }
                                         }
                                     }
+                                )
+                            } else {
+                                // Show loading or permission request state
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                    CircularProgressIndicator()
                                 }
-                            )
-                        } else {
-                            // Show loading or permission request state
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                                CircularProgressIndicator()
                             }
                         }
                     }
