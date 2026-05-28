@@ -28,10 +28,12 @@ fun SetupHomeScreen(
     val greeting = stringResource(R.string.welcome_text)
     val welcomePartial = stringResource(R.string.welcome_partial)
     val welcomeTotal = stringResource(R.string.welcome_total)
-    val labelPartialVi = "một phần"
-    val labelTotalVi = "hoàn toàn"
-    val labelPartialEn = "partially"
-    val labelTotalEn = "totally"
+    
+    val labelPartial = stringResource(R.string.label_partial)
+    val labelTotal = stringResource(R.string.label_total)
+    
+    val keywordPartial = stringResource(R.string.voice_keyword_partial).lowercase()
+    val keywordTotal = stringResource(R.string.voice_keyword_total).lowercase()
 
     val scope = rememberCoroutineScope()
     val voiceSessionId = remember { mutableStateOf<Int?>(null) }
@@ -60,16 +62,29 @@ fun SetupHomeScreen(
 
     LaunchedEffect(interactionsEnabled) {
         if (interactionsEnabled) {
-            voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+            val onIntentClarified = { matchedKeyword: String, level: ImpairmentLevel, welcomeText: String ->
+                interactionsEnabled = false
+                isScreenDimmed = true
+                if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                handleSelection(level, settingsManager, navController, ttsManager, welcomeText, useVietnamese)
+            }
+
+            voiceSessionId.value = voiceCommandManager.startListening(
+                isVietnamese = useVietnamese,
+                partialCallback = { partial ->
+                    val lowerPartial = partial.lowercase()
+                    if (lowerPartial.contains(keywordPartial)) {
+                        onIntentClarified(keywordPartial, ImpairmentLevel.PartiallyImpaired, welcomePartial)
+                    } else if (lowerPartial.contains(keywordTotal)) {
+                        onIntentClarified(keywordTotal, ImpairmentLevel.TotallyImpaired, welcomeTotal)
+                    }
+                }
+            ) { result ->
                 val lowerResult = result.lowercase()
-                if (lowerResult.contains(labelPartialVi.lowercase()) || lowerResult.contains(labelPartialEn.lowercase())) {
-                    interactionsEnabled = false
-                    isScreenDimmed = true
-                    handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, welcomePartial, useVietnamese)
-                } else if (lowerResult.contains(labelTotalVi.lowercase()) || lowerResult.contains(labelTotalEn.lowercase())) {
-                    interactionsEnabled = false
-                    isScreenDimmed = true
-                    handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, welcomeTotal, useVietnamese)
+                if (lowerResult.contains(keywordPartial)) {
+                    onIntentClarified(keywordPartial, ImpairmentLevel.PartiallyImpaired, welcomePartial)
+                } else if (lowerResult.contains(keywordTotal)) {
+                    onIntentClarified(keywordTotal, ImpairmentLevel.TotallyImpaired, welcomeTotal)
                 }
             }
         } else {
@@ -83,8 +98,8 @@ fun SetupHomeScreen(
     Box(modifier = Modifier.fillMaxSize().background(if (isScreenDimmed) Color.Black.copy(alpha = 0.8f) else Color.Transparent)) {
         Column(modifier = Modifier.fillMaxSize()) {
             AccessibleButton(
-                label = if (useVietnamese) "Khiếm thị một phần" else "Partially Blind",
-                speakLabel = if (useVietnamese) "Khiếm thị một phần" else "Partially Blind",
+                label = labelPartial,
+                speakLabel = labelPartial,
                 enabled = interactionsEnabled,
                 onClick = {
                     interactionsEnabled = false
@@ -97,8 +112,8 @@ fun SetupHomeScreen(
                 modifier = Modifier.weight(1f).fillMaxWidth()
             )
             AccessibleButton(
-                label = if (useVietnamese) "Khiếm thị hoàn toàn" else "Totally Blind",
-                speakLabel = if (useVietnamese) "Khiếm thị hoàn toàn" else "Totally Blind",
+                label = labelTotal,
+                speakLabel = labelTotal,
                 enabled = interactionsEnabled,
                 onClick = {
                     interactionsEnabled = false

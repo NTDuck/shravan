@@ -34,7 +34,7 @@ fun MainScreen(
     historyManager: HistoryManager,
     onReset: () -> Unit
 ) {
-    val pagerState = rememberPagerState()
+    val pagerState = rememberPagerState(pageCount = { 6 })
     val coroutineScope = rememberCoroutineScope()
 
     val screens = listOf(
@@ -46,9 +46,36 @@ fun MainScreen(
         Triple(R.string.nav_history, Icons.Default.History, "history")
     )
 
+    val navKeywords = listOf(
+        stringResource(R.string.voice_keyword_explore).lowercase() to 0,
+        stringResource(R.string.voice_keyword_find).lowercase() to 1,
+        stringResource(R.string.voice_keyword_ocr).lowercase() to 2,
+        stringResource(R.string.voice_keyword_currency).lowercase() to 3,
+        stringResource(R.string.voice_keyword_settings).lowercase() to 4,
+        stringResource(R.string.voice_keyword_history).lowercase() to 5
+    )
+
     LaunchedEffect(pagerState.currentPage) {
         if (settingsManager.hapticsEnabled) {
             hapticManager.triggerHaptic()
+        }
+    }
+
+    // Centralized Voice Navigation Listener
+    DisposableEffect(Unit) {
+        val sessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) { result ->
+            val lowerResult = result.lowercase()
+            navKeywords.find { lowerResult.contains(it.first) }?.let { matched ->
+                if (pagerState.currentPage != matched.second) {
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(matched.second)
+                    }
+                }
+            }
+        }
+        onDispose {
+            voiceCommandManager.stopListening(sessionId)
         }
     }
 
@@ -88,7 +115,6 @@ fun MainScreen(
         // The user said "camera feed should take up whole screen", so I'll remove padding.
         
         HorizontalPager(
-            pageCount = 6,
             state = pagerState,
             modifier = Modifier.fillMaxSize() // Removed padding(innerPadding)
         ) { page ->

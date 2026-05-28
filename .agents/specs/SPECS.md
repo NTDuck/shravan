@@ -4,76 +4,80 @@
 
 ### Language Support
 - Supported languages: English (default) & Vietnamese.
-- Uses different TTS & speech recognition for each language.
-- All texts (welcome text, labels, read-out-loud texts) MUST be configurable via Jetpack Compose resource files (`strings.xml`).
-- Configuration values MUST NOT be hard-coded.
-- Texts should be concise, not verbose.
+- Vietnamese uses different TTS & speech recognition (vi-VN locale).
+- All texts (welcome text, labels, read-out-loud texts, etc.) MUST be configurable via Jetpack Compose resource files (`strings.xml`).
+- Configuration values (thresholds, timings, etc.) MUST NOT be hard-coded.
+- Texts should be concise and not verbose.
 
 ### Core Behaviors & Transitions
-- LLMs MUST NOT require an API key (on-device or local integration).
-- Font: Inter.
-- Volume: Use speaker volume (like in calls) instead of normal audio volume.
-- Transitions: Use proper animations (fade in/out prioritized).
+- LLMs/AI models MUST NOT require an API key; all must be download/integrate and use locally with no restrictions.
+- Font: Inter MUST be used for all text.
+- Volume: Always use speaker volume (like in calls, `STREAM_VOICE_CALL`) instead of normal audio volume for TTS.
+- Transitions: Use proper animations for every transition, prioritizing fade in/out where appropriate.
 
 ### Startup & Setup
 - First startup:
-  1. Ask for all necessary permissions.
-  2. Speak welcome text (screen is dimmed).
-  3. Fade screen to normal and listen for user speech.
-  4. Run LLM inference on speech stream to clarify intent (threshold-based).
-  5. Upon clear intent: trigger haptics, fade screen to dimmed (stop listening), and speak confirmation.
-  6. Intent defines impairment level: Partially Blind or Totally Blind.
+  1. Ask for every necessary permission (Camera, Record Audio, etc.).
+  2. Speak welcome text while the screen is dimmed.
+  3. Fade screen to normal and listen for user speech stream.
+  4. Run LLM/AI inference on speech stream to clarify intent (e.g., above some threshold).
+  5. Intent: User is "partially blind" or "totally blind".
+  6. Upon clear intent: Trigger haptics, fade screen to dimmed (not receiving input), and speak confirmation of received intent.
   7. Redirect to Explore Screen.
 - Subsequent startups: Open directly on Explore Screen.
 
 ### Navigation (Bottom Navbar)
-- Persistent bar on Explore, Find, OCR, Currency, Settings, History screens.
-- 6 Icons corresponding to these screens.
-- Click: Trigger haptics and redirect.
-- Swipe Left/Right: Trigger haptics and redirect with swipe animation (clamped at ends).
-- Voice Control: Listen for speech; upon clear intent (target screen), trigger haptics and redirect.
+- Persistent bar fixed to the bottom on Explore, Find, OCR, Currency, Settings, History screens.
+- 6 Icons for each screen.
+- Interaction:
+  - Click Icon: Trigger haptics and redirect to screen.
+  - Swipe Left/Right: Trigger haptics, redirect to left/right screen using swipe animations (clamped at ends).
+  - Voice Control: Listen for user speech in each screen; upon clear intent for screen X, trigger haptics and redirect.
 
 ### Screen-Specific Requirements
 
 #### Explore Screen
-- Camera feed (0.6x zoom/scale).
-- Object detection with colored bounding boxes and labels (localized).
-- Speak aloud detected object label (once per presence in feed).
+- Camera feed: 0.6x zoom/lens.
+- Behavior: Surround detected objects with differently colored bounding boxes and labels (localized).
+- TTS: Speak aloud the object's label (localized) once per presence in the camera feed.
 
 #### Find Screen
-- Camera feed (0.6x zoom/scale).
-- Initial state: Monotone feed, listening for speech intent.
+- Camera feed: 0.6x zoom/lens.
+- Initial state: Monotone camera feed, listening for user speech intent.
 - Intents/Modes: "find seatings & tables", "find doors & windows", "find person & vehicles".
-- Upon intent: Trigger haptics, fade feed to normal colors.
-- Behavior: Similar to Explore but filtered by mode.
-- Interval Haptics: Trigger every 1s (default) if objects detected, interval scales with distance to nearest object (nearer = faster).
+- Upon intent: Trigger haptics and fade camera feed to normal coloring.
+- Behavior: Similar to Explore but only detects objects for the active mode.
+- Proximity Feedback: If objects detected, trigger haptics at an interval (default 1s); interval gets shorter as the nearest object gets closer to the camera.
 
 #### OCR Screen
-- Camera feed (1.0x zoom/scale).
-- Read aloud scanned text.
-- Prevent re-reading of already read text.
+- Camera feed: 1.0x zoom/lens.
+- Behavior: Read aloud scanned text.
+- Optimization: Ensure text already read is not re-read.
 
 #### Currency Screen
-- Camera feed (1.0x zoom/scale).
-- Detect Vietnamese currency using custom model/dataset (`currency.zip`).
-- Behavior similar to Explore.
+- Camera feed: 1.0x zoom/lens.
+- Behavior: Detect Vietnamese currency/paper money specifically.
+- Implementation: Use a technique combining a model with the provided dataset (`currency.zip`/`currency_data`).
 
 #### Settings Screen (Visual Only, No Voice)
-- Order:
-  1. Language: Dropdown ("English", "Tiếng Việt").
-  2. Haptics: Pill option (On/Off).
-  3. Speech Rate: Slider.
-  4. Flash: Dropdown ("Auto", "On", "Off").
-  5. Reset factory settings: Wide spanning button. Press 7 times to trigger haptics, reset all settings, and exit app.
-- Reset leads to setup menu on next launch.
+- Content Order:
+  1. "Language": Dropdown ("English" (default), "Tiếng Việt").
+  2. "Haptics": Pill option (defaults to ON; if OFF, all haptics disabled).
+  3. "Speech rate": Slider bar.
+  4. "Flash": Dropdown ("Auto" (default), "On", "Off").
+  5. "Reset factory settings": Wide spanning button. If pressed 7 times, trigger haptics, reset all settings (including impairment level), and exit the app. Next launch behaves as first startup.
 
 #### History Screen
-- List of scanned objects/texts with time (hh:mm:ss) and localized content.
-- Update rendering immediately on language change.
-- Voice Control: listening for clear intent to clear history, trigger haptics on success.
-- Click item: Read aloud content (interruptible by exiting screen or clicking another item).
+- Content: List of scanned objects/texts with time (hh:mm:ss) and localized content.
+- Language: Immediately update rendered names when language changes.
+- Interaction:
+  - Voice Control: Listen for intent to delete history; trigger haptics and clear all on success.
+  - Click Item: Read aloud content (localized). Interruptible if exiting screen or clicking another item.
 
 ## 2. Technical Standards
 - Adhere to `android-compose-best-practices.mdc`.
-- Adhere to `rules-management.mdc`.
-- App icon: Ensure correct placement and conventional naming.
+- Adhere to `ai-rules.mdc` (no API keys, local inference).
+- Adhere to `feedback-standards.mdc` (speaker volume, haptics).
+- Adhere to `resource-conventions.mdc` (localization, Inter font, animations).
+- App Icon: Correct placement and conventional naming (`ic_launcher`).
+- All state management must follow standard Android practices (MVVM/MVI).

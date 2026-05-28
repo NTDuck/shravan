@@ -1,10 +1,10 @@
 <resources>
     <string name="app_name">Shravan</string>
-    <string name="welcome_text">Chào mừng bạn đến với Shravan. Vui lòng nói yêu cầu của bạn: bạn bị khiếm thị một phần hay hoàn toàn?</string>
+    <string name="welcome_text">Chào mừng bạn đến với Shravan. Vui lòng cho biết tình trạng thị lực của bạn: bạn bị khiếm thị một phần hay hoàn toàn?</string>
     <string name="nav_explore">Khám phá</string>
     <string name="nav_find">Tìm kiếm</string>
-    <string name="nav_ocr">Đọc chữ</string>
-    <string name="nav_currency">Tiền tệ</string>
+    <string name="nav_ocr">Đọc văn bản</string>
+    <string name="nav_currency">Nhận diện tiền</string>
     <string name="nav_settings">Cài đặt</string>
     <string name="nav_history">Lịch sử</string>
     <string name="settings_language">Ngôn ngữ</string>
@@ -19,9 +19,19 @@
     <string name="lang_vi">Tiếng Việt</string>
     <string name="welcome_partial">Đã nhận: Khiếm thị một phần</string>
     <string name="welcome_total">Đã nhận: Khiếm thị hoàn toàn</string>
-    <string name="find_prompt">Bạn đang tìm gì? Bàn và ghế, cửa và cửa sổ, hay người và xe?</string>
+    <string name="label_partial">Khiếm thị một phần</string>
+    <string name="label_total">Khiếm thị hoàn toàn</string>
+    <string name="voice_keyword_partial">một phần</string>
+    <string name="voice_keyword_total">hoàn toàn</string>
+    <string name="voice_keyword_explore">khám phá</string>
+    <string name="voice_keyword_find">tìm kiếm</string>
+    <string name="voice_keyword_ocr">văn bản</string>
+    <string name="voice_keyword_currency">tiền</string>
+    <string name="voice_keyword_settings">cài đặt</string>
+    <string name="voice_keyword_history">lịch sử</string>
+    <string name="find_prompt">Bạn đang tìm gì? Bàn ghế, cửa, hay người và xe?</string>
     <string name="find_looking_for">Đang tìm %s</string>
-    <string name="ocr_greeting">Đọc chữ</string>
+    <string name="ocr_greeting">Đọc văn bản</string>
     <string name="history_greeting">Lịch sử</string>
     <string name="back_command">Quay lại</string>
     <string name="history_empty">Chưa có lịch sử</string>

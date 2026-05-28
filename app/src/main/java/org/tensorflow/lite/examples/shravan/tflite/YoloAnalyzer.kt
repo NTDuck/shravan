@@ -55,80 +55,99 @@ class YoloAnalyzer(
 
     private val lastSeenTime = mutableMapOf<String, Long>()
     private val DEBOUNCE_TIME = 2000L
+    private var isClosed = false
+    private val lock = Any()
 
     override fun analyze(image: ImageProxy) {
-        try {
-            val bitmap = ImageUtils.toBitmap(image)
-            if (bitmap == null) {
+        synchronized(lock) {
+            if (isClosed) {
+                image.close()
                 return
             }
+            try {
+                val bitmap = ImageUtils.toBitmap(image)
+                if (bitmap == null) {
+                    return
+                }
 
-            val matrix = Matrix()
-            matrix.postRotate(image.imageInfo.rotationDegrees.toFloat())
-            val rotatedBitmap = Bitmap.createBitmap(
-                bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
-            )
-            val scaledBitmap = Bitmap.createScaledBitmap(
-                rotatedBitmap, detector.inputSize, detector.inputSize, true
-            )
+                val matrix = Matrix()
+                matrix.postRotate(image.imageInfo.rotationDegrees.toFloat())
+                val rotatedBitmap = Bitmap.createBitmap(
+                    bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
+                )
+                val scaledBitmap = Bitmap.createScaledBitmap(
+                    rotatedBitmap, detector.inputSize, detector.inputSize, true
+                )
 
-            val results = detector.recognizeImage(scaledBitmap)
-            val filteredResults = results.filter { it.confidence > 0.25f }
+                val results = detector.recognizeImage(scaledBitmap)
+                val filteredResults = results.filter { it.confidence > 0.25f }
 
-            val currentTime = System.currentTimeMillis()
-            val currentTitles = mutableSetOf<String>()
+                val currentTime = System.currentTimeMillis()
+                val currentTitles = mutableSetOf<String>()
 
-            filteredResults.forEach { result ->
-                val detectedClass = result.detectedClass
-                val title = if (detectedClass < labels.size) labels[detectedClass] else result.title
-                currentTitles.add(title)
-                
-                // Proximity Detection logic
-                val location = result.location
-                val area = location.width() * location.height()
-                val normalizedArea = area / (detector.inputSize * detector.inputSize)
-                
-                val prevArea = lastAreas[detectedClass] ?: 0f
-                lastAreas[detectedClass] = normalizedArea
-                
-                val lastAlert = lastAlertTime[detectedClass] ?: 0L
-                
-                if (normalizedArea > SIZE_THRESHOLD && (normalizedArea - prevArea) > GROWTH_THRESHOLD) {
-                    if (currentTime - lastAlert > ALERT_COOLDOWN) {
-                        lastAlertTime[detectedClass] = currentTime
-                        val alertTitle = context.getString(org.tensorflow.lite.examples.shravan.R.string.too_close, title)
-                        ttsManager.speak(alertTitle, isQueued = false, isVietnamese = settingsManager.useVietnamese)
-                        
-                        if (settingsManager.hapticsEnabled) {
-                            vibrator?.let { v ->
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                    v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
-                                } else {
-                                    @Suppress("DEPRECATION")
-                                    v.vibrate(500)
+                filteredResults.forEach { result ->
+                    val detectedClass = result.detectedClass
+                    val title = if (detectedClass < labels.size) labels[detectedClass] else result.title
+                    currentTitles.add(title)
+                    
+                    // Proximity Detection logic
+                    val location = result.location
+                    val area = location.width() * location.height()
+                    val normalizedArea = area / (detector.inputSize * detector.inputSize)
+                    
+                    val prevArea = lastAreas[detectedClass] ?: 0f
+                    lastAreas[detectedClass] = normalizedArea
+                    
+                    val lastAlert = lastAlertTime[detectedClass] ?: 0L
+                    
+                    if (normalizedArea > SIZE_THRESHOLD && (normalizedArea - prevArea) > GROWTH_THRESHOLD) {
+                        if (currentTime - lastAlert > ALERT_COOLDOWN) {
+                            lastAlertTime[detectedClass] = currentTime
+                            val alertTitle = context.getString(org.tensorflow.lite.examples.shravan.R.string.too_close, title)
+                            ttsManager.speak(alertTitle, isQueued = false, isVietnamese = settingsManager.useVietnamese)
+                            
+                            if (settingsManager.hapticsEnabled) {
+                                vibrator?.let { v ->
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                        v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+                                    } else {
+                                        @Suppress("DEPRECATION")
+                                        v.vibrate(500)
+                                    }
                                 }
                             }
                         }
                     }
+
+                    val lastSeen = lastSeenTime[title] ?: 0L
+                    if (currentTime - lastSeen > DEBOUNCE_TIME) {
+                        val announcement = title
+                        ttsManager.speak(announcement, isQueued = true, isVietnamese = settingsManager.useVietnamese)
+                        historyManager.addHistory("Object", announcement)
+                    }
+                    lastSeenTime[title] = currentTime
                 }
 
-                val lastSeen = lastSeenTime[title] ?: 0L
-                if (currentTime - lastSeen > DEBOUNCE_TIME) {
-                    val announcement = title
-                    ttsManager.speak(announcement, isQueued = true, isVietnamese = settingsManager.useVietnamese)
-                    historyManager.addHistory("Object", announcement)
-                }
-                lastSeenTime[title] = currentTime
+                // Clean up old entries to prevent memory leak
+                lastSeenTime.entries.removeIf { currentTime - it.value > 5000L }
+
+                onResults(filteredResults)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                image.close()
             }
+        }
+    }
 
-            // Clean up old entries to prevent memory leak
-            lastSeenTime.entries.removeIf { currentTime - it.value > 5000L }
-
-            onResults(filteredResults)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            image.close()
+    fun close() {
+        synchronized(lock) {
+            isClosed = true
+            try {
+                detector.close()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

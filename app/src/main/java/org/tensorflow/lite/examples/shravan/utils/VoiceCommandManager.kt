@@ -17,6 +17,7 @@ class VoiceCommandManager(private val context: Context) {
     private var speechRecognizer: SpeechRecognizer? = null
     private var isListening = false
     private var onResult: ((String) -> Unit)? = null
+    private var onPartialResult: ((String) -> Unit)? = null
     private var lastIsVietnamese = true
     private var shouldRetry = true
     private val handler = Handler(Looper.getMainLooper())
@@ -35,7 +36,7 @@ class VoiceCommandManager(private val context: Context) {
                 } else {
                     Log.e("VoiceCommandManager", "SpeechRecognition not available")
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Log.e("VoiceCommandManager", "Initialization error", e)
             }
         }
@@ -70,24 +71,38 @@ class VoiceCommandManager(private val context: Context) {
                     handler.post { startListeningInternal() }
                 }
             }
-            override fun onPartialResults(partialResults: Bundle?) {}
+            override fun onPartialResults(partialResults: Bundle?) {
+                val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                if (!matches.isNullOrEmpty()) {
+                    onPartialResult?.invoke(matches[0])
+                }
+            }
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
     }
 
-    fun startListening(isVietnamese: Boolean = true, retry: Boolean = true, callback: (String) -> Unit): Int {
+    fun startListening(isVietnamese: Boolean = true, retry: Boolean = true, partialCallback: ((String) -> Unit)? = null, callback: (String) -> Unit): Int {
         currentSessionId++
         handler.post {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                Log.e("VoiceCommandManager", "RECORD_AUDIO permission not granted")
-                return@post
-            }
-            onResult = callback
-            lastIsVietnamese = isVietnamese
-            shouldRetry = retry
+            try {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                    Log.e("VoiceCommandManager", "RECORD_AUDIO permission not granted")
+                    return@post
+                }
+                onResult = callback
+                onPartialResult = partialCallback
+                lastIsVietnamese = isVietnamese
+                shouldRetry = retry
 
-            speechRecognizer?.cancel() // Stop any ongoing session before starting a new one
-            startListeningInternal()
+                if (speechRecognizer != null) {
+                    speechRecognizer?.cancel()
+                    startListeningInternal()
+                } else {
+                    Log.e("VoiceCommandManager", "Recognizer is null, cannot start")
+                }
+            } catch (e: Throwable) {
+                Log.e("VoiceCommandManager", "Error starting listener", e)
+            }
         }
         return currentSessionId
     }
@@ -98,6 +113,7 @@ class VoiceCommandManager(private val context: Context) {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, if (lastIsVietnamese) "vi-VN" else "en-US")
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         }
         speechRecognizer?.startListening(intent)
     }

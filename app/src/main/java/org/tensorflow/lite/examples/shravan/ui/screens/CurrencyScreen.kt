@@ -47,6 +47,12 @@ fun CurrencyScreen(
         } else null
     }
 
+    DisposableEffect(analyzer) {
+        onDispose {
+            analyzer?.close()
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         if (isActive) {
             CameraPreview(

@@ -104,8 +104,6 @@ public class YoloV5ClassifierDetect implements Classifier {
             }
             if (isGPU) {
                 GpuDelegate.Options gpu_options = new GpuDelegate.Options();
-                gpu_options.setPrecisionLossAllowed(true); // It seems that the default is true
-                gpu_options.setInferencePreference(GpuDelegate.Options.INFERENCE_PREFERENCE_SUSTAINED_SPEED);
                 d.gpuDelegate = new GpuDelegate(gpu_options);
                 options.addDelegate(d.gpuDelegate);
             }
@@ -185,7 +183,7 @@ public class YoloV5ClassifierDetect implements Classifier {
     }
 
     public void setNumThreads(int num_threads) {
-        if (tfLite != null) tfLite.setNumThreads(num_threads);
+        // Num threads are set on Interpreter.Options
     }
 
     @Override

@@ -52,9 +52,9 @@ fun CameraPreview(
         val provider = cameraProvider ?: return@LaunchedEffect
         val view = previewView ?: return@LaunchedEffect
         try {
-            // Unbind previous specific use cases for this instance if any
-            previewUseCase?.let { provider.unbind(it) }
-            analysisUseCase?.let { provider.unbind(it) }
+            // Force unbind everything from this provider before binding new ones
+            // This is safer when switching between screens in a HorizontalPager
+            provider.unbindAll()
 
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(view.surfaceProvider)

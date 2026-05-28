@@ -122,16 +122,23 @@ fun FindScreen(
 
     LaunchedEffect(recognitions, activeMode, isActive) {
         if (isActive && activeMode != null && recognitions.isNotEmpty()) {
-            val closest = recognitions.maxByOrNull { it.location.width() * it.location.height() }
-            if (closest != null) {
-                val area = closest.location.width() * closest.location.height()
-                val maxArea = 416f * 416f
-                val distanceRatio = 1f - (area / maxArea)
-                val interval = (distanceRatio * 1000).toLong().coerceAtLeast(100L)
+            while (true) {
+                val currentRecognitions = recognitions
+                if (currentRecognitions.isEmpty()) break
                 
-                if (settingsManager.hapticsEnabled) {
-                    hapticManager.triggerHaptic()
+                val closest = currentRecognitions.maxByOrNull { it.location.width() * it.location.height() }
+                if (closest != null) {
+                    val area = closest.location.width() * closest.location.height()
+                    val maxArea = 416f * 416f
+                    val distanceRatio = (1f - (area / maxArea)).coerceIn(0f, 1f)
+                    val interval = (distanceRatio * 1000).toLong().coerceAtLeast(100L)
+                    
+                    if (settingsManager.hapticsEnabled) {
+                        hapticManager.triggerHaptic()
+                    }
                     delay(interval)
+                } else {
+                    break
                 }
             }
         }

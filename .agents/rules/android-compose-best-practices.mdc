@@ -21,6 +21,7 @@ globs: "**/*.kt"
 - Ensure minimum touch target sizes of 48x48dp.
 - Use Semantic properties to provide extra context to screen readers.
 - In this project, prioritize TTS and Haptic feedback as per [SPECS.md](../specs/SPECS.md).
+- **Font:** Use `Inter` font family for all text elements as per `resource-conventions.mdc`.
 
 ## Architecture
 - Strictly follow MVVM or MVI patterns.

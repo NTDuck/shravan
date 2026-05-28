@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -29,131 +30,160 @@ import org.tensorflow.lite.examples.shravan.utils.*
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = android.graphics.Color.TRANSPARENT
-        window.navigationBarColor = android.graphics.Color.TRANSPARENT
-        setContent {
-            val context = LocalContext.current
-            
-            val settingsManager = remember { 
-                try { SettingsManager(context) } catch (e: Exception) { null }
-            }
-            val historyManager = remember { 
-                try { HistoryManager(context) } catch (e: Exception) { null }
-            }
-            val ttsManager = remember { 
-                try { TTSManager(context) } catch (e: Exception) { null }
-            }
-            val hapticManager = remember { 
-                try { HapticManager(context) } catch (e: Exception) { null }
-            }
-            val voiceCommandManager = remember { 
-                try { VoiceCommandManager(context) } catch (e: Exception) { null }
-            }
-
-            if (settingsManager == null || historyManager == null || ttsManager == null || 
-                hapticManager == null || voiceCommandManager == null) {
-                // Critical failure, show simple error
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                    androidx.compose.material3.Text("Failed to initialize components")
+        android.util.Log.d("SHRAVAN_DEBUG", "MainActivity onCreate started")
+        try {
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            android.util.Log.d("SHRAVAN_DEBUG", "Window configured")
+            setContent {
+                val context = LocalContext.current
+                android.util.Log.d("SHRAVAN_DEBUG", "setContent started")
+                
+                val settingsManager = remember { 
+                    try { SettingsManager(context) } catch (e: Throwable) { 
+                        android.util.Log.e("MainActivity", "SettingsManager init failed", e)
+                        null 
+                    }
                 }
-                return@setContent
-            }
-            
-            ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.background
-                ) {
-                    val navController = rememberNavController()
-
-                    var hasCameraPermission by remember {
-                        mutableStateOf(
-                            ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.CAMERA
-                            ) == PackageManager.PERMISSION_GRANTED
-                        )
+                val historyManager = remember { 
+                    try { HistoryManager(context) } catch (e: Throwable) { 
+                        android.util.Log.e("MainActivity", "HistoryManager init failed", e)
+                        null 
                     }
-                    
-                    var hasRecordAudioPermission by remember {
-                        mutableStateOf(
-                            ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.RECORD_AUDIO
-                            ) == PackageManager.PERMISSION_GRANTED
-                        )
+                }
+                val ttsManager = remember { 
+                    try { TTSManager(context) } catch (e: Throwable) { 
+                        android.util.Log.e("MainActivity", "TTSManager init failed", e)
+                        null 
                     }
-
-                    val launcher = rememberLauncherForActivityResult(
-                        contract = ActivityResultContracts.RequestMultiplePermissions(),
-                        onResult = { permissions ->
-                            hasCameraPermission = permissions[Manifest.permission.CAMERA] ?: hasCameraPermission
-                            hasRecordAudioPermission = permissions[Manifest.permission.RECORD_AUDIO] ?: hasRecordAudioPermission
-                        }
-                    )
-
-                    LaunchedEffect(Unit) {
-                        val permissionsNeeded = mutableListOf<String>()
-                        if (!hasCameraPermission) permissionsNeeded.add(Manifest.permission.CAMERA)
-                        if (!hasRecordAudioPermission) permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
-                        
-                        if (permissionsNeeded.isNotEmpty()) {
-                            launcher.launch(permissionsNeeded.toTypedArray())
-                        }
-                        ttsManager.setSpeechRate(settingsManager.speechRate)
+                }
+                val hapticManager = remember { 
+                    try { HapticManager(context) } catch (e: Throwable) { 
+                        android.util.Log.e("MainActivity", "HapticManager init failed", e)
+                        null 
                     }
-
-                    DisposableEffect(Unit) {
-                        onDispose {
-                            ttsManager.destroy()
-                            voiceCommandManager.destroy()
-                        }
+                }
+                val voiceCommandManager = remember { 
+                    try { VoiceCommandManager(context) } catch (e: Throwable) { 
+                        android.util.Log.e("MainActivity", "VoiceCommandManager init failed", e)
+                        null 
                     }
+                }
 
-                    val startDestination = if (settingsManager.impairmentLevel == null) "setup" else "main"
-
-                    NavHost(
-                        navController = navController, 
-                        startDestination = startDestination
-                    ) {
-                        composable("setup") {
-                            SetupHomeScreen(
-                                navController = navController,
-                                settingsManager = settingsManager,
-                                ttsManager = ttsManager,
-                                hapticManager = hapticManager,
-                                voiceCommandManager = voiceCommandManager
+                if (settingsManager == null || historyManager == null || ttsManager == null || 
+                    hapticManager == null || voiceCommandManager == null) {
+                    // Critical failure, show simple error
+                    Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                            androidx.compose.material3.Text(
+                                "Critical system failure. Please restart the app.",
+                                color = Color.White,
+                                style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
                             )
                         }
-                        composable("main") {
-                            if (hasCameraPermission && hasRecordAudioPermission) {
-                                MainScreen(
+                    }
+                    return@setContent
+                }
+                
+                ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.background
+                    ) {
+                        val navController = rememberNavController()
+
+                        var hasCameraPermission by remember {
+                            mutableStateOf(
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.CAMERA
+                                ) == PackageManager.PERMISSION_GRANTED
+                            )
+                        }
+                        
+                        var hasRecordAudioPermission by remember {
+                            mutableStateOf(
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                            )
+                        }
+
+                        val launcher = rememberLauncherForActivityResult(
+                            contract = ActivityResultContracts.RequestMultiplePermissions(),
+                            onResult = { permissions ->
+                                hasCameraPermission = permissions[Manifest.permission.CAMERA] ?: hasCameraPermission
+                                hasRecordAudioPermission = permissions[Manifest.permission.RECORD_AUDIO] ?: hasRecordAudioPermission
+                            }
+                        )
+
+                        LaunchedEffect(Unit) {
+                            val permissionsNeeded = mutableListOf<String>()
+                            if (!hasCameraPermission) permissionsNeeded.add(Manifest.permission.CAMERA)
+                            if (!hasRecordAudioPermission) permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
+                            
+                            if (permissionsNeeded.isNotEmpty()) {
+                                launcher.launch(permissionsNeeded.toTypedArray())
+                            }
+                            ttsManager.setSpeechRate(settingsManager.speechRate)
+                        }
+
+                        DisposableEffect(Unit) {
+                            onDispose {
+                                ttsManager.destroy()
+                                voiceCommandManager.destroy()
+                            }
+                        }
+
+                        val startDestination = if (settingsManager.impairmentLevel == null) "setup" else "main"
+
+                        NavHost(
+                            navController = navController, 
+                            startDestination = startDestination,
+                            enterTransition = { fadeIn(animationSpec = androidx.compose.animation.core.tween(500)) },
+                            exitTransition = { fadeOut(animationSpec = androidx.compose.animation.core.tween(500)) }
+                        ) {
+                            composable("setup") {
+                                SetupHomeScreen(
+                                    navController = navController,
                                     settingsManager = settingsManager,
                                     ttsManager = ttsManager,
                                     hapticManager = hapticManager,
-                                    voiceCommandManager = voiceCommandManager,
-                                    historyManager = historyManager,
-                                    onReset = {
-                                        settingsManager.clearAll()
-                                        historyManager.clearHistory()
-                                        navController.navigate("setup") {
-                                            popUpTo(navController.graph.startDestinationId) {
-                                                inclusive = true
-                                            }
-                                        }
-                                    }
+                                    voiceCommandManager = voiceCommandManager
                                 )
-                            } else {
-                                // Show loading or permission request state
-                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                                    CircularProgressIndicator()
+                            }
+                            composable("main") {
+                                if (hasCameraPermission && hasRecordAudioPermission) {
+                                    MainScreen(
+                                        settingsManager = settingsManager,
+                                        ttsManager = ttsManager,
+                                        hapticManager = hapticManager,
+                                        voiceCommandManager = voiceCommandManager,
+                                        historyManager = historyManager,
+                                        onReset = {
+                                            settingsManager.clearAll()
+                                            historyManager.clearHistory()
+                                            (context as? android.app.Activity)?.finishAffinity()
+                                        }
+                                    )
+                                } else {
+                                    // Show loading or permission request state
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                        CircularProgressIndicator()
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+        } catch (e: Throwable) {
+            android.util.Log.e("MainActivity", "CRITICAL ERROR DURING ONCREATE", e)
+            // Show a very basic view if setContent failed
+            android.widget.Toast.makeText(this, "Critical error: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            finish()
         }
     }
 }

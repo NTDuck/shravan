@@ -19,6 +19,16 @@
     <string name="lang_vi">Tiếng Việt</string>
     <string name="welcome_partial">Received: Partially Blind</string>
     <string name="welcome_total">Received: Totally Blind</string>
+    <string name="label_partial">Partially Blind</string>
+    <string name="label_total">Totally Blind</string>
+    <string name="voice_keyword_partial">partially</string>
+    <string name="voice_keyword_total">totally</string>
+    <string name="voice_keyword_explore">explore</string>
+    <string name="voice_keyword_find">find</string>
+    <string name="voice_keyword_ocr">ocr</string>
+    <string name="voice_keyword_currency">currency</string>
+    <string name="voice_keyword_settings">settings</string>
+    <string name="voice_keyword_history">history</string>
     <string name="find_prompt">What are you looking for? Seatings and tables, doors and windows, or person and vehicles?</string>
     <string name="find_looking_for">Looking for %s</string>
     <string name="ocr_greeting">OCR</string>

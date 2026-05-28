@@ -72,6 +72,11 @@ fun HistoryScreen(
                     ttsManager.speak(backCommand, isVietnamese = useVietnamese)
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     onBack()
+                } else if (lowerResult.contains("xóa") || lowerResult.contains("clear") || lowerResult.contains("delete")) {
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    historyManager.clearHistory()
+                    val msg = if (useVietnamese) "Đã xóa lịch sử" else "History cleared"
+                    ttsManager.speak(msg, isVietnamese = useVietnamese)
                 }
             }
         } else {
