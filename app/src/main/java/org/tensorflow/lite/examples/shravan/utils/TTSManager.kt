@@ -107,15 +107,24 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
             setLanguage(isVietnamese)
             val queueMode = if (isQueued) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH
             
-            // Set speakerphone on for VOICE_CALL stream
-            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-            audioManager.isSpeakerphoneOn = true
-            
-            val params = Bundle().apply {
-                putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "id")
-                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_VOICE_CALL)
+            val params = Bundle()
+            try {
+                // Set speakerphone on for VOICE_CALL stream
+                val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? android.media.AudioManager
+                audioManager?.isSpeakerphoneOn = true
+                params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "id")
+                params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_VOICE_CALL)
+            } catch (e: Exception) {
+                Log.e("TTSManager", "Error setting audio parameters", e)
             }
-            tts?.speak(text, queueMode, params, "id")
+            
+            try {
+                tts?.speak(text, queueMode, params, "id")
+            } catch (e: Exception) {
+                Log.e("TTSManager", "Error in speak call", e)
+                onComplete?.invoke()
+                onCompletionListener = null
+            }
         } else {
             pendingRequests.add(PendingSpeakRequest(text, isQueued, isVietnamese, onComplete))
         }

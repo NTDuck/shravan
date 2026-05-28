@@ -29,7 +29,7 @@ class YoloAnalyzer(
         DetectorFactory.getDetector(context.assets, modelName)
     }
 
-    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     private val lastAreas = mutableMapOf<Int, Float>()
     private val lastAlertTime = mutableMapOf<Int, Long>()
     private val ALERT_COOLDOWN = 2000L
@@ -100,11 +100,13 @@ class YoloAnalyzer(
                         ttsManager.speak(alertTitle, isQueued = false, isVietnamese = settingsManager.useVietnamese)
                         
                         if (settingsManager.hapticsEnabled) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
-                            } else {
-                                @Suppress("DEPRECATION")
-                                vibrator.vibrate(500)
+                            vibrator?.let { v ->
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+                                } else {
+                                    @Suppress("DEPRECATION")
+                                    v.vibrate(500)
+                                }
                             }
                         }
                     }

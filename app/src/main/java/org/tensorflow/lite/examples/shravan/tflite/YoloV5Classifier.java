@@ -140,8 +140,13 @@ public class YoloV5Classifier implements Classifier {
         }
 
         int[] shape = d.tfLite.getOutputTensor(0).shape();
-        d.output_box = shape[1];
-        int numClass = shape[shape.length - 1] - 5;
+        if (shape != null && shape.length > 1) {
+            d.output_box = shape[1];
+        } else {
+            d.output_box = 10647; // Fallback
+        }
+        
+        int numClass = shape != null ? (shape[shape.length - 1] - 5) : 80;
         d.numClass = numClass;
         d.outData = ByteBuffer.allocateDirect(d.output_box * (numClass + 5) * numBytesPerChannel);
         d.outData.order(ByteOrder.nativeOrder());
@@ -162,17 +167,21 @@ public class YoloV5Classifier implements Classifier {
 
     @Override
     public void close() {
-        if (tfLite != null) {
-            tfLite.close();
-            tfLite = null;
-        }
-        if (gpuDelegate != null) {
-            gpuDelegate.close();
-            gpuDelegate = null;
-        }
-        if (nnapiDelegate != null) {
-            nnapiDelegate.close();
-            nnapiDelegate = null;
+        try {
+            if (tfLite != null) {
+                tfLite.close();
+                tfLite = null;
+            }
+            if (gpuDelegate != null) {
+                gpuDelegate.close();
+                gpuDelegate = null;
+            }
+            if (nnapiDelegate != null) {
+                nnapiDelegate.close();
+                nnapiDelegate = null;
+            }
+        } catch (Exception e) {
+            Log.e("YoloV5Classifier", "Error closing interpreter", e);
         }
         tfliteModel = null;
     }
@@ -187,9 +196,13 @@ public class YoloV5Classifier implements Classifier {
     }
 
     private void recreateInterpreter() {
-        if (tfLite != null) {
-            tfLite.close();
-            tfLite = new Interpreter(tfliteModel, tfliteOptions);
+        try {
+            if (tfLite != null) {
+                tfLite.close();
+                tfLite = new Interpreter(tfliteModel, tfliteOptions);
+            }
+        } catch (Exception e) {
+            Log.e("YoloV5Classifier", "Error recreating interpreter", e);
         }
     }
 
@@ -379,83 +392,83 @@ public class YoloV5Classifier implements Classifier {
     }
 
     public ArrayList<Recognition> recognizeImage(Bitmap bitmap) {
-        convertBitmapToByteBuffer(bitmap);
+        try {
+            convertBitmapToByteBuffer(bitmap);
 
-        Map<Integer, Object> outputMap = new HashMap<>();
+            Map<Integer, Object> outputMap = new HashMap<>();
 
-//        float[][][] outbuf = new float[1][output_box][labels.size() + 5];
-        outData.rewind();
-        outputMap.put(0, outData);
-        Log.d("YoloV5Classifier", "mObjThresh: " + getObjThresh());
+            outData.rewind();
+            outputMap.put(0, outData);
 
-        Object[] inputArray = {imgData};
-        tfLite.runForMultipleInputsOutputs(inputArray, outputMap);
+            Object[] inputArray = {imgData};
+            if (tfLite != null) {
+                tfLite.runForMultipleInputsOutputs(inputArray, outputMap);
+            } else {
+                return new ArrayList<Recognition>();
+            }
 
-        ByteBuffer byteBuffer = (ByteBuffer) outputMap.get(0);
-        byteBuffer.rewind();
+            ByteBuffer byteBuffer = (ByteBuffer) outputMap.get(0);
+            byteBuffer.rewind();
 
-        ArrayList<Recognition> detections = new ArrayList<Recognition>();
+            ArrayList<Recognition> detections = new ArrayList<Recognition>();
 
-        float[][][] out = new float[1][output_box][numClass + 5];
-        Log.d("YoloV5Classifier", "out[0] detect start");
-        for (int i = 0; i < output_box; ++i) {
-            for (int j = 0; j < numClass + 5; ++j) {
-                if (isModelQuantized){
-                    out[0][i][j] = oup_scale * (((int) byteBuffer.get() & 0xFF) - oup_zero_point);
+            float[][][] out = new float[1][output_box][numClass + 5];
+            for (int i = 0; i < output_box; ++i) {
+                for (int j = 0; j < numClass + 5; ++j) {
+                    if (isModelQuantized){
+                        out[0][i][j] = oup_scale * (((int) byteBuffer.get() & 0xFF) - oup_zero_point);
+                    }
+                    else {
+                        out[0][i][j] = byteBuffer.getFloat();
+                    }
                 }
-                else {
-                    out[0][i][j] = byteBuffer.getFloat();
+                // Denormalize xywh
+                for (int j = 0; j < 4; ++j) {
+                    out[0][i][j] *= getInputSize();
                 }
             }
-            // Denormalize xywh
-            for (int j = 0; j < 4; ++j) {
-                out[0][i][j] *= getInputSize();
+            for (int i = 0; i < output_box; ++i){
+                final int offset = 0;
+                final float confidence = out[0][i][4];
+                int detectedClass = -1;
+                float maxClass = 0;
+
+                final int numDetectedClasses = Math.min(labels.size(), numClass);
+                final float[] classes = new float[numDetectedClasses];
+                for (int c = 0; c < numDetectedClasses; ++c) {
+                    classes[c] = out[0][i][5 + c];
+                }
+
+                for (int c = 0; c < numDetectedClasses; ++c) {
+                    if (classes[c] > maxClass) {
+                        detectedClass = c;
+                        maxClass = classes[c];
+                    }
+                }
+
+                final float confidenceInClass = maxClass * confidence;
+                if (confidenceInClass > getObjThresh() && detectedClass != -1) {
+                    final float xPos = out[0][i][0];
+                    final float yPos = out[0][i][1];
+
+                    final float w = out[0][i][2];
+                    final float h = out[0][i][3];
+
+                    final RectF rect =
+                            new RectF(
+                                    Math.max(0, xPos - w / 2),
+                                    Math.max(0, yPos - h / 2),
+                                    Math.min(bitmap.getWidth() - 1, xPos + w / 2),
+                                    Math.min(bitmap.getHeight() - 1, yPos + h / 2));
+                    detections.add(new Recognition("" + offset, labels.get(detectedClass),
+                            confidenceInClass, rect, detectedClass));
+                }
             }
+            return nms(detections);
+        } catch (Exception e) {
+            Log.e("YoloV5Classifier", "Error during recognition", e);
+            return new ArrayList<Recognition>();
         }
-        for (int i = 0; i < output_box; ++i){
-            final int offset = 0;
-            final float confidence = out[0][i][4];
-            int detectedClass = -1;
-            float maxClass = 0;
-
-            final int numDetectedClasses = Math.min(labels.size(), numClass);
-            final float[] classes = new float[numDetectedClasses];
-            for (int c = 0; c < numDetectedClasses; ++c) {
-                classes[c] = out[0][i][5 + c];
-            }
-
-            for (int c = 0; c < numDetectedClasses; ++c) {
-                if (classes[c] > maxClass) {
-                    detectedClass = c;
-                    maxClass = classes[c];
-                }
-            }
-
-            final float confidenceInClass = maxClass * confidence;
-            if (confidenceInClass > getObjThresh() && detectedClass != -1) {
-                final float xPos = out[0][i][0];
-                final float yPos = out[0][i][1];
-
-                final float w = out[0][i][2];
-                final float h = out[0][i][3];
-                Log.d("YoloV5Classifier",
-                        Float.toString(xPos) + ',' + yPos + ',' + w + ',' + h);
-
-                final RectF rect =
-                        new RectF(
-                                Math.max(0, xPos - w / 2),
-                                Math.max(0, yPos - h / 2),
-                                Math.min(bitmap.getWidth() - 1, xPos + w / 2),
-                                Math.min(bitmap.getHeight() - 1, yPos + h / 2));
-                detections.add(new Recognition("" + offset, labels.get(detectedClass),
-                        confidenceInClass, rect, detectedClass));
-            }
-        }
-
-        Log.d("YoloV5Classifier", "detect end");
-        final ArrayList<Recognition> recognitions = nms(detections);
-//        final ArrayList<Recognition> recognitions = detections;
-        return recognitions;
     }
 
     public boolean checkInvalidateBox(float x, float y, float width, float height, float oriW, float oriH, int intputSize) {

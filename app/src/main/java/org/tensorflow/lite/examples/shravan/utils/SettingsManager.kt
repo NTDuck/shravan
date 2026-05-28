@@ -15,7 +15,13 @@ class SettingsManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("shravan_prefs", Context.MODE_PRIVATE)
 
     var impairmentLevel by mutableStateOf(
-        prefs.getString("impairment_level", null)?.let { ImpairmentLevel.valueOf(it) }
+        prefs.getString("impairment_level", null)?.let {
+            try {
+                ImpairmentLevel.valueOf(it)
+            } catch (e: Exception) {
+                null
+            }
+        }
     )
 
     fun updateImpairmentLevel(level: ImpairmentLevel?) {

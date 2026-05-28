@@ -9,7 +9,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
@@ -28,11 +33,31 @@ class MainActivity : ComponentActivity() {
         window.navigationBarColor = android.graphics.Color.TRANSPARENT
         setContent {
             val context = LocalContext.current
-            val settingsManager = remember { SettingsManager(context) }
-            val historyManager = remember { HistoryManager(context) }
-            val ttsManager = remember { TTSManager(context) }
-            val hapticManager = remember { HapticManager(context) }
-            val voiceCommandManager = remember { VoiceCommandManager(context) }
+            
+            val settingsManager = remember { 
+                try { SettingsManager(context) } catch (e: Exception) { null }
+            }
+            val historyManager = remember { 
+                try { HistoryManager(context) } catch (e: Exception) { null }
+            }
+            val ttsManager = remember { 
+                try { TTSManager(context) } catch (e: Exception) { null }
+            }
+            val hapticManager = remember { 
+                try { HapticManager(context) } catch (e: Exception) { null }
+            }
+            val voiceCommandManager = remember { 
+                try { VoiceCommandManager(context) } catch (e: Exception) { null }
+            }
+
+            if (settingsManager == null || historyManager == null || ttsManager == null || 
+                hapticManager == null || voiceCommandManager == null) {
+                // Critical failure, show simple error
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    androidx.compose.material3.Text("Failed to initialize components")
+                }
+                return@setContent
+            }
             
             ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
                 val navController = rememberNavController()
@@ -107,14 +132,18 @@ class MainActivity : ComponentActivity() {
                                 onReset = {
                                     settingsManager.clearAll()
                                     historyManager.clearHistory()
-                                    // Normally we should restart the app, but for now navigate to setup
                                     navController.navigate("setup") {
-                                        popUpTo(navController.graph.startDestinationId) {
+                                        popUpTo(navController.graph.id) {
                                             inclusive = true
                                         }
                                     }
                                 }
                             )
+                        } else {
+                            // Show loading or permission request state
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                CircularProgressIndicator()
+                            }
                         }
                     }
                 }

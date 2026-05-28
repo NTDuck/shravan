@@ -24,9 +24,19 @@ class VoiceCommandManager(private val context: Context) {
 
     init {
         handler.post {
-            if (SpeechRecognizer.isRecognitionAvailable(context)) {
-                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
-                setupListener()
+            try {
+                if (SpeechRecognizer.isRecognitionAvailable(context)) {
+                    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
+                    if (speechRecognizer != null) {
+                        setupListener()
+                    } else {
+                        Log.e("VoiceCommandManager", "SpeechRecognizer creation failed")
+                    }
+                } else {
+                    Log.e("VoiceCommandManager", "SpeechRecognition not available")
+                }
+            } catch (e: Exception) {
+                Log.e("VoiceCommandManager", "Initialization error", e)
             }
         }
     }
