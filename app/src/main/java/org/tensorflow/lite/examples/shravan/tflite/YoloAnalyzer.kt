@@ -25,6 +25,8 @@ class YoloAnalyzer(
     private val onResults: (List<Classifier.Recognition>) -> Unit
 ) : ImageAnalysis.Analyzer {
 
+    var allowedClasses: List<String>? = null
+
     private val detector: YoloV5Classifier by lazy {
         DetectorFactory.getDetector(context.assets, modelName)
     }
@@ -80,7 +82,15 @@ class YoloAnalyzer(
                 )
 
                 val results = detector.recognizeImage(scaledBitmap)
-                val filteredResults = results.filter { it.confidence > 0.25f }
+                val baseFiltered = results.filter { it.confidence > 0.25f }
+                val filteredResults = if (allowedClasses != null) {
+                    baseFiltered.filter { result ->
+                        val title = if (result.detectedClass < labels.size) labels[result.detectedClass] else result.title
+                        allowedClasses!!.contains(title.lowercase())
+                    }
+                } else {
+                    baseFiltered
+                }
 
                 val currentTime = System.currentTimeMillis()
                 val currentTitles = mutableSetOf<String>()

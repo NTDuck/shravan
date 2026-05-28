@@ -9,6 +9,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.EventSeat
 import androidx.compose.material.icons.filled.MeetingRoom
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.TableRestaurant
+import androidx.compose.material.icons.filled.Window
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -61,19 +64,21 @@ fun FindScreen(
         if (isActive) {
             YoloAnalyzer(context, ttsManager, settingsManager, historyManager) { results ->
                 if (activeMode != null) {
-                    recognitions = results.filter { 
-                        when (activeMode) {
-                            "seatings & tables" -> it.title.lowercase() in listOf("chair", "dining table", "couch", "bàn", "ghế")
-                            "doors & windows" -> it.title.lowercase() in listOf("door", "window", "cửa")
-                            "person & vehicles" -> it.title.lowercase() in listOf("person", "car", "bus", "truck", "motorcycle", "người", "xe")
-                            else -> false
-                        }
-                    }
+                    recognitions = results
                 } else {
                     recognitions = emptyList()
                 }
             }
         } else null
+    }
+
+    LaunchedEffect(activeMode) {
+        analyzer?.allowedClasses = when (activeMode) {
+            "seatings & tables" -> listOf("chair", "dining table", "couch", "bàn", "ghế")
+            "doors & windows" -> listOf("door", "window", "cửa")
+            "person & vehicles" -> listOf("person", "car", "bus", "truck", "motorcycle", "người", "xe")
+            else -> emptyList()
+        }
     }
 
     val findPrompt = stringResource(org.tensorflow.lite.examples.shravan.R.string.find_prompt)
@@ -151,90 +156,85 @@ fun FindScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.6f)) {
-            if (isActive) {
-                CameraPreview(
-                    modifier = Modifier.fillMaxSize(),
-                    zoomRatio = 0.6f,
-                    imageAnalyzer = analyzer
-                )
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        if (isActive) {
+            CameraPreview(
+                modifier = Modifier.fillMaxSize(),
+                zoomRatio = 0.6f,
+                imageAnalyzer = analyzer
+            )
 
-                if (isMonotone) {
-                    Box(modifier = Modifier.fillMaxSize().background(Color.Gray.copy(alpha = 0.8f)))
-                }
+            if (isMonotone) {
+                Box(modifier = Modifier.fillMaxSize().background(Color.Gray.copy(alpha = 0.8f)))
+            }
 
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    recognitions.forEach { recognition ->
-                        val rect = recognition.location
-                        val scaleX = size.width / 416f
-                        val scaleY = size.height / 416f
-                        val color = DimmedPalette[recognition.detectedClass % DimmedPalette.size]
-                        
-                        val topLeft = Offset(rect.left * scaleX, rect.top * scaleY)
-                        val boxSize = Size(rect.width() * scaleX, rect.height() * scaleY)
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                recognitions.forEach { recognition ->
+                    val rect = recognition.location
+                    val scaleX = size.width / 416f
+                    val scaleY = size.height / 416f
+                    val color = DimmedPalette[recognition.detectedClass % DimmedPalette.size]
+                    
+                    val topLeft = Offset(rect.left * scaleX, rect.top * scaleY)
+                    val boxSize = Size(rect.width() * scaleX, rect.height() * scaleY)
 
-                        drawRect(
-                            color = color,
-                            topLeft = topLeft,
-                            size = boxSize,
-                            style = Stroke(width = 3.dp.toPx())
+                    drawRect(
+                        color = color,
+                        topLeft = topLeft,
+                        size = boxSize,
+                        style = Stroke(width = 3.dp.toPx())
+                    )
+                    
+                    drawText(
+                        textMeasurer = textMeasurer,
+                        text = recognition.title,
+                        topLeft = Offset(topLeft.x, topLeft.y - 20.dp.toPx()),
+                        style = TextStyle(
+                            color = color, 
+                            fontSize = 16.sp,
+                            fontFamily = InterFontFamily
                         )
-                        
-                        drawText(
-                            textMeasurer = textMeasurer,
-                            text = recognition.title,
-                            topLeft = Offset(topLeft.x, topLeft.y - 20.dp.toPx()),
-                            style = TextStyle(
-                                color = color, 
-                                fontSize = 16.sp,
-                                fontFamily = InterFontFamily
-                            )
-                        )
-                    }
+                    )
                 }
             }
         }
         
-        Column(
-            modifier = Modifier.fillMaxWidth().weight(1f).padding(16.dp),
-            verticalArrangement = Arrangement.SpaceEvenly
+        Row(
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(bottom = 32.dp, start = 16.dp, end = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val mode1 = if (settingsManager.useVietnamese) "Bàn & Ghế" else "Seatings & Tables"
-            val mode2 = if (settingsManager.useVietnamese) "Cửa & Cửa sổ" else "Doors & Windows"
-            val mode3 = if (settingsManager.useVietnamese) "Người & Xe" else "Person & Vehicles"
-
-            val modesList = listOf(
-                Triple("seatings & tables", androidx.compose.material.icons.Icons.Default.EventSeat, mode1),
-                Triple("doors & windows", androidx.compose.material.icons.Icons.Default.MeetingRoom, mode2),
-                Triple("person & vehicles", androidx.compose.material.icons.Icons.Default.DirectionsCar, mode3)
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+            // Button 1
+            Box(
+                modifier = Modifier.size(100.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (activeMode == "seatings & tables") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                contentAlignment = Alignment.Center
             ) {
-                modesList.forEach { (modeId, icon, desc) ->
-                    val isSelected = activeMode == modeId
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f))
-                            .clickable {
-                                activeMode = modeId
-                                if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = desc,
-                            tint = if (isSelected) Color.White else Color.LightGray,
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(androidx.compose.material.icons.Icons.Default.EventSeat, contentDescription = null, tint = if (activeMode == "seatings & tables") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Text("/", color = if (activeMode == "seatings & tables") Color.White else Color.LightGray, fontSize = 24.sp, modifier = Modifier.padding(horizontal = 4.dp))
+                    Icon(androidx.compose.material.icons.Icons.Default.TableRestaurant, contentDescription = null, tint = if (activeMode == "seatings & tables") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                }
+            }
+            // Button 2
+            Box(
+                modifier = Modifier.size(100.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (activeMode == "doors & windows") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(androidx.compose.material.icons.Icons.Default.Window, contentDescription = null, tint = if (activeMode == "doors & windows") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Text("/", color = if (activeMode == "doors & windows") Color.White else Color.LightGray, fontSize = 24.sp, modifier = Modifier.padding(horizontal = 4.dp))
+                    Icon(androidx.compose.material.icons.Icons.Default.MeetingRoom, contentDescription = null, tint = if (activeMode == "doors & windows") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                }
+            }
+            // Button 3
+            Box(
+                modifier = Modifier.size(100.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (activeMode == "person & vehicles") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(androidx.compose.material.icons.Icons.Default.Person, contentDescription = null, tint = if (activeMode == "person & vehicles") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Text("/", color = if (activeMode == "person & vehicles") Color.White else Color.LightGray, fontSize = 24.sp, modifier = Modifier.padding(horizontal = 4.dp))
+                    Icon(androidx.compose.material.icons.Icons.Default.DirectionsCar, contentDescription = null, tint = if (activeMode == "person & vehicles") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
                 }
             }
         }

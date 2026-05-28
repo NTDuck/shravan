@@ -41,7 +41,7 @@ fun HistoryScreen(
     isActive: Boolean = true
 ) {
     val useVietnamese = settingsManager.useVietnamese
-    val historyItems = historyManager.getHistory()
+    var historyItems by remember { mutableStateOf(historyManager.getHistory()) }
     val dateFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     var interactionsEnabled by remember { mutableStateOf(false) }
     val voiceSessionId = remember { mutableStateOf<Int?>(null) }
@@ -87,6 +87,7 @@ fun HistoryScreen(
                 } else if (lowerResult.contains("xóa") || lowerResult.contains("clear") || lowerResult.contains("delete")) {
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     historyManager.clearHistory()
+                    historyItems = emptyList()
                     val msg = if (useVietnamese) "Đã xóa lịch sử" else "History cleared"
                     ttsManager.speak(msg, isVietnamese = useVietnamese)
                 }
@@ -116,6 +117,7 @@ fun HistoryScreen(
                 onClick = {
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     historyManager.clearHistory()
+                    historyItems = emptyList()
                     ttsManager.speak(if (useVietnamese) "Đã xóa lịch sử" else "History cleared", isVietnamese = useVietnamese)
                 },
                 modifier = Modifier.align(Alignment.CenterEnd)

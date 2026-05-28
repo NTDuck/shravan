@@ -79,11 +79,14 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
     }
 
     fun setLanguage(isVietnamese: Boolean) {
-        if (isInitialized) {
-            val locale = if (isVietnamese) localeVi else Locale.US
-            val result = tts?.setLanguage(locale)
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.e("TTSManager", "Language $locale not supported!")
+        lastIsVietnamese = isVietnamese
+        val locale = if (isVietnamese) Locale("vi") else Locale.US
+        val result = tts?.setLanguage(locale)
+        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            Log.e("TTSManager", "Language not supported: $locale")
+            if (isVietnamese) {
+                // Fallback attempt
+                tts?.setLanguage(Locale("vi", "VN"))
             }
         }
     }

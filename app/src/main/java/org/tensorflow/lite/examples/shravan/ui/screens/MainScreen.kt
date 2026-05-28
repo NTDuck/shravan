@@ -1,6 +1,7 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -125,10 +126,10 @@ fun MainScreen(
                 1 -> FindScreen(ttsManager, hapticManager, voiceCommandManager, settingsManager, historyManager, isActive = isActive)
                 2 -> OCRScreen(onBack = {}, ttsManager = ttsManager, settingsManager = settingsManager, historyManager = historyManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)
                 3 -> CurrencyScreen(ttsManager, hapticManager, voiceCommandManager, settingsManager, historyManager, isActive = isActive)
-                4 -> Box(modifier = Modifier.padding(innerPadding)) {
+                4 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
                     SettingsScreen(ttsManager, hapticManager, settingsManager, onReset, isActive = isActive)
                 }
-                5 -> Box(modifier = Modifier.padding(innerPadding)) {
+                5 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
                     HistoryScreen(onBack = {}, historyManager = historyManager, settingsManager = settingsManager, ttsManager = ttsManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)
                 }
             }
