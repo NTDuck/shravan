@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -87,8 +88,8 @@ fun MainScreen(
             ) {
                 screens.forEachIndexed { index, screen ->
                     NavigationBarItem(
-                        icon = { Icon(screen.second, contentDescription = stringResource(screen.first)) },
-                        label = { Text(stringResource(screen.first)) },
+                        icon = { Icon(screen.second, contentDescription = stringResource(screen.first), modifier = Modifier.size(20.dp)) },
+                        label = { Text(stringResource(screen.first), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
                         selected = pagerState.currentPage == index,
                         colors = NavigationBarItemDefaults.colors(
                             indicatorColor = Color.Transparent,

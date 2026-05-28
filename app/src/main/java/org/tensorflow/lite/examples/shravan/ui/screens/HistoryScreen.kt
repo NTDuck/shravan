@@ -1,14 +1,26 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -90,46 +102,78 @@ fun HistoryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color(0xFF222222))
             .padding(16.dp)
     ) {
-        Text(
-            text = historyGreeting,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally)
-        )
+        Box(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+            Text(
+                text = historyGreeting,
+                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+                color = Color.White,
+                modifier = Modifier.align(Alignment.Center)
+            )
+            IconButton(
+                onClick = {
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    historyManager.clearHistory()
+                    ttsManager.speak(if (useVietnamese) "Đã xóa lịch sử" else "History cleared", isVietnamese = useVietnamese)
+                },
+                modifier = Modifier.align(Alignment.CenterEnd)
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = "Clear History", tint = Color.White)
+            }
+        }
 
         if (historyItems.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(historyEmpty, fontSize = 20.sp)
+                Text(historyEmpty, fontSize = 20.sp, color = Color.White)
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(historyItems) { item ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFF444444), RoundedCornerShape(12.dp))
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = item.type.uppercase(),
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = dateFormat.format(Date(item.timestamp)),
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.outline
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = item.content, fontSize = 18.sp)
+                        val icon = when (item.type.lowercase()) {
+                            "object", "explore" -> Icons.Default.CameraAlt
+                            "find" -> Icons.Default.Search
+                            "ocr" -> Icons.Default.TextFields
+                            "currency" -> Icons.Default.MonetizationOn
+                            else -> Icons.Default.History
+                        }
+                        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = dateFormat.format(Date(item.timestamp)),
+                                color = Color.LightGray,
+                                fontSize = 14.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = item.content,
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        IconButton(onClick = {
+                            if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                            ttsManager.speak(item.content, isVietnamese = useVietnamese)
+                        }) {
+                            Icon(Icons.Default.VolumeUp, contentDescription = "Speak", tint = Color.White, modifier = Modifier.size(32.dp))
                         }
                     }
                 }

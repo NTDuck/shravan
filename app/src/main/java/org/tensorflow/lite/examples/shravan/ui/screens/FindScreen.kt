@@ -2,11 +2,18 @@ package org.tensorflow.lite.examples.shravan.ui.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.EventSeat
+import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -197,55 +204,38 @@ fun FindScreen(
             val mode2 = if (settingsManager.useVietnamese) "Cửa & Cửa sổ" else "Doors & Windows"
             val mode3 = if (settingsManager.useVietnamese) "Người & Xe" else "Person & Vehicles"
 
-            Button(
-                onClick = { 
-                    activeMode = "seatings & tables" 
-                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
-                },
-                modifier = Modifier.fillMaxWidth().height(60.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (activeMode == "seatings & tables") MaterialTheme.colorScheme.primary else Color.DarkGray
-                )
-            ) {
-                Text(
-                    text = mode1, 
-                    fontSize = 18.sp,
-                    fontFamily = InterFontFamily
-                )
-            }
+            val modesList = listOf(
+                Triple("seatings & tables", androidx.compose.material.icons.Icons.Default.EventSeat, mode1),
+                Triple("doors & windows", androidx.compose.material.icons.Icons.Default.MeetingRoom, mode2),
+                Triple("person & vehicles", androidx.compose.material.icons.Icons.Default.DirectionsCar, mode3)
+            )
 
-            Button(
-                onClick = { 
-                    activeMode = "doors & windows" 
-                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
-                },
-                modifier = Modifier.fillMaxWidth().height(60.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (activeMode == "doors & windows") MaterialTheme.colorScheme.primary else Color.DarkGray
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = mode2, 
-                    fontSize = 18.sp,
-                    fontFamily = InterFontFamily
-                )
-            }
-
-            Button(
-                onClick = { 
-                    activeMode = "person & vehicles" 
-                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
-                },
-                modifier = Modifier.fillMaxWidth().height(60.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (activeMode == "person & vehicles") MaterialTheme.colorScheme.primary else Color.DarkGray
-                )
-            ) {
-                Text(
-                    text = mode3, 
-                    fontSize = 18.sp,
-                    fontFamily = InterFontFamily
-                )
+                modesList.forEach { (modeId, icon, desc) ->
+                    val isSelected = activeMode == modeId
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f))
+                            .clickable {
+                                activeMode = modeId
+                                if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = desc,
+                            tint = if (isSelected) Color.White else Color.LightGray,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                }
             }
         }
     }
