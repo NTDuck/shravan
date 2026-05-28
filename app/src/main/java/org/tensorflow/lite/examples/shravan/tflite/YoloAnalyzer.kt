@@ -96,7 +96,7 @@ class YoloAnalyzer(
                 if (normalizedArea > SIZE_THRESHOLD && (normalizedArea - prevArea) > GROWTH_THRESHOLD) {
                     if (currentTime - lastAlert > ALERT_COOLDOWN) {
                         lastAlertTime[detectedClass] = currentTime
-                        val alertTitle = if (settingsManager.useVietnamese) "$title quá gần!" else "$title too close!"
+                        val alertTitle = context.getString(org.tensorflow.lite.examples.shravan.R.string.too_close, title)
                         ttsManager.speak(alertTitle, isQueued = false, isVietnamese = settingsManager.useVietnamese)
                         
                         if (settingsManager.hapticsEnabled) {

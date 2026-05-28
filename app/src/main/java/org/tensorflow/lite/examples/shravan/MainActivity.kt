@@ -109,7 +109,9 @@ class MainActivity : ComponentActivity() {
                                     historyManager.clearHistory()
                                     // Normally we should restart the app, but for now navigate to setup
                                     navController.navigate("setup") {
-                                        popUpTo(0)
+                                        popUpTo(navController.graph.startDestinationId) {
+                                            inclusive = true
+                                        }
                                     }
                                 }
                             )

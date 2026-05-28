@@ -21,6 +21,15 @@ val InterFontFamily = FontFamily(
 
 // Legible Typography for visually impaired (bold, clear sans-serif)
 private val AppTypography = Typography(
+    displayLarge = TextStyle(fontFamily = InterFontFamily),
+    displayMedium = TextStyle(fontFamily = InterFontFamily),
+    displaySmall = TextStyle(fontFamily = InterFontFamily),
+    headlineLarge = TextStyle(fontFamily = InterFontFamily),
+    headlineMedium = TextStyle(fontFamily = InterFontFamily),
+    headlineSmall = TextStyle(fontFamily = InterFontFamily),
+    titleLarge = TextStyle(fontFamily = InterFontFamily),
+    titleMedium = TextStyle(fontFamily = InterFontFamily),
+    titleSmall = TextStyle(fontFamily = InterFontFamily),
     bodyLarge = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.Bold,
@@ -28,13 +37,17 @@ private val AppTypography = Typography(
         lineHeight = 26.sp,
         letterSpacing = 0.5.sp
     ),
+    bodyMedium = TextStyle(fontFamily = InterFontFamily),
+    bodySmall = TextStyle(fontFamily = InterFontFamily),
     labelLarge = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp
-    )
+    ),
+    labelMedium = TextStyle(fontFamily = InterFontFamily),
+    labelSmall = TextStyle(fontFamily = InterFontFamily)
 )
 
 @Composable

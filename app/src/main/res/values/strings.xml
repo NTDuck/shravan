@@ -17,4 +17,13 @@
     <string name="flash_off">Off</string>
     <string name="lang_en">English</string>
     <string name="lang_vi">Tiếng Việt</string>
+    <string name="welcome_partial">Received: Partially Blind</string>
+    <string name="welcome_total">Received: Totally Blind</string>
+    <string name="find_prompt">What are you looking for? Seatings and tables, doors and windows, or person and vehicles?</string>
+    <string name="find_looking_for">Looking for %s</string>
+    <string name="ocr_greeting">OCR</string>
+    <string name="history_greeting">History</string>
+    <string name="back_command">Back</string>
+    <string name="history_empty">No history yet</string>
+    <string name="too_close">%s too close!</string>
 </resources>

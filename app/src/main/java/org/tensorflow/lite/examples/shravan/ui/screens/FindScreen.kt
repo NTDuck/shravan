@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -26,6 +27,7 @@ import org.tensorflow.lite.examples.shravan.tflite.Classifier
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
 import org.tensorflow.lite.examples.shravan.ui.theme.DimmedPalette
+import org.tensorflow.lite.examples.shravan.ui.theme.InterFontFamily
 import org.tensorflow.lite.examples.shravan.utils.*
 
 @OptIn(ExperimentalTextApi::class)
@@ -67,10 +69,12 @@ fun FindScreen(
         } else null
     }
 
+    val findPrompt = stringResource(org.tensorflow.lite.examples.shravan.R.string.find_prompt)
+    
     LaunchedEffect(activeMode, isActive) {
         if (isActive) {
             if (activeMode == null) {
-                ttsManager.speak("What are you looking for? Seatings and tables, doors and windows, or person and vehicles?")
+                ttsManager.speak(findPrompt, isVietnamese = settingsManager.useVietnamese)
                 voiceSessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) { result ->
                     val lowerResult = result.lowercase()
                     if (lowerResult.contains("seat") || lowerResult.contains("table") || lowerResult.contains("bàn") || lowerResult.contains("ghế")) {
@@ -89,7 +93,18 @@ fun FindScreen(
                     voiceCommandManager.stopListening(it)
                     voiceSessionId = null
                 }
-                ttsManager.speak("Looking for $activeMode")
+                val lookingForText = if (settingsManager.useVietnamese) {
+                    val modeVi = when (activeMode) {
+                        "seatings & tables" -> "Bàn & Ghế"
+                        "doors & windows" -> "Cửa & Cửa sổ"
+                        "person & vehicles" -> "Người & Xe"
+                        else -> ""
+                    }
+                    "Đang tìm $modeVi"
+                } else {
+                    "Looking for $activeMode"
+                }
+                ttsManager.speak(lookingForText, isVietnamese = settingsManager.useVietnamese)
             }
         } else {
             voiceSessionId?.let {
@@ -156,7 +171,11 @@ fun FindScreen(
                             textMeasurer = textMeasurer,
                             text = recognition.title,
                             topLeft = Offset(topLeft.x, topLeft.y - 20.dp.toPx()),
-                            style = TextStyle(color = color, fontSize = 16.sp)
+                            style = TextStyle(
+                                color = color, 
+                                fontSize = 16.sp,
+                                fontFamily = InterFontFamily
+                            )
                         )
                     }
                 }
@@ -181,7 +200,11 @@ fun FindScreen(
                     containerColor = if (activeMode == "seatings & tables") MaterialTheme.colorScheme.primary else Color.DarkGray
                 )
             ) {
-                Text(mode1, fontSize = 18.sp)
+                Text(
+                    text = mode1, 
+                    fontSize = 18.sp,
+                    fontFamily = InterFontFamily
+                )
             }
 
             Button(
@@ -194,7 +217,11 @@ fun FindScreen(
                     containerColor = if (activeMode == "doors & windows") MaterialTheme.colorScheme.primary else Color.DarkGray
                 )
             ) {
-                Text(mode2, fontSize = 18.sp)
+                Text(
+                    text = mode2, 
+                    fontSize = 18.sp,
+                    fontFamily = InterFontFamily
+                )
             }
 
             Button(
@@ -207,7 +234,11 @@ fun FindScreen(
                     containerColor = if (activeMode == "person & vehicles") MaterialTheme.colorScheme.primary else Color.DarkGray
                 )
             ) {
-                Text(mode3, fontSize = 18.sp)
+                Text(
+                    text = mode3, 
+                    fontSize = 18.sp,
+                    fontFamily = InterFontFamily
+                )
             }
         }
     }

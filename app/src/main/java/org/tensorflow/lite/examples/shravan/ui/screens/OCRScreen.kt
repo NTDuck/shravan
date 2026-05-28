@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.mlkit.vision.common.InputImage
@@ -21,6 +22,7 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.tensorflow.lite.examples.shravan.R
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
 import org.tensorflow.lite.examples.shravan.ui.components.ControlCircleButton
 import org.tensorflow.lite.examples.shravan.utils.*
@@ -60,10 +62,13 @@ fun OCRScreen(
         onBack()
     }
 
+    val ocrGreeting = stringResource(R.string.ocr_greeting)
+    val backCommand = stringResource(R.string.back_command)
+
     LaunchedEffect(isActive) {
         if (isActive) {
             ttsManager.speak(
-                if (useVietnamese) "Đọc chữ" else "OCR",
+                ocrGreeting,
                 isVietnamese = useVietnamese,
                 onComplete = {
                     scope.launch {
@@ -90,7 +95,7 @@ fun OCRScreen(
             voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
-                    ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
+                    ttsManager.speak(backCommand, isVietnamese = useVietnamese)
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     onBack()
                 }

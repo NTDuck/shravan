@@ -71,15 +71,6 @@ fun CameraPreview(
                 analysis.setAnalyzer(cameraExecutor, imageAnalyzer)
                 analysisUseCase = analysis
                 
-                // Unbind all before binding just in case to clear any zombie bindings, 
-                // but wait, if another screen bound it, unbindAll will kill theirs.
-                // It's safer to just bind ours. However, CameraX allows binding multiple if they fit,
-                // or fails. Usually unbindAll() is called before bindToLifecycle in single-screen apps.
-                // Let's rely on unbindAll() only if we know we are the active screen, OR just unbind our own.
-                // Actually, if we use HorizontalPager, both screens might try to bind to the SAME lifecycleOwner.
-                // It's best to unbindAll() just before binding new ones in LaunchedEffect because we are taking over.
-                provider.unbindAll() 
-                
                 provider.bindToLifecycle(
                     lifecycleOwner,
                     cameraSelector,
@@ -87,7 +78,6 @@ fun CameraPreview(
                     analysis
                 )
             } else {
-                provider.unbindAll()
                 provider.bindToLifecycle(
                     lifecycleOwner,
                     cameraSelector,

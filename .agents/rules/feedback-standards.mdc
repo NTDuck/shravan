@@ -1,0 +1,11 @@
+---
+description: Haptic and TTS (Text-to-Speech) feedback standards.
+globs: "**/*.kt"
+---
+
+# Feedback Standards
+
+- **Haptics:** Trigger haptic feedback for every user-initiated navigation or confirmed intent. Allow disabling via settings.
+- **TTS:** Use concise, localized strings for read-aloud features.
+- **Volume:** Always use `STREAM_VOICE_CALL` (speaker volume) for TTS output to ensure accessibility for visually impaired users.
+- **Debounce:** Ensure TTS does not overlap excessively; cancel previous speech if a new priority event occurs.

@@ -7,11 +7,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.tensorflow.lite.examples.shravan.R
 import org.tensorflow.lite.examples.shravan.utils.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -41,10 +43,14 @@ fun HistoryScreen(
         }
     }
 
+    val historyGreeting = stringResource(R.string.history_greeting)
+    val backCommand = stringResource(R.string.back_command)
+    val historyEmpty = stringResource(R.string.history_empty)
+
     LaunchedEffect(isActive) {
         if (isActive) {
             ttsManager.speak(
-                if (useVietnamese) "Lịch sử" else "History",
+                historyGreeting,
                 isVietnamese = useVietnamese,
                 onComplete = {
                     scope.launch {
@@ -63,7 +69,7 @@ fun HistoryScreen(
             voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
-                    ttsManager.speak(if (useVietnamese) "Quay lại" else "Back", isVietnamese = useVietnamese)
+                    ttsManager.speak(backCommand, isVietnamese = useVietnamese)
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     onBack()
                 }
@@ -82,14 +88,14 @@ fun HistoryScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = if (useVietnamese) "Lịch sử" else "History",
+            text = historyGreeting,
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally)
         )
 
         if (historyItems.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(if (useVietnamese) "Chưa có lịch sử" else "No history yet", fontSize = 20.sp)
+                Text(historyEmpty, fontSize = 20.sp)
             }
         } else {
             LazyColumn(

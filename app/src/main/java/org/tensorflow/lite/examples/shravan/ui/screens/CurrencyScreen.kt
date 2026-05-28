@@ -22,6 +22,7 @@ import org.tensorflow.lite.examples.shravan.tflite.Classifier
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
 import org.tensorflow.lite.examples.shravan.ui.theme.DimmedPalette
+import org.tensorflow.lite.examples.shravan.ui.theme.InterFontFamily
 import org.tensorflow.lite.examples.shravan.utils.*
 
 @OptIn(ExperimentalTextApi::class)
@@ -74,7 +75,11 @@ fun CurrencyScreen(
                         textMeasurer = textMeasurer,
                         text = recognition.title,
                         topLeft = Offset(topLeft.x, topLeft.y - 20.dp.toPx()),
-                        style = TextStyle(color = color, fontSize = 16.sp)
+                        style = TextStyle(
+                            color = color, 
+                            fontSize = 16.sp,
+                            fontFamily = InterFontFamily
+                        )
                     )
                 }
             }

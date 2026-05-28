@@ -140,6 +140,7 @@ public class YoloV5Classifier implements Classifier {
         }
 
         int[] shape = d.tfLite.getOutputTensor(0).shape();
+        d.output_box = shape[1];
         int numClass = shape[shape.length - 1] - 5;
         d.numClass = numClass;
         d.outData = ByteBuffer.allocateDirect(d.output_box * (numClass + 5) * numBytesPerChannel);
@@ -161,8 +162,10 @@ public class YoloV5Classifier implements Classifier {
 
     @Override
     public void close() {
-        tfLite.close();
-        tfLite = null;
+        if (tfLite != null) {
+            tfLite.close();
+            tfLite = null;
+        }
         if (gpuDelegate != null) {
             gpuDelegate.close();
             gpuDelegate = null;
@@ -355,7 +358,6 @@ public class YoloV5Classifier implements Classifier {
 //        byteBuffer.order(ByteOrder.nativeOrder());
 //        int[] intValues = new int[INPUT_SIZE * INPUT_SIZE];
         bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-        int pixel = 0;
 
         imgData.rewind();
         for (int i = 0; i < INPUT_SIZE; ++i) {
@@ -377,7 +379,7 @@ public class YoloV5Classifier implements Classifier {
     }
 
     public ArrayList<Recognition> recognizeImage(Bitmap bitmap) {
-        ByteBuffer byteBuffer_ = convertBitmapToByteBuffer(bitmap);
+        convertBitmapToByteBuffer(bitmap);
 
         Map<Integer, Object> outputMap = new HashMap<>();
 
@@ -416,12 +418,13 @@ public class YoloV5Classifier implements Classifier {
             int detectedClass = -1;
             float maxClass = 0;
 
-            final float[] classes = new float[labels.size()];
-            for (int c = 0; c < labels.size(); ++c) {
+            final int numDetectedClasses = Math.min(labels.size(), numClass);
+            final float[] classes = new float[numDetectedClasses];
+            for (int c = 0; c < numDetectedClasses; ++c) {
                 classes[c] = out[0][i][5 + c];
             }
 
-            for (int c = 0; c < labels.size(); ++c) {
+            for (int c = 0; c < numDetectedClasses; ++c) {
                 if (classes[c] > maxClass) {
                     detectedClass = c;
                     maxClass = classes[c];
@@ -429,7 +432,7 @@ public class YoloV5Classifier implements Classifier {
             }
 
             final float confidenceInClass = maxClass * confidence;
-            if (confidenceInClass > getObjThresh()) {
+            if (confidenceInClass > getObjThresh() && detectedClass != -1) {
                 final float xPos = out[0][i][0];
                 final float yPos = out[0][i][1];
 

@@ -17,4 +17,13 @@
     <string name="flash_off">Tắt</string>
     <string name="lang_en">English</string>
     <string name="lang_vi">Tiếng Việt</string>
+    <string name="welcome_partial">Đã nhận: Khiếm thị một phần</string>
+    <string name="welcome_total">Đã nhận: Khiếm thị hoàn toàn</string>
+    <string name="find_prompt">Bạn đang tìm gì? Bàn và ghế, cửa và cửa sổ, hay người và xe?</string>
+    <string name="find_looking_for">Đang tìm %s</string>
+    <string name="ocr_greeting">Đọc chữ</string>
+    <string name="history_greeting">Lịch sử</string>
+    <string name="back_command">Quay lại</string>
+    <string name="history_empty">Chưa có lịch sử</string>
+    <string name="too_close">%s quá gần!</string>
 </resources>
