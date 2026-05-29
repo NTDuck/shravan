@@ -77,8 +77,8 @@ fun CurrencyScreen(
             Canvas(modifier = Modifier.fillMaxSize()) {
                 recognitions.forEach { recognition ->
                     val rect = recognition.location
-                    val scaleX = size.width / 416f
-                    val scaleY = size.height / 416f
+                    val scaleX = size.width / 640f
+                    val scaleY = size.height / 640f
                     val color = DimmedPalette[recognition.detectedClass % DimmedPalette.size]
                     
                     val topLeft = Offset(rect.left * scaleX, rect.top * scaleY)

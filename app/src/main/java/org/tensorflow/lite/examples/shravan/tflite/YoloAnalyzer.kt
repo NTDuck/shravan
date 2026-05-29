@@ -138,7 +138,7 @@ class YoloAnalyzer(
                 persistentRecognitions = newPersistentList
 
                 val currentTime = System.currentTimeMillis()
-                currentFiltered.forEach { result ->
+                persistentRecognitions.forEach { result ->
                     val detectedClass = result.detectedClass
                     val title = if (detectedClass < labels.size) labels[detectedClass] else result.title
                     

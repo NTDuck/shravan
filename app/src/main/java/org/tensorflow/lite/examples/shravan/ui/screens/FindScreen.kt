@@ -252,35 +252,35 @@ fun FindScreen(
         ) {
             // Button 1
             Box(
-                modifier = Modifier.size(width = 90.dp, height = 65.dp).clip(RoundedCornerShape(12.dp)).background(seatingBgColor).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 80.dp, height = 50.dp).clip(RoundedCornerShape(12.dp)).background(seatingBgColor).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.EventSeat, contentDescription = null, tint = seatingContentColor, modifier = Modifier.size(24.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.TableRestaurant, contentDescription = null, tint = seatingContentColor, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.EventSeat, contentDescription = null, tint = seatingContentColor, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(Icons.Default.TableRestaurant, contentDescription = null, tint = seatingContentColor, modifier = Modifier.size(20.dp))
                 }
             }
             // Button 2
             Box(
-                modifier = Modifier.size(width = 90.dp, height = 65.dp).clip(RoundedCornerShape(12.dp)).background(doorsBgColor).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 80.dp, height = 50.dp).clip(RoundedCornerShape(12.dp)).background(doorsBgColor).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Window, contentDescription = null, tint = doorsContentColor, modifier = Modifier.size(24.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.MeetingRoom, contentDescription = null, tint = doorsContentColor, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Window, contentDescription = null, tint = doorsContentColor, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(Icons.Default.MeetingRoom, contentDescription = null, tint = doorsContentColor, modifier = Modifier.size(20.dp))
                 }
             }
             // Button 3
             Box(
-                modifier = Modifier.size(width = 90.dp, height = 65.dp).clip(RoundedCornerShape(12.dp)).background(personBgColor).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 80.dp, height = 50.dp).clip(RoundedCornerShape(12.dp)).background(personBgColor).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = personContentColor, modifier = Modifier.size(24.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = personContentColor, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Person, contentDescription = null, tint = personContentColor, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = personContentColor, modifier = Modifier.size(20.dp))
                 }
             }
         }

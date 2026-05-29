@@ -150,6 +150,39 @@ fun SettingsScreen(
             }
         }
 
+        // Haptics
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(stringResource(R.string.settings_haptics), color = Color.White, fontSize = 18.sp)
+            Switch(
+                checked = settingsManager.hapticsEnabled,
+                onCheckedChange = { settingsManager.hapticsEnabled = it },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color.Gray,
+                    uncheckedThumbColor = Color.White,
+                    uncheckedTrackColor = Color.DarkGray
+                )
+            )
+        }
+
+        // Speech Rate
+        Column {
+            Text(stringResource(R.string.settings_speech_rate) + ": ${"%.1f".format(settingsManager.speechRate)}x", color = Color.White, fontSize = 18.sp)
+            Slider(
+                value = settingsManager.speechRate,
+                onValueChange = { 
+                    settingsManager.speechRate = it
+                    ttsManager.setSpeechRate(it)
+                },
+                valueRange = 0.5f..2.0f,
+                steps = 14
+            )
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         // Reset

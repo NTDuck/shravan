@@ -323,19 +323,18 @@ public class YoloV5Classifier implements Classifier {
             //2.do non maximum suppression
             while (pq.size() > 0) {
                 //insert detection with max confidence
-                Recognition[] a = new Recognition[pq.size()];
-                Recognition[] detections = pq.toArray(a);
-                Recognition max = detections[0];
+                Recognition max = pq.poll();
                 nmsList.add(max);
-                pq.clear();
 
-                for (int j = 1; j < detections.length; j++) {
-                    Recognition detection = detections[j];
+                ArrayList<Recognition> temp = new ArrayList<>();
+                while (pq.size() > 0) {
+                    Recognition detection = pq.poll();
                     RectF b = detection.getLocation();
                     if (box_iou(max.getLocation(), b) < mNmsThresh) {
-                        pq.add(detection);
+                        temp.add(detection);
                     }
                 }
+                pq.addAll(temp);
             }
         }
         return nmsList;
