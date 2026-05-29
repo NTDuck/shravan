@@ -84,6 +84,7 @@ fun FindScreen(
         }
     }
 
+    val findGreeting = stringResource(org.tensorflow.lite.examples.shravan.R.string.find_greeting)
     val findPrompt = stringResource(org.tensorflow.lite.examples.shravan.R.string.find_prompt)
     val modeSeatingsTables = stringResource(org.tensorflow.lite.examples.shravan.R.string.mode_seatings_tables)
     val modeDoorsWindows = stringResource(org.tensorflow.lite.examples.shravan.R.string.mode_doors_windows)
@@ -92,7 +93,8 @@ fun FindScreen(
     LaunchedEffect(activeMode, isActive) {
         if (isActive) {
             if (activeMode == null) {
-                ttsManager.speak(findPrompt, isVietnamese = settingsManager.useVietnamese)
+                ttsManager.speak(findGreeting, isVietnamese = settingsManager.useVietnamese)
+                ttsManager.speak(findPrompt, isQueued = true, isVietnamese = settingsManager.useVietnamese)
                 voiceSessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) { result ->
                     val lowerResult = result.lowercase()
                     if (lowerResult.contains(modeSeatingsTables.lowercase()) || lowerResult.contains("seat") || lowerResult.contains("table") || lowerResult.contains("bàn") || lowerResult.contains("ghế")) {

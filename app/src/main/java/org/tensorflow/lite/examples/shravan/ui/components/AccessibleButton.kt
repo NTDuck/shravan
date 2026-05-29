@@ -26,7 +26,8 @@ fun AccessibleButton(
     settingsManager: SettingsManager,
     hapticManager: HapticManager,
     modifier: Modifier = Modifier,
-    backgroundColor: Color? = null
+    backgroundColor: Color? = null,
+    textColor: Color = Color.White
 ) {
     Surface(
         modifier = modifier
@@ -55,7 +56,7 @@ fun AccessibleButton(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 24.sp),
-                color = Color.White
+                color = textColor
             )
         }
     }

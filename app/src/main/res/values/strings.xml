@@ -36,6 +36,7 @@
     <string name="mode_person_vehicles">Person and vehicles</string>
     <string name="explore_greeting">Explore mode</string>
     <string name="currency_greeting">Currency mode</string>
+    <string name="find_greeting">Find mode</string>
     <string name="ocr_greeting">OCR</string>
     <string name="history_greeting">History</string>
     <string name="history_greeting_tts">History mode</string>

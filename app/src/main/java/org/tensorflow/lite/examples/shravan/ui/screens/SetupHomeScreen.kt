@@ -23,6 +23,7 @@ fun SetupHomeScreen(
 ) {
     var interactionsEnabled by remember { mutableStateOf(false) }
     var isScreenDimmed by remember { mutableStateOf(true) } // Dimmed during welcome text
+    var selectedLevel by remember { mutableStateOf<ImpairmentLevel?>(null) }
     val useVietnamese = settingsManager.useVietnamese
 
     val greeting = stringResource(R.string.welcome_text)
@@ -63,6 +64,7 @@ fun SetupHomeScreen(
     LaunchedEffect(interactionsEnabled) {
         if (interactionsEnabled) {
             val onIntentClarified = { matchedKeyword: String, level: ImpairmentLevel, welcomeText: String ->
+                selectedLevel = level
                 interactionsEnabled = false
                 isScreenDimmed = true
                 if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
@@ -102,6 +104,7 @@ fun SetupHomeScreen(
                 speakLabel = labelPartial,
                 enabled = interactionsEnabled,
                 onClick = {
+                    selectedLevel = ImpairmentLevel.PartiallyImpaired
                     interactionsEnabled = false
                     isScreenDimmed = true
                     handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, welcomePartial, useVietnamese)
@@ -110,13 +113,15 @@ fun SetupHomeScreen(
                 settingsManager = settingsManager,
                 hapticManager = hapticManager,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                backgroundColor = Color(0xFFDDDDDD)
+                backgroundColor = Color(0xFF222222),
+                textColor = if (selectedLevel == ImpairmentLevel.PartiallyImpaired) Color.White else Color.LightGray
             )
             AccessibleButton(
                 label = labelTotal,
                 speakLabel = labelTotal,
                 enabled = interactionsEnabled,
                 onClick = {
+                    selectedLevel = ImpairmentLevel.TotallyImpaired
                     interactionsEnabled = false
                     isScreenDimmed = true
                     handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, welcomeTotal, useVietnamese)
@@ -125,7 +130,8 @@ fun SetupHomeScreen(
                 settingsManager = settingsManager,
                 hapticManager = hapticManager,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                backgroundColor = Color(0xFFDDDDDD)
+                backgroundColor = Color(0xFF222222),
+                textColor = if (selectedLevel == ImpairmentLevel.TotallyImpaired) Color.White else Color.LightGray
             )
         }
     }

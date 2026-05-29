@@ -96,94 +96,92 @@ class MainActivity : ComponentActivity() {
                     resources.updateConfiguration(configuration, resources.displayMetrics)
                 }
                 
-                key(useVietnamese) {
-                    ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
-                        Surface(
-                            modifier = Modifier.fillMaxSize(),
-                            color = androidx.compose.material3.MaterialTheme.colorScheme.background
-                        ) {
-                            val navController = rememberNavController()
+                ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.background
+                    ) {
+                        val navController = rememberNavController()
 
-                            var hasCameraPermission by remember {
-                                mutableStateOf(
-                                    ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.CAMERA
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                )
-                            }
-                            
-                            var hasRecordAudioPermission by remember {
-                                mutableStateOf(
-                                    ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.RECORD_AUDIO
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                )
-                            }
-
-                            val launcher = rememberLauncherForActivityResult(
-                                contract = ActivityResultContracts.RequestMultiplePermissions(),
-                                onResult = { permissions ->
-                                    hasCameraPermission = permissions[Manifest.permission.CAMERA] ?: hasCameraPermission
-                                    hasRecordAudioPermission = permissions[Manifest.permission.RECORD_AUDIO] ?: hasRecordAudioPermission
-                                }
+                        var hasCameraPermission by remember {
+                            mutableStateOf(
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.CAMERA
+                                ) == PackageManager.PERMISSION_GRANTED
                             )
+                        }
+                        
+                        var hasRecordAudioPermission by remember {
+                            mutableStateOf(
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                            )
+                        }
 
-                            LaunchedEffect(Unit) {
-                                val permissionsNeeded = mutableListOf<String>()
-                                if (!hasCameraPermission) permissionsNeeded.add(Manifest.permission.CAMERA)
-                                if (!hasRecordAudioPermission) permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
-                                
-                                if (permissionsNeeded.isNotEmpty()) {
-                                    launcher.launch(permissionsNeeded.toTypedArray())
-                                }
-                                ttsManager.setSpeechRate(settingsManager.speechRate)
+                        val launcher = rememberLauncherForActivityResult(
+                            contract = ActivityResultContracts.RequestMultiplePermissions(),
+                            onResult = { permissions ->
+                                hasCameraPermission = permissions[Manifest.permission.CAMERA] ?: hasCameraPermission
+                                hasRecordAudioPermission = permissions[Manifest.permission.RECORD_AUDIO] ?: hasRecordAudioPermission
                             }
+                        )
 
-                            DisposableEffect(Unit) {
-                                onDispose {
-                                    ttsManager.destroy()
-                                    voiceCommandManager.destroy()
-                                }
+                        LaunchedEffect(Unit) {
+                            val permissionsNeeded = mutableListOf<String>()
+                            if (!hasCameraPermission) permissionsNeeded.add(Manifest.permission.CAMERA)
+                            if (!hasRecordAudioPermission) permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
+                            
+                            if (permissionsNeeded.isNotEmpty()) {
+                                launcher.launch(permissionsNeeded.toTypedArray())
                             }
+                            ttsManager.setSpeechRate(settingsManager.speechRate)
+                        }
 
-                            val startDestination = if (settingsManager.impairmentLevel == null) "setup" else "main"
+                        DisposableEffect(Unit) {
+                            onDispose {
+                                ttsManager.destroy()
+                                voiceCommandManager.destroy()
+                            }
+                        }
 
-                            NavHost(
-                                navController = navController, 
-                                startDestination = startDestination,
-                                enterTransition = { fadeIn(animationSpec = androidx.compose.animation.core.tween(500)) },
-                                exitTransition = { fadeOut(animationSpec = androidx.compose.animation.core.tween(500)) }
-                            ) {
-                                composable("setup") {
-                                    SetupHomeScreen(
-                                        navController = navController,
+                        val startDestination = if (settingsManager.impairmentLevel == null) "setup" else "main"
+
+                        NavHost(
+                            navController = navController, 
+                            startDestination = startDestination,
+                            enterTransition = { fadeIn(animationSpec = androidx.compose.animation.core.tween(500)) },
+                            exitTransition = { fadeOut(animationSpec = androidx.compose.animation.core.tween(500)) }
+                        ) {
+                            composable("setup") {
+                                SetupHomeScreen(
+                                    navController = navController,
+                                    settingsManager = settingsManager,
+                                    ttsManager = ttsManager,
+                                    hapticManager = hapticManager,
+                                    voiceCommandManager = voiceCommandManager
+                                )
+                            }
+                            composable("main") {
+                                if (hasCameraPermission && hasRecordAudioPermission) {
+                                    MainScreen(
                                         settingsManager = settingsManager,
                                         ttsManager = ttsManager,
                                         hapticManager = hapticManager,
-                                        voiceCommandManager = voiceCommandManager
-                                    )
-                                }
-                                composable("main") {
-                                    if (hasCameraPermission && hasRecordAudioPermission) {
-                                        MainScreen(
-                                            settingsManager = settingsManager,
-                                            ttsManager = ttsManager,
-                                            hapticManager = hapticManager,
-                                            voiceCommandManager = voiceCommandManager,
-                                            historyManager = historyManager,
-                                            onReset = {
-                                                settingsManager.clearAll()
-                                                historyManager.clearHistory()
-                                                (context as? android.app.Activity)?.finishAffinity()
-                                            }
-                                        )
-                                    } else {
-                                        // Show loading or permission request state
-                                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                                            CircularProgressIndicator()
+                                        voiceCommandManager = voiceCommandManager,
+                                        historyManager = historyManager,
+                                        onReset = {
+                                            settingsManager.clearAll()
+                                            historyManager.clearHistory()
+                                            (context as? android.app.Activity)?.finishAffinity()
                                         }
+                                    )
+                                } else {
+                                    // Show loading or permission request state
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                        CircularProgressIndicator()
                                     }
                                 }
                             }

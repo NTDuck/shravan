@@ -8,11 +8,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toSize
 import org.tensorflow.lite.examples.shravan.R
 import org.tensorflow.lite.examples.shravan.utils.*
 
@@ -29,6 +32,7 @@ fun SettingsScreen(
     var languageExpanded by remember { mutableStateOf(false) }
     var flashExpanded by remember { mutableStateOf(false) }
     var resetClickCount by remember { mutableStateOf(0) }
+    var textFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
     val languages = listOf("English" to false, "Tiếng Việt" to true)
     val flashes = listOf(
@@ -80,7 +84,10 @@ fun SettingsScreen(
                 enabled = false, // Use Box for click
                 label = { Text(stringResource(R.string.settings_language)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = languageExpanded) },
-                modifier = Modifier.fillMaxWidth().clickable { languageExpanded = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { textFieldSize = it.size.toSize() }
+                    .clickable { languageExpanded = true },
                 colors = OutlinedTextFieldDefaults.colors(
                     disabledTextColor = Color.White,
                     disabledBorderColor = Color.White,
@@ -91,7 +98,9 @@ fun SettingsScreen(
             DropdownMenu(
                 expanded = languageExpanded,
                 onDismissRequest = { languageExpanded = false },
-                modifier = Modifier.fillMaxWidth().background(Color(0xFF333333))
+                modifier = Modifier
+                    .width(with(LocalDensity.current) { textFieldSize.width.toDp() })
+                    .background(Color(0xFF333333))
             ) {
                 languages.forEach { (label, isVi) ->
                     DropdownMenuItem(
@@ -115,7 +124,13 @@ fun SettingsScreen(
             Text(stringResource(R.string.settings_haptics), color = Color.White, fontSize = 18.sp)
             Switch(
                 checked = settingsManager.hapticsEnabled,
-                onCheckedChange = { settingsManager.hapticsEnabled = it }
+                onCheckedChange = { settingsManager.hapticsEnabled = it },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color.Gray,
+                    uncheckedThumbColor = Color.White,
+                    uncheckedTrackColor = Color.DarkGray
+                )
             )
         }
 
@@ -142,7 +157,10 @@ fun SettingsScreen(
                 enabled = false,
                 label = { Text(stringResource(R.string.settings_flash)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = flashExpanded) },
-                modifier = Modifier.fillMaxWidth().clickable { flashExpanded = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { textFieldSize = it.size.toSize() }
+                    .clickable { flashExpanded = true },
                 colors = OutlinedTextFieldDefaults.colors(
                     disabledTextColor = Color.White,
                     disabledBorderColor = Color.White,
@@ -153,7 +171,9 @@ fun SettingsScreen(
             DropdownMenu(
                 expanded = flashExpanded,
                 onDismissRequest = { flashExpanded = false },
-                modifier = Modifier.fillMaxWidth().background(Color(0xFF333333))
+                modifier = Modifier
+                    .width(with(LocalDensity.current) { textFieldSize.width.toDp() })
+                    .background(Color(0xFF333333))
             ) {
                 flashes.forEach { (label, mode) ->
                     DropdownMenuItem(
