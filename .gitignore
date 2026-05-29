@@ -32,7 +32,11 @@ google-services.json
 # Android Profiling
 *.hprof
 
-
+# Large Data Files
+currency.zip
+*.data
+currency_data/
+currency_data_new/
 
 /local.properties
 
