@@ -71,13 +71,7 @@ fun HistoryScreen(
                     }
                 }
             )
-        } else {
-            interactionsEnabled = false
-        }
-    }
-
-    LaunchedEffect(interactionsEnabled, isActive) {
-        if (interactionsEnabled && isActive) {
+            
             voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
@@ -93,6 +87,7 @@ fun HistoryScreen(
                 }
             }
         } else {
+            interactionsEnabled = false
             voiceSessionId.value?.let {
                 voiceCommandManager.stopListening(it)
                 voiceSessionId.value = null

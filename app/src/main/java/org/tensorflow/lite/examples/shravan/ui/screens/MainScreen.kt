@@ -36,6 +36,7 @@ fun MainScreen(
     historyManager: HistoryManager,
     onReset: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val pagerState = rememberPagerState(pageCount = { 6 })
     val coroutineScope = rememberCoroutineScope()
 
@@ -48,14 +49,16 @@ fun MainScreen(
         Triple(R.string.nav_history, Icons.Default.History, "history")
     )
 
-    val navKeywords = listOf(
-        stringResource(R.string.voice_keyword_explore).lowercase() to 0,
-        stringResource(R.string.voice_keyword_find).lowercase() to 1,
-        stringResource(R.string.voice_keyword_ocr).lowercase() to 2,
-        stringResource(R.string.voice_keyword_currency).lowercase() to 3,
-        stringResource(R.string.voice_keyword_settings).lowercase() to 4,
-        stringResource(R.string.voice_keyword_history).lowercase() to 5
-    )
+    val navKeywords = remember(settingsManager.useVietnamese) {
+        listOf(
+            context.getString(R.string.voice_keyword_explore).lowercase() to 0,
+            context.getString(R.string.voice_keyword_find).lowercase() to 1,
+            context.getString(R.string.voice_keyword_ocr).lowercase() to 2,
+            context.getString(R.string.voice_keyword_currency).lowercase() to 3,
+            context.getString(R.string.voice_keyword_settings).lowercase() to 4,
+            context.getString(R.string.voice_keyword_history).lowercase() to 5
+        )
+    }
 
     LaunchedEffect(pagerState.currentPage) {
         if (settingsManager.hapticsEnabled) {

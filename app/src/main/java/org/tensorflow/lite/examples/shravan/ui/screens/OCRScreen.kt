@@ -77,30 +77,17 @@ fun OCRScreen(
                     }
                 }
             )
-        } else {
-            interactionsEnabled = false
-        }
-    }
-
-    DisposableEffect(isActive) {
-        onDispose {
-            voiceSessionId.value?.let {
-                voiceCommandManager.stopListening(it)
-            }
-        }
-    }
-
-    LaunchedEffect(interactionsEnabled, isActive) {
-        if (interactionsEnabled && isActive) {
+            
             voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
                 val lowerResult = result.lowercase()
-                if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
+                if (lowerResult.contains(backCommand.lowercase())) {
                     ttsManager.speak(backCommand, isVietnamese = useVietnamese)
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     onBack()
                 }
             }
         } else {
+            interactionsEnabled = false
             voiceSessionId.value?.let {
                 voiceCommandManager.stopListening(it)
                 voiceSessionId.value = null

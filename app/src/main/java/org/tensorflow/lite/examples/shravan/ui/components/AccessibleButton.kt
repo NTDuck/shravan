@@ -25,7 +25,8 @@ fun AccessibleButton(
     ttsManager: TTSManager,
     settingsManager: SettingsManager,
     hapticManager: HapticManager,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    backgroundColor: Color? = null
 ) {
     Surface(
         modifier = modifier
@@ -47,7 +48,7 @@ fun AccessibleButton(
                 }
             },
         shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.primary,
+        color = backgroundColor ?: MaterialTheme.colorScheme.primary,
         tonalElevation = 4.dp
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {

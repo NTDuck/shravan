@@ -7,9 +7,9 @@ import java.io.IOException;
 public class DetectorFactory {
     public static YoloV5Classifier getDetector(
             final AssetManager assetManager,
-            final String modelFilename)
+            final String modelFilename,
+            final String labelFilename)
             throws IOException {
-        String labelFilename = null;
         boolean isQuantized = false;
         int inputSize = 0;
         int[] output_width = new int[]{0};
@@ -17,7 +17,6 @@ public class DetectorFactory {
         int[] anchors = new int[]{0};
 
         if (modelFilename.equals("yolov5s.tflite")) {
-            labelFilename = "file:///android_asset/customclasses.txt";
             isQuantized = false;
             inputSize = 416;
             output_width = new int[]{80, 40, 20};
@@ -27,7 +26,6 @@ public class DetectorFactory {
             };
         }
         else if (modelFilename.equals("yolov5s-fp16.tflite")) {
-            labelFilename = "file:///android_asset/customclasses.txt";
             isQuantized = false;
             inputSize = 416;
             output_width = new int[]{40, 20, 10};
@@ -37,7 +35,6 @@ public class DetectorFactory {
             };
         }
         else if (modelFilename.equals("yolov5s-int8.tflite")) {
-            labelFilename = "file:///android_asset/customclasses.txt";
             isQuantized = true;
             inputSize = 416;
             output_width = new int[]{40, 20, 10};
@@ -47,7 +44,6 @@ public class DetectorFactory {
             };
         }
         else if (modelFilename.equals("currency.tflite")) {
-            labelFilename = "file:///android_asset/currency_labels.txt";
             isQuantized = false;
             inputSize = 416;
             output_width = new int[]{40, 20, 10};

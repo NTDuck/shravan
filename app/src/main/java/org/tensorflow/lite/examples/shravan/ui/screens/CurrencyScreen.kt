@@ -39,7 +39,7 @@ fun CurrencyScreen(
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
     val textMeasurer = rememberTextMeasurer()
 
-    val analyzer = remember(isActive) {
+    val analyzer = remember(isActive, settingsManager.useVietnamese) {
         if (isActive) {
             YoloAnalyzer(context, ttsManager, settingsManager, historyManager, modelName = "currency.tflite") { results ->
                 recognitions = results 
@@ -47,7 +47,7 @@ fun CurrencyScreen(
         } else null
     }
 
-    DisposableEffect(isActive) {
+    DisposableEffect(isActive, settingsManager.useVietnamese) {
         var sessionId: Int? = null
         if (isActive) {
             sessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) {}

@@ -109,7 +109,8 @@ fun SetupHomeScreen(
                 ttsManager = ttsManager,
                 settingsManager = settingsManager,
                 hapticManager = hapticManager,
-                modifier = Modifier.weight(1f).fillMaxWidth()
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                backgroundColor = Color(0xFFDDDDDD)
             )
             AccessibleButton(
                 label = labelTotal,
@@ -123,7 +124,8 @@ fun SetupHomeScreen(
                 ttsManager = ttsManager,
                 settingsManager = settingsManager,
                 hapticManager = hapticManager,
-                modifier = Modifier.weight(1f).fillMaxWidth()
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                backgroundColor = Color(0xFFDDDDDD)
             )
         }
     }

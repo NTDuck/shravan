@@ -31,6 +31,11 @@
     <string name="voice_keyword_history">history</string>
     <string name="find_prompt">What are you looking for? Seatings and tables, doors and windows, or person and vehicles?</string>
     <string name="find_looking_for">Looking for %s</string>
+    <string name="mode_seatings_tables">Seatings and tables</string>
+    <string name="mode_doors_windows">Doors and windows</string>
+    <string name="mode_person_vehicles">Person and vehicles</string>
+    <string name="explore_greeting">Explore</string>
+    <string name="currency_greeting">Currency</string>
     <string name="ocr_greeting">OCR</string>
     <string name="history_greeting">History</string>
     <string name="back_command">Back</string>

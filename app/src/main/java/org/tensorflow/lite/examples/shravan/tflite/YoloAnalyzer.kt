@@ -28,7 +28,12 @@ class YoloAnalyzer(
     var allowedClasses: List<String>? = null
 
     private val detector: YoloV5Classifier by lazy {
-        DetectorFactory.getDetector(context.assets, modelName)
+        val labelFile = when {
+            modelName == "currency.tflite" -> "file:///android_asset/currency_labels.txt"
+            settingsManager.useVietnamese -> "file:///android_asset/coco_vi.txt"
+            else -> "file:///android_asset/coco.txt"
+        }
+        DetectorFactory.getDetector(context.assets, modelName, labelFile)
     }
 
     private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
@@ -38,9 +43,13 @@ class YoloAnalyzer(
     private val GROWTH_THRESHOLD = 0.15f
     private val SIZE_THRESHOLD = 0.4f
 
-    private val labels: List<String> by lazy {
+    private val labels: List<String> get() {
         val labelsList = mutableListOf<String>()
-        val filename = if (modelName == "currency.tflite") "currency_labels.txt" else "coco_vi.txt"
+        val filename = when {
+            modelName == "currency.tflite" -> "currency_labels.txt"
+            settingsManager.useVietnamese -> "coco_vi.txt"
+            else -> "coco.txt"
+        }
         try {
             val reader = BufferedReader(InputStreamReader(context.assets.open(filename)))
             var line: String? = reader.readLine()
@@ -52,7 +61,7 @@ class YoloAnalyzer(
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        labelsList
+        return labelsList
     }
 
     private val lastSeenTime = mutableMapOf<String, Long>()

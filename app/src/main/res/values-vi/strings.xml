@@ -31,6 +31,9 @@
     <string name="voice_keyword_history">lịch sử</string>
     <string name="find_prompt">Bạn đang tìm gì? Bàn ghế, cửa, hay người và xe?</string>
     <string name="find_looking_for">Đang tìm %s</string>
+    <string name="mode_seatings_tables">Bàn ghế</string>
+    <string name="mode_doors_windows">Cửa</string>
+    <string name="mode_person_vehicles">Người và xe</string>
     <string name="ocr_greeting">Đọc văn bản</string>
     <string name="history_greeting">Lịch sử</string>
     <string name="back_command">Quay lại</string>

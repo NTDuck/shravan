@@ -60,15 +60,15 @@ fun FindScreen(
     val scope = rememberCoroutineScope()
     var voiceSessionId by remember { mutableStateOf<Int?>(null) }
 
-    val analyzer = remember(isActive) {
+    val analyzer = remember(isActive, settingsManager.useVietnamese) {
         if (isActive) {
             YoloAnalyzer(context, ttsManager, settingsManager, historyManager) { results ->
                 recognitions = results
             }.apply {
                 this.allowedClasses = when (activeMode) {
-                    "seatings & tables" -> listOf("chair", "dining table", "couch", "bàn", "ghế")
+                    "seatings & tables" -> listOf("chair", "dining table", "sofa", "couch", "bàn ăn", "ghế", "ghế sofa")
                     "doors & windows" -> listOf("door", "window", "cửa")
-                    "person & vehicles" -> listOf("person", "car", "bus", "truck", "motorcycle", "người", "xe")
+                    "person & vehicles" -> listOf("person", "car", "bus", "truck", "motorcycle", "bicycle", "người", "xe hơi", "xe buýt", "xe tải", "xe máy", "xe đạp")
                     else -> emptyList()
                 }
             }
@@ -77,14 +77,17 @@ fun FindScreen(
 
     LaunchedEffect(activeMode) {
         analyzer?.allowedClasses = when (activeMode) {
-            "seatings & tables" -> listOf("chair", "dining table", "couch", "bàn", "ghế")
+            "seatings & tables" -> listOf("chair", "dining table", "sofa", "couch", "bàn ăn", "ghế", "ghế sofa")
             "doors & windows" -> listOf("door", "window", "cửa")
-            "person & vehicles" -> listOf("person", "car", "bus", "truck", "motorcycle", "người", "xe")
+            "person & vehicles" -> listOf("person", "car", "bus", "truck", "motorcycle", "bicycle", "người", "xe hơi", "xe buýt", "xe tải", "xe máy", "xe đạp")
             else -> emptyList()
         }
     }
 
     val findPrompt = stringResource(org.tensorflow.lite.examples.shravan.R.string.find_prompt)
+    val modeSeatingsTables = stringResource(org.tensorflow.lite.examples.shravan.R.string.mode_seatings_tables)
+    val modeDoorsWindows = stringResource(org.tensorflow.lite.examples.shravan.R.string.mode_doors_windows)
+    val modePersonVehicles = stringResource(org.tensorflow.lite.examples.shravan.R.string.mode_person_vehicles)
     
     LaunchedEffect(activeMode, isActive) {
         if (isActive) {
@@ -92,13 +95,13 @@ fun FindScreen(
                 ttsManager.speak(findPrompt, isVietnamese = settingsManager.useVietnamese)
                 voiceSessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) { result ->
                     val lowerResult = result.lowercase()
-                    if (lowerResult.contains("seat") || lowerResult.contains("table") || lowerResult.contains("bàn") || lowerResult.contains("ghế")) {
+                    if (lowerResult.contains(modeSeatingsTables.lowercase()) || lowerResult.contains("seat") || lowerResult.contains("table") || lowerResult.contains("bàn") || lowerResult.contains("ghế")) {
                         activeMode = "seatings & tables"
                         if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
-                    } else if (lowerResult.contains("door") || lowerResult.contains("window") || lowerResult.contains("cửa")) {
+                    } else if (lowerResult.contains(modeDoorsWindows.lowercase()) || lowerResult.contains("door") || lowerResult.contains("window") || lowerResult.contains("cửa")) {
                         activeMode = "doors & windows"
                         if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
-                    } else if (lowerResult.contains("person") || lowerResult.contains("vehicle") || lowerResult.contains("người") || lowerResult.contains("xe")) {
+                    } else if (lowerResult.contains(modePersonVehicles.lowercase()) || lowerResult.contains("person") || lowerResult.contains("vehicle") || lowerResult.contains("người") || lowerResult.contains("xe")) {
                         activeMode = "person & vehicles"
                         if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     }
@@ -108,17 +111,13 @@ fun FindScreen(
                     voiceCommandManager.stopListening(it)
                     voiceSessionId = null
                 }
-                val lookingForText = if (settingsManager.useVietnamese) {
-                    val modeVi = when (activeMode) {
-                        "seatings & tables" -> "Bàn & Ghế"
-                        "doors & windows" -> "Cửa & Cửa sổ"
-                        "person & vehicles" -> "Người & Xe"
-                        else -> ""
-                    }
-                    "Đang tìm $modeVi"
-                } else {
-                    "Looking for $activeMode"
+                val modeLabel = when (activeMode) {
+                    "seatings & tables" -> modeSeatingsTables
+                    "doors & windows" -> modeDoorsWindows
+                    "person & vehicles" -> modePersonVehicles
+                    else -> ""
                 }
+                val lookingForText = context.getString(org.tensorflow.lite.examples.shravan.R.string.find_looking_for, modeLabel)
                 ttsManager.speak(lookingForText, isVietnamese = settingsManager.useVietnamese)
             }
         } else {
