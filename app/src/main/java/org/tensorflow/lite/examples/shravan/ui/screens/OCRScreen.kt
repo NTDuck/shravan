@@ -4,11 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,10 +18,7 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.R
-import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
-import org.tensorflow.lite.examples.shravan.ui.components.ControlCircleButton
 import org.tensorflow.lite.examples.shravan.utils.*
-import kotlin.math.min
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -37,21 +29,50 @@ fun OCRScreen(
     historyManager: HistoryManager,
     hapticManager: HapticManager,
     voiceCommandManager: VoiceCommandManager,
-    isActive: Boolean = true
+    isActive: Boolean = true,
+    onProvideAnalyzer: (androidx.camera.core.ImageAnalysis.Analyzer?) -> Unit = {}
 ) {
     val recognizer = remember(isActive) { 
         if (isActive) TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) else null 
     }
     
+    val spokenTextSet = remember { mutableStateOf(mutableSetOf<String>()) }
+    val useVietnamese = settingsManager.useVietnamese
+
+    LaunchedEffect(isActive, recognizer) {
+        if (isActive) {
+            onProvideAnalyzer { imageProxy ->
+                try {
+                    val mediaImage = imageProxy.image
+                    if (mediaImage != null) {
+                        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                        val visionText = recognizer?.let { com.google.android.gms.tasks.Tasks.await(it.process(image)) }
+                        visionText?.textBlocks?.forEach { block ->
+                            val originalText = block.text.trim()
+                            val normalizedText = originalText.lowercase()
+                            if (normalizedText.length > 3 && !spokenTextSet.value.contains(normalizedText)) {
+                                spokenTextSet.value.add(normalizedText)
+                                ttsManager.speak(originalText, isQueued = true, isVietnamese = containsVietnamese(originalText))
+                                historyManager.addHistory("OCR", originalText)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("OCRScreen", "Error during OCR processing", e)
+                } finally {
+                    imageProxy.close()
+                }
+            }
+        } else {
+            onProvideAnalyzer(null)
+        }
+    }
+
     DisposableEffect(recognizer) {
         onDispose {
             recognizer?.close()
         }
     }
-
-    val spokenTextSet = remember { mutableStateOf(mutableSetOf<String>()) }
-    var isPaused by remember { mutableStateOf(false) }
-    val useVietnamese = settingsManager.useVietnamese
 
     val scope = rememberCoroutineScope()
     var interactionsEnabled by remember { mutableStateOf(false) }
@@ -97,37 +118,9 @@ fun OCRScreen(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = Color.Transparent
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            if (!isPaused && isActive) {
-                CameraPreview(
-                    modifier = Modifier.fillMaxSize(),
-                    zoomRatio = 0.6f,
-                    imageAnalyzer = { imageProxy ->
-                        try {
-                            val mediaImage = imageProxy.image
-                            if (mediaImage != null) {
-                                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                                val visionText = recognizer?.let { com.google.android.gms.tasks.Tasks.await(it.process(image)) }
-                                visionText?.textBlocks?.forEach { block ->
-                                    val originalText = block.text.trim()
-                                    val normalizedText = originalText.lowercase()
-                                    if (normalizedText.length > 3 && !spokenTextSet.value.contains(normalizedText)) {
-                                        spokenTextSet.value.add(normalizedText)
-                                        ttsManager.speak(originalText, isQueued = true, isVietnamese = containsVietnamese(originalText))
-                                        historyManager.addHistory("OCR", originalText)
-                                    }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            android.util.Log.e("OCRScreen", "Error during OCR processing", e)
-                        } finally {
-                            imageProxy.close()
-                        }
-                    }
-                )
-            }
         }
     }
 }

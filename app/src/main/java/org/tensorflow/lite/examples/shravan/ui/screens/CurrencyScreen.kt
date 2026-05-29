@@ -35,7 +35,8 @@ fun CurrencyScreen(
     voiceCommandManager: VoiceCommandManager,
     settingsManager: SettingsManager,
     historyManager: HistoryManager,
-    isActive: Boolean = true
+    isActive: Boolean = true,
+    yoloAnalyzer: YoloAnalyzer? = null
 ) {
     val context = LocalContext.current
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
@@ -52,12 +53,12 @@ fun CurrencyScreen(
         }
     }
 
-    val analyzer = remember(isActive, settingsManager.useVietnamese) {
+    LaunchedEffect(isActive, yoloAnalyzer) {
         if (isActive) {
-            YoloAnalyzer(context, ttsManager, settingsManager, historyManager, modelName = "currency.tflite") { results ->
-                recognitions = results 
+            yoloAnalyzer?.onResults = { results ->
+                recognitions = results
             }
-        } else null
+        }
     }
 
     DisposableEffect(isActive, settingsManager.useVietnamese) {
@@ -66,17 +67,12 @@ fun CurrencyScreen(
             sessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) {}
         }
         onDispose {
-            analyzer?.close()
             sessionId?.let { voiceCommandManager.stopListening(it) }
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.Transparent)) {
         if (isActive) {
-            CameraPreview(
-                modifier = Modifier.fillMaxSize(),
-                imageAnalyzer = analyzer
-            )
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 recognitions.forEach { recognition ->

@@ -85,22 +85,22 @@ class MainActivity : ComponentActivity() {
                     }
                     return@setContent
                 }
+val useVietnamese = settingsManager.useVietnamese
+LaunchedEffect(useVietnamese) {
+    val locale = if (useVietnamese) java.util.Locale("vi") else java.util.Locale.ENGLISH
+    java.util.Locale.setDefault(locale)
+    val resources = this@MainActivity.resources
+    val configuration = android.content.res.Configuration(resources.configuration)
+    configuration.setLocale(locale)
+    resources.updateConfiguration(configuration, resources.displayMetrics)
+}
 
-                val useVietnamese = settingsManager.useVietnamese
-                LaunchedEffect(useVietnamese) {
-                    val locale = if (useVietnamese) java.util.Locale("vi") else java.util.Locale.ENGLISH
-                    java.util.Locale.setDefault(locale)
-                    val resources = this@MainActivity.resources
-                    val configuration = android.content.res.Configuration(resources.configuration)
-                    configuration.setLocale(locale)
-                    resources.updateConfiguration(configuration, resources.displayMetrics)
-                }
-                
-                ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.background
-                    ) {
+ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFF222222)
+    ) {
+
                         val navController = rememberNavController()
 
                         var hasCameraPermission by remember {

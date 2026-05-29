@@ -32,7 +32,8 @@ fun SettingsScreen(
     var languageExpanded by remember { mutableStateOf(false) }
     var flashExpanded by remember { mutableStateOf(false) }
     var resetClickCount by remember { mutableStateOf(0) }
-    var textFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
+    var languageTextFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
+    var flashTextFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
     val languages = listOf("English" to false, "Tiếng Việt" to true)
     val flashes = listOf(
@@ -86,7 +87,7 @@ fun SettingsScreen(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = languageExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onGloballyPositioned { textFieldSize = it.size.toSize() }
+                    .onGloballyPositioned { languageTextFieldSize = it.size.toSize() }
                     .clickable { languageExpanded = true },
                 colors = OutlinedTextFieldDefaults.colors(
                     disabledTextColor = Color.White,
@@ -99,7 +100,7 @@ fun SettingsScreen(
                 expanded = languageExpanded,
                 onDismissRequest = { languageExpanded = false },
                 modifier = Modifier
-                    .width(with(LocalDensity.current) { textFieldSize.width.toDp() })
+                    .width(with(LocalDensity.current) { languageTextFieldSize.width.toDp() })
                     .background(Color(0xFF333333))
             ) {
                 languages.forEach { (label, isVi) ->
@@ -159,7 +160,7 @@ fun SettingsScreen(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = flashExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onGloballyPositioned { textFieldSize = it.size.toSize() }
+                    .onGloballyPositioned { flashTextFieldSize = it.size.toSize() }
                     .clickable { flashExpanded = true },
                 colors = OutlinedTextFieldDefaults.colors(
                     disabledTextColor = Color.White,
@@ -172,7 +173,7 @@ fun SettingsScreen(
                 expanded = flashExpanded,
                 onDismissRequest = { flashExpanded = false },
                 modifier = Modifier
-                    .width(with(LocalDensity.current) { textFieldSize.width.toDp() })
+                    .width(with(LocalDensity.current) { flashTextFieldSize.width.toDp() })
                     .background(Color(0xFF333333))
             ) {
                 flashes.forEach { (label, mode) ->

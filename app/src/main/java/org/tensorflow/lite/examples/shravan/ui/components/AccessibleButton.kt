@@ -31,7 +31,7 @@ fun AccessibleButton(
 ) {
     Surface(
         modifier = modifier
-            .padding(2.dp)
+            .padding(4.dp)
             .pointerInput(enabled) {
                 if (enabled) {
                     detectTapGestures(

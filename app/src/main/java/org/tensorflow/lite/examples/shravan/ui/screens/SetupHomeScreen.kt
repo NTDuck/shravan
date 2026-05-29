@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -98,7 +99,7 @@ fun SetupHomeScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(if (isScreenDimmed) Color.Black.copy(alpha = 0.8f) else Color(0xFF333333))) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
             AccessibleButton(
                 label = labelPartial,
                 speakLabel = labelPartial,
@@ -114,8 +115,9 @@ fun SetupHomeScreen(
                 hapticManager = hapticManager,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 backgroundColor = Color(0xFF222222),
-                textColor = if (selectedLevel == ImpairmentLevel.PartiallyImpaired) Color.White else Color.LightGray
+                textColor = if (selectedLevel == ImpairmentLevel.PartiallyImpaired) Color.White else Color.Gray
             )
+            Spacer(modifier = Modifier.height(12.dp))
             AccessibleButton(
                 label = labelTotal,
                 speakLabel = labelTotal,
@@ -131,7 +133,7 @@ fun SetupHomeScreen(
                 hapticManager = hapticManager,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 backgroundColor = Color(0xFF222222),
-                textColor = if (selectedLevel == ImpairmentLevel.TotallyImpaired) Color.White else Color.LightGray
+                textColor = if (selectedLevel == ImpairmentLevel.TotallyImpaired) Color.White else Color.Gray
             )
         }
     }

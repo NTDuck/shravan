@@ -22,7 +22,7 @@ class YoloAnalyzer(
     private val settingsManager: SettingsManager,
     private val historyManager: HistoryManager,
     private val modelName: String = "yolov5s-fp16.tflite",
-    private val onResults: (List<Classifier.Recognition>) -> Unit
+    var onResults: ((List<Classifier.Recognition>) -> Unit)? = null
 ) : ImageAnalysis.Analyzer {
 
     var allowedClasses: List<String>? = null
@@ -114,7 +114,7 @@ class YoloAnalyzer(
                 // Clean up old entries to prevent memory leak
                 lastSeenTime.entries.removeIf { currentTime - it.value > 5000L }
 
-                onResults(filteredResults)
+                onResults?.invoke(filteredResults)
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {

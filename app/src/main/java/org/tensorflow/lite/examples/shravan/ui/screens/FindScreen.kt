@@ -20,12 +20,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.drawText
+import org.tensorflow.lite.examples.shravan.R
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -35,7 +34,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.tflite.Classifier
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
-import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
 import org.tensorflow.lite.examples.shravan.ui.theme.DimmedPalette
 import org.tensorflow.lite.examples.shravan.ui.theme.InterFontFamily
 import org.tensorflow.lite.examples.shravan.utils.*
@@ -48,7 +46,8 @@ fun FindScreen(
     voiceCommandManager: VoiceCommandManager,
     settingsManager: SettingsManager,
     historyManager: HistoryManager,
-    isActive: Boolean = true
+    isActive: Boolean = true,
+    yoloAnalyzer: YoloAnalyzer? = null
 ) {
     val context = LocalContext.current
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
@@ -60,40 +59,35 @@ fun FindScreen(
     val scope = rememberCoroutineScope()
     var voiceSessionId by remember { mutableStateOf<Int?>(null) }
 
-    val analyzer = remember(isActive, settingsManager.useVietnamese) {
+    LaunchedEffect(isActive, yoloAnalyzer, activeMode) {
         if (isActive) {
-            YoloAnalyzer(context, ttsManager, settingsManager, historyManager) { results ->
-                recognitions = results
-            }.apply {
-                this.allowedClasses = when (activeMode) {
-                    "seatings & tables" -> listOf("chair", "dining table", "sofa", "couch", "bàn ăn", "ghế", "ghế sofa")
-                    "doors & windows" -> listOf("door", "window", "cửa")
-                    "person & vehicles" -> listOf("person", "car", "bus", "truck", "motorcycle", "bicycle", "người", "xe hơi", "xe buýt", "xe tải", "xe máy", "xe đạp")
-                    else -> emptyList()
-                }
+            yoloAnalyzer?.allowedClasses = when (activeMode) {
+                "seatings & tables" -> listOf("chair", "dining table", "sofa", "couch", "bàn ăn", "ghế", "ghế sofa")
+                "doors & windows" -> listOf("door", "window", "cửa")
+                "person & vehicles" -> listOf("person", "car", "bus", "truck", "motorcycle", "bicycle", "người", "xe hơi", "xe buýt", "xe tải", "xe máy", "xe đạp")
+                else -> emptyList()
             }
-        } else null
-    }
-
-    LaunchedEffect(activeMode) {
-        analyzer?.allowedClasses = when (activeMode) {
-            "seatings & tables" -> listOf("chair", "dining table", "sofa", "couch", "bàn ăn", "ghế", "ghế sofa")
-            "doors & windows" -> listOf("door", "window", "cửa")
-            "person & vehicles" -> listOf("person", "car", "bus", "truck", "motorcycle", "bicycle", "người", "xe hơi", "xe buýt", "xe tải", "xe máy", "xe đạp")
-            else -> emptyList()
+            yoloAnalyzer?.onResults = { results ->
+                recognitions = results
+            }
         }
     }
 
-    val findGreeting = stringResource(org.tensorflow.lite.examples.shravan.R.string.find_greeting)
-    val findPrompt = stringResource(org.tensorflow.lite.examples.shravan.R.string.find_prompt)
-    val modeSeatingsTables = stringResource(org.tensorflow.lite.examples.shravan.R.string.mode_seatings_tables)
-    val modeDoorsWindows = stringResource(org.tensorflow.lite.examples.shravan.R.string.mode_doors_windows)
-    val modePersonVehicles = stringResource(org.tensorflow.lite.examples.shravan.R.string.mode_person_vehicles)
+    val findGreeting = stringResource(R.string.find_greeting)
+    val findPrompt = stringResource(R.string.find_prompt)
+    val modeSeatingsTables = stringResource(R.string.mode_seatings_tables)
+    val modeDoorsWindows = stringResource(R.string.mode_doors_windows)
+    val modePersonVehicles = stringResource(R.string.mode_person_vehicles)
     
+    LaunchedEffect(isActive, settingsManager.useVietnamese) {
+        if (isActive) {
+            ttsManager.speak(findGreeting, isVietnamese = settingsManager.useVietnamese)
+        }
+    }
+
     LaunchedEffect(activeMode, isActive) {
         if (isActive) {
             if (activeMode == null) {
-                ttsManager.speak(findGreeting, isVietnamese = settingsManager.useVietnamese)
                 ttsManager.speak(findPrompt, isQueued = true, isVietnamese = settingsManager.useVietnamese)
                 voiceSessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) { result ->
                     val lowerResult = result.lowercase()
@@ -119,7 +113,7 @@ fun FindScreen(
                     "person & vehicles" -> modePersonVehicles
                     else -> ""
                 }
-                val lookingForText = context.getString(org.tensorflow.lite.examples.shravan.R.string.find_looking_for, modeLabel)
+                val lookingForText = context.getString(R.string.find_looking_for, modeLabel)
                 ttsManager.speak(lookingForText, isVietnamese = settingsManager.useVietnamese)
             }
         } else {
@@ -160,14 +154,8 @@ fun FindScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.Transparent)) {
         if (isActive) {
-            CameraPreview(
-                modifier = Modifier.fillMaxSize(),
-                zoomRatio = 0.6f,
-                imageAnalyzer = analyzer
-            )
-
             if (isMonotone) {
                 Box(modifier = Modifier.fillMaxSize().background(Color.Gray.copy(alpha = 0.8f)))
             }
@@ -210,35 +198,35 @@ fun FindScreen(
         ) {
             // Button 1
             Box(
-                modifier = Modifier.size(100.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (activeMode == "seatings & tables") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(100.dp).clip(CircleShape).background(if (activeMode == "seatings & tables") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(androidx.compose.material.icons.Icons.Default.EventSeat, contentDescription = null, tint = if (activeMode == "seatings & tables") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.EventSeat, contentDescription = null, tint = if (activeMode == "seatings & tables") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
                     Text("/", color = if (activeMode == "seatings & tables") Color.White else Color.LightGray, fontSize = 24.sp, modifier = Modifier.padding(horizontal = 4.dp))
-                    Icon(androidx.compose.material.icons.Icons.Default.TableRestaurant, contentDescription = null, tint = if (activeMode == "seatings & tables") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.TableRestaurant, contentDescription = null, tint = if (activeMode == "seatings & tables") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
                 }
             }
             // Button 2
             Box(
-                modifier = Modifier.size(100.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (activeMode == "doors & windows") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(100.dp).clip(CircleShape).background(if (activeMode == "doors & windows") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(androidx.compose.material.icons.Icons.Default.Window, contentDescription = null, tint = if (activeMode == "doors & windows") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Window, contentDescription = null, tint = if (activeMode == "doors & windows") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
                     Text("/", color = if (activeMode == "doors & windows") Color.White else Color.LightGray, fontSize = 24.sp, modifier = Modifier.padding(horizontal = 4.dp))
-                    Icon(androidx.compose.material.icons.Icons.Default.MeetingRoom, contentDescription = null, tint = if (activeMode == "doors & windows") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.MeetingRoom, contentDescription = null, tint = if (activeMode == "doors & windows") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
                 }
             }
             // Button 3
             Box(
-                modifier = Modifier.size(100.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (activeMode == "person & vehicles") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(100.dp).clip(CircleShape).background(if (activeMode == "person & vehicles") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(androidx.compose.material.icons.Icons.Default.Person, contentDescription = null, tint = if (activeMode == "person & vehicles") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Person, contentDescription = null, tint = if (activeMode == "person & vehicles") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
                     Text("/", color = if (activeMode == "person & vehicles") Color.White else Color.LightGray, fontSize = 24.sp, modifier = Modifier.padding(horizontal = 4.dp))
-                    Icon(androidx.compose.material.icons.Icons.Default.DirectionsCar, contentDescription = null, tint = if (activeMode == "person & vehicles") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = if (activeMode == "person & vehicles") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
                 }
             }
         }
