@@ -252,7 +252,7 @@ fun FindScreen(
         ) {
             // Button 1
             Box(
-                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(seatingBgColor).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 90.dp, height = 65.dp).clip(RoundedCornerShape(12.dp)).background(seatingBgColor).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -263,7 +263,7 @@ fun FindScreen(
             }
             // Button 2
             Box(
-                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(doorsBgColor).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 90.dp, height = 65.dp).clip(RoundedCornerShape(12.dp)).background(doorsBgColor).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -274,7 +274,7 @@ fun FindScreen(
             }
             // Button 3
             Box(
-                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(personBgColor).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 90.dp, height = 65.dp).clip(RoundedCornerShape(12.dp)).background(personBgColor).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

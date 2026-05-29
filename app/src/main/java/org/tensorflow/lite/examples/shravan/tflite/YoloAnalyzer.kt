@@ -61,6 +61,11 @@ class YoloAnalyzer(
     private val lastSeenTime = mutableMapOf<String, Long>()
     private var isClosed = false
     private val lock = Any()
+    
+    // Persistence state
+    private var persistentRecognitions = mutableListOf<Classifier.Recognition>()
+    private val frameCountMap = mutableMapOf<String, Int>()
+    private val PERSISTENCE_THRESHOLD = 5 // Stay detected for 5 frames if missing
 
     override fun analyze(image: ImageProxy) {
         synchronized(lock) {
@@ -100,7 +105,7 @@ class YoloAnalyzer(
                     2000L
                 }
 
-                val filteredResults = if (allowedClasses != null) {
+                val currentFiltered = if (allowedClasses != null) {
                     baseFiltered.filter { result ->
                         val title = if (result.detectedClass < labels.size) labels[result.detectedClass] else result.title
                         allowedClasses!!.contains(title.lowercase())
@@ -109,8 +114,31 @@ class YoloAnalyzer(
                     baseFiltered
                 }
 
+                // Apply Persistence Logic
+                val newPersistentList = mutableListOf<Classifier.Recognition>()
+                val activeTitles = currentFiltered.map { it.title }.toSet()
+                
+                // 1. Add current frame results
+                currentFiltered.forEach { recognition ->
+                    newPersistentList.add(recognition)
+                    frameCountMap[recognition.title] = PERSISTENCE_THRESHOLD
+                }
+                
+                // 2. Carry over missing objects that are still within the threshold
+                persistentRecognitions.forEach { old ->
+                    if (!activeTitles.contains(old.title)) {
+                        val count = frameCountMap[old.title] ?: 0
+                        if (count > 0) {
+                            newPersistentList.add(old)
+                            frameCountMap[old.title] = count - 1
+                        }
+                    }
+                }
+                
+                persistentRecognitions = newPersistentList
+
                 val currentTime = System.currentTimeMillis()
-                filteredResults.forEach { result ->
+                currentFiltered.forEach { result ->
                     val detectedClass = result.detectedClass
                     val title = if (detectedClass < labels.size) labels[detectedClass] else result.title
                     
@@ -126,7 +154,7 @@ class YoloAnalyzer(
                 // Clean up old entries to prevent memory leak
                 lastSeenTime.entries.removeIf { currentTime - it.value > 5000L }
 
-                onResults?.invoke(filteredResults)
+                onResults?.invoke(persistentRecognitions)
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {

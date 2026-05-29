@@ -45,8 +45,8 @@ public class DetectorFactory {
         }
         else if (modelFilename.equals("currency.tflite")) {
             isQuantized = false;
-            inputSize = 416;
-            output_width = new int[]{40, 20, 10};
+            inputSize = 640;
+            output_width = new int[]{80, 40, 20};
             masks = new int[][]{{0, 1, 2}, {3, 4, 5}, {6, 7, 8}};
             anchors = new int[]{
                     10,13, 16,30, 33,23, 30,61, 62,45, 59,119, 116,90, 156,198, 373,326

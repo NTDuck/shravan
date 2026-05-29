@@ -239,7 +239,7 @@ public class YoloV5Classifier implements Classifier {
 
     @Override
     public float getObjThresh() {
-        return 0.5f;
+        return 0.3f;
     }
 
     private static final Logger LOGGER = new Logger();

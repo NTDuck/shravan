@@ -54,8 +54,15 @@ fun MainScreen(
     var totalDrag by remember { mutableStateOf(0f) }
     var isCameraReady by remember { mutableStateOf(false) }
     var isTorchEnabled by remember { mutableStateOf(false) }
+    
+    // Shared state for reset reddening
+    var resetCount by remember { mutableIntStateOf(0) }
+    val redAlpha = (resetCount * 0.14f).coerceIn(0f, 1f)
+    val navBarColor = if (resetCount > 0) Color.Red.copy(alpha = redAlpha) else Color.Black
 
-    // Cached Analyzers to avoid re-loading models
+    LaunchedEffect(currentPage) {
+        if (currentPage != 4) resetCount = 0
+    }
     val yoloAnalyzer = remember { 
         YoloAnalyzer(context, ttsManager, settingsManager, historyManager).apply {
             this.onDarknessDetected = { isDark ->
@@ -163,7 +170,7 @@ fun MainScreen(
         containerColor = Color.Transparent,
         bottomBar = {
             NavigationBar(
-                containerColor = Color.Black,
+                containerColor = navBarColor,
                 tonalElevation = 0.dp
             ) {
                 screens.forEachIndexed { index, screen ->
@@ -304,7 +311,16 @@ fun MainScreen(
                             yoloAnalyzer = currencyAnalyzer
                         )
                         4 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
-                            SettingsScreen(ttsManager, hapticManager, voiceCommandManager, settingsManager, onReset, isActive = isActive)
+                            SettingsScreen(
+                                ttsManager = ttsManager, 
+                                hapticManager = hapticManager, 
+                                voiceCommandManager = voiceCommandManager, 
+                                settingsManager = settingsManager, 
+                                onReset = onReset, 
+                                isActive = isActive,
+                                resetCount = resetCount,
+                                onResetClick = { resetCount++ }
+                            )
                         }
                         5 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
                             HistoryScreen(onBack = { currentPage = 0 }, historyManager = historyManager, settingsManager = settingsManager, ttsManager = ttsManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)

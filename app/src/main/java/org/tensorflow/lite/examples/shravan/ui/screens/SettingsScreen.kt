@@ -27,13 +27,14 @@ fun SettingsScreen(
     voiceCommandManager: VoiceCommandManager,
     settingsManager: SettingsManager,
     onReset: () -> Unit,
-    isActive: Boolean = true
+    isActive: Boolean = true,
+    resetCount: Int = 0,
+    onResetClick: () -> Unit = {}
 ) {
     var languageExpanded by remember { mutableStateOf(false) }
     var flashExpanded by remember { mutableStateOf(false) }
-    var resetClickCount by remember { mutableStateOf(0) }
     var languageTextFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
-    var flashTextFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
+    var flashFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
     val languages = listOf("English" to false, "Tiếng Việt" to true)
     val flashes = listOf(
@@ -41,12 +42,6 @@ fun SettingsScreen(
         stringResource(R.string.flash_on) to "on",
         stringResource(R.string.flash_off) to "off"
     )
-
-    LaunchedEffect(isActive) {
-        if (!isActive) {
-            resetClickCount = 0
-        }
-    }
 
     DisposableEffect(isActive) {
         var sessionId: Int? = null
@@ -58,8 +53,8 @@ fun SettingsScreen(
         }
     }
 
-    val redAlpha = (resetClickCount * 0.14f).coerceIn(0f, 1f)
-    val bgColor = if (resetClickCount > 0) Color.Red.copy(alpha = redAlpha) else Color(0xFF222222)
+    val redAlpha = (resetCount * 0.14f).coerceIn(0f, 1f)
+    val bgColor = if (resetCount > 0) Color.Red.copy(alpha = redAlpha) else Color(0xFF222222)
 
     Column(
         modifier = Modifier
@@ -75,6 +70,45 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
         )
+
+        // Flash
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = flashes.find { it.second == settingsManager.flashMode }?.first ?: stringResource(R.string.flash_auto),
+                onValueChange = {},
+                readOnly = true,
+                enabled = false,
+                label = { Text(stringResource(R.string.settings_flash)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = flashExpanded) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { flashFieldSize = it.size.toSize() }
+                    .clickable { flashExpanded = true },
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = Color.White,
+                    disabledBorderColor = Color.White,
+                    disabledLabelColor = Color.White,
+                    disabledTrailingIconColor = Color.White
+                )
+            )
+            DropdownMenu(
+                expanded = flashExpanded,
+                onDismissRequest = { flashExpanded = false },
+                modifier = Modifier
+                    .width(with(LocalDensity.current) { flashFieldSize.width.toDp() })
+                    .background(Color(0xFF333333))
+            ) {
+                flashes.forEach { (label, mode) ->
+                    DropdownMenuItem(
+                        text = { Text(label, color = if (settingsManager.flashMode == mode) Color.Yellow else Color.White, fontSize = 18.sp) },
+                        onClick = {
+                            settingsManager.flashMode = mode
+                            flashExpanded = false
+                        }
+                    )
+                }
+            }
+        }
 
         // Language
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -116,92 +150,19 @@ fun SettingsScreen(
             }
         }
 
-        // Haptics
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(stringResource(R.string.settings_haptics), color = Color.White, fontSize = 18.sp)
-            Switch(
-                checked = settingsManager.hapticsEnabled,
-                onCheckedChange = { settingsManager.hapticsEnabled = it },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = Color.Gray,
-                    uncheckedThumbColor = Color.White,
-                    uncheckedTrackColor = Color.DarkGray
-                )
-            )
-        }
-
-        // Speech Rate
-        Column {
-            Text(stringResource(R.string.settings_speech_rate) + ": ${"%.1f".format(settingsManager.speechRate)}x", color = Color.White, fontSize = 18.sp)
-            Slider(
-                value = settingsManager.speechRate,
-                onValueChange = { 
-                    settingsManager.speechRate = it
-                    ttsManager.setSpeechRate(it)
-                },
-                valueRange = 0.5f..2.0f,
-                steps = 14
-            )
-        }
-
-        // Flash
-        Box(modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = flashes.find { it.second == settingsManager.flashMode }?.first ?: stringResource(R.string.flash_auto),
-                onValueChange = {},
-                readOnly = true,
-                enabled = false,
-                label = { Text(stringResource(R.string.settings_flash)) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = flashExpanded) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned { flashTextFieldSize = it.size.toSize() }
-                    .clickable { flashExpanded = true },
-                colors = OutlinedTextFieldDefaults.colors(
-                    disabledTextColor = Color.White,
-                    disabledBorderColor = Color.White,
-                    disabledLabelColor = Color.White,
-                    disabledTrailingIconColor = Color.White
-                )
-            )
-            DropdownMenu(
-                expanded = flashExpanded,
-                onDismissRequest = { flashExpanded = false },
-                modifier = Modifier
-                    .width(with(LocalDensity.current) { flashTextFieldSize.width.toDp() })
-                    .background(Color(0xFF333333))
-            ) {
-                flashes.forEach { (label, mode) ->
-                    DropdownMenuItem(
-                        text = { Text(label, color = if (settingsManager.flashMode == mode) Color.Yellow else Color.White, fontSize = 18.sp) },
-                        onClick = {
-                            settingsManager.flashMode = mode
-                            flashExpanded = false
-                        }
-                    )
-                }
-            }
-        }
-
         Spacer(modifier = Modifier.weight(1f))
 
         // Reset
         Button(
             onClick = {
-                resetClickCount++
-                if (resetClickCount >= 7) {
+                onResetClick()
+                if (resetCount + 1 >= 7) {
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     onReset()
-                    resetClickCount = 0
                 }
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = if (resetClickCount > 0) Color.Transparent else MaterialTheme.colorScheme.error)
+            colors = ButtonDefaults.buttonColors(containerColor = if (resetCount > 0) Color.Transparent else MaterialTheme.colorScheme.error)
         ) {
             Text(stringResource(R.string.settings_reset), fontSize = 18.sp, color = Color.White)
         }
