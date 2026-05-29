@@ -1,5 +1,7 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -131,6 +133,33 @@ fun FindScreen(
         }
     }
 
+    val seatingBgColor by animateColorAsState(
+        targetValue = if (activeMode == "seatings & tables") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f),
+        animationSpec = tween(durationMillis = 300)
+    )
+    val seatingContentColor by animateColorAsState(
+        targetValue = if (activeMode == "seatings & tables") Color.White else Color.LightGray,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    val doorsBgColor by animateColorAsState(
+        targetValue = if (activeMode == "doors & windows") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f),
+        animationSpec = tween(durationMillis = 300)
+    )
+    val doorsContentColor by animateColorAsState(
+        targetValue = if (activeMode == "doors & windows") Color.White else Color.LightGray,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    val personBgColor by animateColorAsState(
+        targetValue = if (activeMode == "person & vehicles") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f),
+        animationSpec = tween(durationMillis = 300)
+    )
+    val personContentColor by animateColorAsState(
+        targetValue = if (activeMode == "person & vehicles") Color.White else Color.LightGray,
+        animationSpec = tween(durationMillis = 300)
+    )
+
     LaunchedEffect(recognitions, activeMode, isActive) {
         if (isActive && activeMode != null && recognitions.isNotEmpty()) {
             while (true) {
@@ -199,35 +228,35 @@ fun FindScreen(
         ) {
             // Button 1
             Box(
-                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(if (activeMode == "seatings & tables") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(seatingBgColor).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.EventSeat, contentDescription = null, tint = if (activeMode == "seatings & tables") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.EventSeat, contentDescription = null, tint = seatingContentColor, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.TableRestaurant, contentDescription = null, tint = if (activeMode == "seatings & tables") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.TableRestaurant, contentDescription = null, tint = seatingContentColor, modifier = Modifier.size(24.dp))
                 }
             }
             // Button 2
             Box(
-                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(if (activeMode == "doors & windows") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(doorsBgColor).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Window, contentDescription = null, tint = if (activeMode == "doors & windows") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Window, contentDescription = null, tint = doorsContentColor, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.MeetingRoom, contentDescription = null, tint = if (activeMode == "doors & windows") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.MeetingRoom, contentDescription = null, tint = doorsContentColor, modifier = Modifier.size(24.dp))
                 }
             }
             // Button 3
             Box(
-                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(if (activeMode == "person & vehicles") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(personBgColor).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = if (activeMode == "person & vehicles") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Person, contentDescription = null, tint = personContentColor, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = if (activeMode == "person & vehicles") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = personContentColor, modifier = Modifier.size(24.dp))
                 }
             }
         }

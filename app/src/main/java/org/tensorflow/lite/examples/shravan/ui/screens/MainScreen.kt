@@ -1,6 +1,8 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
 import androidx.camera.core.ImageAnalysis
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -34,7 +36,7 @@ import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
 import org.tensorflow.lite.examples.shravan.utils.*
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun MainScreen(
     settingsManager: SettingsManager,
@@ -45,11 +47,12 @@ fun MainScreen(
     onReset: () -> Unit
 ) {
     val context = LocalContext.current
-    val pagerState = rememberPagerState(pageCount = { 6 })
+    var currentPage by remember { mutableIntStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
     val swipeThreshold = remember { with(density) { 50.dp.toPx() } }
     var totalDrag by remember { mutableStateOf(0f) }
+    var isCameraReady by remember { mutableStateOf(false) }
 
     // Cached Analyzers to avoid re-loading models
     val yoloAnalyzer = remember { YoloAnalyzer(context, ttsManager, settingsManager, historyManager) }
@@ -85,43 +88,40 @@ fun MainScreen(
         )
     }
 
-    LaunchedEffect(pagerState.currentPage) {
+    // Single Haptic Trigger
+    LaunchedEffect(currentPage) {
         if (settingsManager.hapticsEnabled) {
             hapticManager.triggerHaptic()
         }
-    }
-
-    LaunchedEffect(pagerState.currentPage, ocrAnalyzer) {
-        // Update active analyzer based on page
-        activeAnalyzer = when (pagerState.currentPage) {
+        // Prepare analyzer for the new page
+        activeAnalyzer = when (currentPage) {
             0 -> {
                 yoloAnalyzer.allowedClasses = null
                 yoloAnalyzer
             }
-            1 -> yoloAnalyzer // FindScreen will set allowedClasses
+            1 -> yoloAnalyzer // FindScreen sets allowedClasses
             2 -> ocrAnalyzer
             3 -> currencyAnalyzer
             else -> null
+        }
+        
+        // If moving away from camera pages, reset camera ready
+        if (currentPage >= 4) {
+            isCameraReady = false
         }
     }
 
     // Centralized Voice Navigation Listener
     DisposableEffect(settingsManager.useVietnamese) {
         voiceCommandManager.onGlobalIntent = { result ->
-            val isSpeaking = ttsManager.isSpeaking()
-            android.util.Log.d("SHRAVAN_NAV", "Global intent check: result=$result, isSpeaking=$isSpeaking")
-            
-            if (isSpeaking) {
+            if (ttsManager.isSpeaking()) {
                 false
             } else {
                 val lowerResult = result.lowercase()
-                
                 val matched = navKeywords.find { lowerResult.contains(it.first) }
                 if (matched != null) {
-                    if (pagerState.currentPage != matched.second) {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(matched.second)
-                        }
+                    if (currentPage != matched.second) {
+                        currentPage = matched.second
                     }
                     true // handled
                 } else {
@@ -146,36 +146,13 @@ fun MainScreen(
         bottomBar = {
             NavigationBar(
                 containerColor = Color.Black,
-                tonalElevation = 0.dp,
-                modifier = Modifier.pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onDragEnd = { totalDrag = 0f },
-                        onDragCancel = { totalDrag = 0f },
-                        onHorizontalDrag = { change, dragAmount ->
-                            change.consume()
-                            totalDrag += dragAmount
-                            if (java.lang.Math.abs(totalDrag) > swipeThreshold) {
-                                val targetPage = if (totalDrag < 0) {
-                                    (pagerState.currentPage + 1).coerceAtMost(5)
-                                } else {
-                                    (pagerState.currentPage - 1).coerceAtLeast(0)
-                                }
-                                if (targetPage != pagerState.currentPage) {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(targetPage)
-                                    }
-                                }
-                                totalDrag = 0f
-                            }
-                        }
-                    )
-                }
+                tonalElevation = 0.dp
             ) {
                 screens.forEachIndexed { index, screen ->
                     NavigationBarItem(
                         icon = { Icon(screen.second, contentDescription = stringResource(screen.first), modifier = Modifier.size(32.dp)) },
                         label = null,
-                        selected = pagerState.currentPage == index,
+                        selected = currentPage == index,
                         colors = NavigationBarItemDefaults.colors(
                             indicatorColor = Color.Transparent,
                             selectedIconColor = Color.White,
@@ -184,45 +161,91 @@ fun MainScreen(
                             unselectedTextColor = Color.Gray
                         ),
                         onClick = {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(index)
-                            }
+                            currentPage = index
                         }
                     )
                 }
             }
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Shared CameraPreview behind the pager
-            if (pagerState.currentPage < 4) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = { totalDrag = 0f },
+                        onDragCancel = { totalDrag = 0f },
+                        onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
+                            totalDrag += dragAmount
+                            if (java.lang.Math.abs(totalDrag) > swipeThreshold) {
+                                val targetPage = if (totalDrag < 0) {
+                                    (currentPage + 1).coerceAtMost(5)
+                                } else {
+                                    (currentPage - 1).coerceAtLeast(0)
+                                }
+                                if (targetPage != currentPage) {
+                                    currentPage = targetPage
+                                }
+                                totalDrag = 0f
+                            }
+                        }
+                    )
+                }
+        ) {
+            // Shared CameraPreview layer
+            if (currentPage < 4) {
                 CameraPreview(
                     modifier = Modifier.fillMaxSize(),
                     zoomRatio = 0.6f,
-                    imageAnalyzer = activeAnalyzer
+                    imageAnalyzer = activeAnalyzer,
+                    onReady = { isCameraReady = true }
                 )
             }
 
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize()
-            ) { page ->
-                val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-                val isFindScreenTransition = page == 1 || pagerState.currentPage == 1
-                
-                val alpha = if (isFindScreenTransition) {
-                    1f - Math.abs(pageOffset).coerceIn(0f, 1f)
-                } else 1f
-
-                Box(modifier = Modifier.graphicsLayer { 
-                    this.alpha = alpha
-                    if (isFindScreenTransition) {
-                        // Counteract the sliding motion to create a stationary fade effect
-                        translationX = pageOffset * size.width
+            // Crossfade between Spinner and Camera
+            if (currentPage < 4) {
+                AnimatedVisibility(
+                    visible = !isCameraReady,
+                    enter = fadeIn(),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 500))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF222222)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 4.dp,
+                            modifier = Modifier.size(64.dp)
+                        )
                     }
-                }) {
-                    val isActive = pagerState.currentPage == page
-                    when (page) {
+                }
+            }
+
+            // Page Content with slide transitions
+            AnimatedContent(
+                targetState = currentPage,
+                transitionSpec = {
+                    val isFindTransition = targetState == 1 || initialState == 1
+                    if (isFindTransition) {
+                        // Fade only for Find Screen transitions
+                        fadeIn(animationSpec = tween(500)) with fadeOut(animationSpec = tween(500))
+                    } else {
+                        // Slide for everything else
+                        if (targetState > initialState) {
+                            slideInHorizontally { it } + fadeIn() with slideOutHorizontally { -it } + fadeOut()
+                        } else {
+                            slideInHorizontally { -it } + fadeIn() with slideOutHorizontally { it } + fadeOut()
+                        }
+                    }.using(SizeTransform(clip = false))
+                }
+            ) { targetPage ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    val isActive = currentPage == targetPage
+                    when (targetPage) {
                         0 -> ExploreScreen(
                             ttsManager = ttsManager,
                             hapticManager = hapticManager,
@@ -242,9 +265,13 @@ fun MainScreen(
                             yoloAnalyzer = yoloAnalyzer
                         )
                         2 -> OCRScreen(
-                            onBack = {}, ttsManager = ttsManager, settingsManager = settingsManager, 
-                            historyManager = historyManager, hapticManager = hapticManager, 
-                            voiceCommandManager = voiceCommandManager, isActive = isActive,
+                            onBack = { currentPage = 0 },
+                            ttsManager = ttsManager,
+                            settingsManager = settingsManager,
+                            historyManager = historyManager,
+                            hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager,
+                            isActive = isActive,
                             onProvideAnalyzer = { ocrAnalyzer = it }
                         )
                         3 -> CurrencyScreen(
@@ -260,7 +287,7 @@ fun MainScreen(
                             SettingsScreen(ttsManager, hapticManager, voiceCommandManager, settingsManager, onReset, isActive = isActive)
                         }
                         5 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
-                            HistoryScreen(onBack = {}, historyManager = historyManager, settingsManager = settingsManager, ttsManager = ttsManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)
+                            HistoryScreen(onBack = { currentPage = 0 }, historyManager = historyManager, settingsManager = settingsManager, ttsManager = ttsManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)
                         }
                     }
                 }

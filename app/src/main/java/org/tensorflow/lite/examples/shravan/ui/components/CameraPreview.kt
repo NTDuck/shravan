@@ -24,11 +24,13 @@ object CameraExecutorManager {
 fun CameraPreview(
     modifier: Modifier = Modifier,
     zoomRatio: Float = 1.0f,
-    imageAnalyzer: ImageAnalysis.Analyzer? = null
+    imageAnalyzer: ImageAnalysis.Analyzer? = null,
+    onReady: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraExecutor = CameraExecutorManager.executor
+    val currentOnReady by rememberUpdatedState(onReady)
 
     
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
@@ -85,6 +87,7 @@ fun CameraPreview(
                 )
             }
             camera.cameraControl.setZoomRatio(zoomRatio)
+            currentOnReady()
         } catch (e: Exception) {
             Log.e("CameraPreview", "Use case binding failed", e)
         }
