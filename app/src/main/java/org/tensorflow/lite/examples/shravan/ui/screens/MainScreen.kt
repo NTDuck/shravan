@@ -77,6 +77,9 @@ fun MainScreen(
     DisposableEffect(settingsManager.useVietnamese) {
         voiceCommandManager.onGlobalIntent = { result ->
             val lowerResult = result.lowercase()
+            android.util.Log.d("SHRAVAN_NAV", "Voice result: $result")
+            android.util.Log.d("SHRAVAN_NAV", "Keywords: ${navKeywords.map { it.first }}")
+            
             val matched = navKeywords.find { lowerResult.contains(it.first) }
             if (matched != null) {
                 if (pagerState.currentPage != matched.second) {
@@ -96,6 +99,7 @@ fun MainScreen(
     }
 
     Scaffold(
+        containerColor = Color.Transparent,
         bottomBar = {
             NavigationBar(
                 containerColor = Color.Black,

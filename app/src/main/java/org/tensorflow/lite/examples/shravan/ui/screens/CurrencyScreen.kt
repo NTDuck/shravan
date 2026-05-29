@@ -12,7 +12,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.drawText
+import org.tensorflow.lite.examples.shravan.R
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -39,10 +41,12 @@ fun CurrencyScreen(
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
     val textMeasurer = rememberTextMeasurer()
 
+    val currencyGreeting = stringResource(R.string.currency_greeting)
+
     LaunchedEffect(isActive) {
         if (isActive) {
             ttsManager.speak(
-                context.getString(org.tensorflow.lite.examples.shravan.R.string.currency_greeting),
+                currencyGreeting,
                 isVietnamese = settingsManager.useVietnamese
             )
         }

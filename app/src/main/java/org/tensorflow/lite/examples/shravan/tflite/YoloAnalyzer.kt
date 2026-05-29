@@ -36,13 +36,6 @@ class YoloAnalyzer(
         DetectorFactory.getDetector(context.assets, modelName, labelFile)
     }
 
-    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-    private val lastAreas = mutableMapOf<Int, Float>()
-    private val lastAlertTime = mutableMapOf<Int, Long>()
-    private val ALERT_COOLDOWN = 2000L
-    private val GROWTH_THRESHOLD = 0.15f
-    private val SIZE_THRESHOLD = 0.4f
-
     private val labels: List<String> get() {
         val labelsList = mutableListOf<String>()
         val filename = when {
