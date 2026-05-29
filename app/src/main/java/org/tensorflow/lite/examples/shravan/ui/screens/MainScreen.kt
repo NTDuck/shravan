@@ -49,14 +49,21 @@ fun MainScreen(
         Triple(R.string.nav_history, Icons.Default.History, "history")
     )
 
-    val navKeywords = remember(settingsManager.useVietnamese) {
+    val kExplore = stringResource(R.string.voice_keyword_explore).lowercase()
+    val kFind = stringResource(R.string.voice_keyword_find).lowercase()
+    val kOcr = stringResource(R.string.voice_keyword_ocr).lowercase()
+    val kCurrency = stringResource(R.string.voice_keyword_currency).lowercase()
+    val kSettings = stringResource(R.string.voice_keyword_settings).lowercase()
+    val kHistory = stringResource(R.string.voice_keyword_history).lowercase()
+
+    val navKeywords = remember(kExplore, kFind, kOcr, kCurrency, kSettings, kHistory) {
         listOf(
-            context.getString(R.string.voice_keyword_explore).lowercase() to 0,
-            context.getString(R.string.voice_keyword_find).lowercase() to 1,
-            context.getString(R.string.voice_keyword_ocr).lowercase() to 2,
-            context.getString(R.string.voice_keyword_currency).lowercase() to 3,
-            context.getString(R.string.voice_keyword_settings).lowercase() to 4,
-            context.getString(R.string.voice_keyword_history).lowercase() to 5
+            kExplore to 0,
+            kFind to 1,
+            kOcr to 2,
+            kCurrency to 3,
+            kSettings to 4,
+            kHistory to 5
         )
     }
 

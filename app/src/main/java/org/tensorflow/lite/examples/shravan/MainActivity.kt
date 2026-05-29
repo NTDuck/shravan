@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(useVietnamese) {
                     val locale = if (useVietnamese) java.util.Locale("vi") else java.util.Locale.ENGLISH
                     java.util.Locale.setDefault(locale)
-                    val resources = context.resources
+                    val resources = this@MainActivity.resources
                     val configuration = resources.configuration
                     configuration.setLocale(locale)
                     resources.updateConfiguration(configuration, resources.displayMetrics)
@@ -96,9 +96,9 @@ class MainActivity : ComponentActivity() {
                     return@setContent
                 }
                 
-                key(useVietnamese) {
-                    val locale = if (useVietnamese) java.util.Locale("vi") else java.util.Locale.ENGLISH
-                    val config = android.content.res.Configuration(context.resources.configuration)
+                key(settingsManager.useVietnamese) {
+                    val locale = if (settingsManager.useVietnamese) java.util.Locale("vi") else java.util.Locale.ENGLISH
+                    val config = android.content.res.Configuration(this@MainActivity.resources.configuration)
                     config.setLocale(locale)
                     val contextWrapper = context.createConfigurationContext(config)
                     

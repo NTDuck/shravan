@@ -56,13 +56,14 @@ fun HistoryScreen(
     }
 
     val historyGreeting = stringResource(R.string.history_greeting)
+    val historyGreetingTts = stringResource(R.string.history_greeting_tts)
     val backCommand = stringResource(R.string.back_command)
     val historyEmpty = stringResource(R.string.history_empty)
 
     LaunchedEffect(isActive) {
         if (isActive) {
             ttsManager.speak(
-                historyGreeting,
+                historyGreetingTts,
                 isVietnamese = useVietnamese,
                 onComplete = {
                     scope.launch {

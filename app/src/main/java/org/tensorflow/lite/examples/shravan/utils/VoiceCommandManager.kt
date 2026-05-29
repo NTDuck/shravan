@@ -65,9 +65,15 @@ class VoiceCommandManager(private val context: Context) {
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
-                    val result = matches[0]
-                    if (onGlobalIntent?.invoke(result) != true) {
-                        onResult?.invoke(result)
+                    var handled = false
+                    for (match in matches) {
+                        if (onGlobalIntent?.invoke(match) == true) {
+                            handled = true
+                            break
+                        }
+                    }
+                    if (!handled) {
+                        onResult?.invoke(matches[0])
                     }
                 }
                 isListening = false
@@ -78,9 +84,15 @@ class VoiceCommandManager(private val context: Context) {
             override fun onPartialResults(partialResults: Bundle?) {
                 val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
-                    val result = matches[0]
-                    if (onGlobalIntent?.invoke(result) != true) {
-                        onPartialResult?.invoke(result)
+                    var handled = false
+                    for (match in matches) {
+                        if (onGlobalIntent?.invoke(match) == true) {
+                            handled = true
+                            break
+                        }
+                    }
+                    if (!handled) {
+                        onPartialResult?.invoke(matches[0])
                     }
                 }
             }

@@ -34,10 +34,11 @@
     <string name="mode_seatings_tables">Seatings and tables</string>
     <string name="mode_doors_windows">Doors and windows</string>
     <string name="mode_person_vehicles">Person and vehicles</string>
-    <string name="explore_greeting">Explore</string>
-    <string name="currency_greeting">Currency</string>
+    <string name="explore_greeting">Explore mode</string>
+    <string name="currency_greeting">Currency mode</string>
     <string name="ocr_greeting">OCR</string>
     <string name="history_greeting">History</string>
+    <string name="history_greeting_tts">History mode</string>
     <string name="back_command">Back</string>
     <string name="history_empty">No history yet</string>
     <string name="too_close">%s too close!</string>

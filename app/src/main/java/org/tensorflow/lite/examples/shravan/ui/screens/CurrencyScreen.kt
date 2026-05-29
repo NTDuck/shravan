@@ -39,6 +39,15 @@ fun CurrencyScreen(
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
     val textMeasurer = rememberTextMeasurer()
 
+    LaunchedEffect(isActive) {
+        if (isActive) {
+            ttsManager.speak(
+                context.getString(org.tensorflow.lite.examples.shravan.R.string.currency_greeting),
+                isVietnamese = settingsManager.useVietnamese
+            )
+        }
+    }
+
     val analyzer = remember(isActive, settingsManager.useVietnamese) {
         if (isActive) {
             YoloAnalyzer(context, ttsManager, settingsManager, historyManager, modelName = "currency.tflite") { results ->

@@ -34,8 +34,11 @@
     <string name="mode_seatings_tables">Bàn ghế</string>
     <string name="mode_doors_windows">Cửa</string>
     <string name="mode_person_vehicles">Người và xe</string>
+    <string name="explore_greeting">Chế độ khám phá</string>
+    <string name="currency_greeting">Chế độ nhận diện tiền</string>
     <string name="ocr_greeting">Đọc văn bản</string>
     <string name="history_greeting">Lịch sử</string>
+    <string name="history_greeting_tts">Lịch sử</string>
     <string name="back_command">Quay lại</string>
     <string name="history_empty">Chưa có lịch sử</string>
     <string name="too_close">%s quá gần!</string>
