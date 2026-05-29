@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.EventSeat
@@ -198,34 +199,34 @@ fun FindScreen(
         ) {
             // Button 1
             Box(
-                modifier = Modifier.size(100.dp).clip(CircleShape).background(if (activeMode == "seatings & tables") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(if (activeMode == "seatings & tables") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.EventSeat, contentDescription = null, tint = if (activeMode == "seatings & tables") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
-                    Text("/", color = if (activeMode == "seatings & tables") Color.White else Color.LightGray, fontSize = 24.sp, modifier = Modifier.padding(horizontal = 4.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Icon(Icons.Default.TableRestaurant, contentDescription = null, tint = if (activeMode == "seatings & tables") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
                 }
             }
             // Button 2
             Box(
-                modifier = Modifier.size(100.dp).clip(CircleShape).background(if (activeMode == "doors & windows") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(if (activeMode == "doors & windows") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Window, contentDescription = null, tint = if (activeMode == "doors & windows") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
-                    Text("/", color = if (activeMode == "doors & windows") Color.White else Color.LightGray, fontSize = 24.sp, modifier = Modifier.padding(horizontal = 4.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Icon(Icons.Default.MeetingRoom, contentDescription = null, tint = if (activeMode == "doors & windows") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
                 }
             }
             // Button 3
             Box(
-                modifier = Modifier.size(100.dp).clip(CircleShape).background(if (activeMode == "person & vehicles") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 110.dp, height = 80.dp).clip(RoundedCornerShape(12.dp)).background(if (activeMode == "person & vehicles") MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.5f)).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Person, contentDescription = null, tint = if (activeMode == "person & vehicles") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
-                    Text("/", color = if (activeMode == "person & vehicles") Color.White else Color.LightGray, fontSize = 24.sp, modifier = Modifier.padding(horizontal = 4.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = if (activeMode == "person & vehicles") Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
                 }
             }

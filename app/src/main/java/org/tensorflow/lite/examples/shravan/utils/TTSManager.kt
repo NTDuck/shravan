@@ -60,16 +60,27 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
         }
     }
 
+    private var lastSpeechEndTime: Long = 0
+
     private fun setupProgressListener() {
         tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) {
+                lastSpeechEndTime = System.currentTimeMillis()
                 mainHandler.post {
                     onCompletionListener?.invoke()
                     onCompletionListener = null
                 }
             }
             override fun onError(utteranceId: String?) {
+                lastSpeechEndTime = System.currentTimeMillis()
+                mainHandler.post {
+                    onCompletionListener?.invoke()
+                    onCompletionListener = null
+                }
+            }
+            override fun onStop(utteranceId: String?, interrupted: Boolean) {
+                lastSpeechEndTime = System.currentTimeMillis()
                 mainHandler.post {
                     onCompletionListener?.invoke()
                     onCompletionListener = null
@@ -140,7 +151,11 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
     }
 
     fun isSpeaking(): Boolean {
-        return tts?.isSpeaking ?: false
+        val currentlySpeaking = tts?.isSpeaking ?: false
+        if (currentlySpeaking) return true
+        
+        val timeSinceLastSpeech = System.currentTimeMillis() - lastSpeechEndTime
+        return timeSinceLastSpeech < 500 // 500ms buffer to prevent voice command interference
     }
 
     fun stop() {

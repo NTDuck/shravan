@@ -22,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -84,11 +85,13 @@ fun MainScreen(
         )
     }
 
-    LaunchedEffect(pagerState.currentPage, ocrAnalyzer) {
+    LaunchedEffect(pagerState.currentPage) {
         if (settingsManager.hapticsEnabled) {
             hapticManager.triggerHaptic()
         }
+    }
 
+    LaunchedEffect(pagerState.currentPage, ocrAnalyzer) {
         // Update active analyzer based on page
         activeAnalyzer = when (pagerState.currentPage) {
             0 -> {
@@ -105,16 +108,17 @@ fun MainScreen(
     // Centralized Voice Navigation Listener
     DisposableEffect(settingsManager.useVietnamese) {
         voiceCommandManager.onGlobalIntent = { result ->
-            if (ttsManager.isSpeaking()) {
+            val isSpeaking = ttsManager.isSpeaking()
+            android.util.Log.d("SHRAVAN_NAV", "Global intent check: result=$result, isSpeaking=$isSpeaking")
+            
+            if (isSpeaking) {
                 false
             } else {
                 val lowerResult = result.lowercase()
-                android.util.Log.d("SHRAVAN_NAV", "Voice result: $result")
                 
                 val matched = navKeywords.find { lowerResult.contains(it.first) }
                 if (matched != null) {
                     if (pagerState.currentPage != matched.second) {
-                        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(matched.second)
                         }
@@ -160,7 +164,6 @@ fun MainScreen(
                                     coroutineScope.launch {
                                         pagerState.animateScrollToPage(targetPage)
                                     }
-                                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                                 }
                                 totalDrag = 0f
                             }
@@ -181,7 +184,6 @@ fun MainScreen(
                             unselectedTextColor = Color.Gray
                         ),
                         onClick = {
-                            if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                             coroutineScope.launch {
                                 pagerState.animateScrollToPage(index)
                             }
@@ -205,46 +207,61 @@ fun MainScreen(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize()
             ) { page ->
-                val isActive = pagerState.currentPage == page
-                when (page) {
-                    0 -> ExploreScreen(
-                        ttsManager = ttsManager,
-                        hapticManager = hapticManager,
-                        voiceCommandManager = voiceCommandManager,
-                        settingsManager = settingsManager,
-                        historyManager = historyManager,
-                        isActive = isActive,
-                        yoloAnalyzer = yoloAnalyzer
-                    )
-                    1 -> FindScreen(
-                        ttsManager = ttsManager,
-                        hapticManager = hapticManager,
-                        voiceCommandManager = voiceCommandManager,
-                        settingsManager = settingsManager,
-                        historyManager = historyManager,
-                        isActive = isActive,
-                        yoloAnalyzer = yoloAnalyzer
-                    )
-                    2 -> OCRScreen(
-                        onBack = {}, ttsManager = ttsManager, settingsManager = settingsManager, 
-                        historyManager = historyManager, hapticManager = hapticManager, 
-                        voiceCommandManager = voiceCommandManager, isActive = isActive,
-                        onProvideAnalyzer = { ocrAnalyzer = it }
-                    )
-                    3 -> CurrencyScreen(
-                        ttsManager = ttsManager,
-                        hapticManager = hapticManager,
-                        voiceCommandManager = voiceCommandManager,
-                        settingsManager = settingsManager,
-                        historyManager = historyManager,
-                        isActive = isActive,
-                        yoloAnalyzer = currencyAnalyzer
-                    )
-                    4 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
-                        SettingsScreen(ttsManager, hapticManager, voiceCommandManager, settingsManager, onReset, isActive = isActive)
+                val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+                val isFindScreenTransition = page == 1 || pagerState.currentPage == 1
+                
+                val alpha = if (isFindScreenTransition) {
+                    1f - Math.abs(pageOffset).coerceIn(0f, 1f)
+                } else 1f
+
+                Box(modifier = Modifier.graphicsLayer { 
+                    this.alpha = alpha
+                    if (isFindScreenTransition) {
+                        // Counteract the sliding motion to create a stationary fade effect
+                        translationX = pageOffset * size.width
                     }
-                    5 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
-                        HistoryScreen(onBack = {}, historyManager = historyManager, settingsManager = settingsManager, ttsManager = ttsManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)
+                }) {
+                    val isActive = pagerState.currentPage == page
+                    when (page) {
+                        0 -> ExploreScreen(
+                            ttsManager = ttsManager,
+                            hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager,
+                            settingsManager = settingsManager,
+                            historyManager = historyManager,
+                            isActive = isActive,
+                            yoloAnalyzer = yoloAnalyzer
+                        )
+                        1 -> FindScreen(
+                            ttsManager = ttsManager,
+                            hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager,
+                            settingsManager = settingsManager,
+                            historyManager = historyManager,
+                            isActive = isActive,
+                            yoloAnalyzer = yoloAnalyzer
+                        )
+                        2 -> OCRScreen(
+                            onBack = {}, ttsManager = ttsManager, settingsManager = settingsManager, 
+                            historyManager = historyManager, hapticManager = hapticManager, 
+                            voiceCommandManager = voiceCommandManager, isActive = isActive,
+                            onProvideAnalyzer = { ocrAnalyzer = it }
+                        )
+                        3 -> CurrencyScreen(
+                            ttsManager = ttsManager,
+                            hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager,
+                            settingsManager = settingsManager,
+                            historyManager = historyManager,
+                            isActive = isActive,
+                            yoloAnalyzer = currencyAnalyzer
+                        )
+                        4 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
+                            SettingsScreen(ttsManager, hapticManager, voiceCommandManager, settingsManager, onReset, isActive = isActive)
+                        }
+                        5 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
+                            HistoryScreen(onBack = {}, historyManager = historyManager, settingsManager = settingsManager, ttsManager = ttsManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)
+                        }
                     }
                 }
             }

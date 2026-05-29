@@ -42,6 +42,7 @@ fun HistoryScreen(
 ) {
     val useVietnamese = settingsManager.useVietnamese
     var historyItems by remember { mutableStateOf(historyManager.getHistory()) }
+    var speakingItemId by remember { mutableStateOf<Long?>(null) }
     val dateFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     var interactionsEnabled by remember { mutableStateOf(false) }
     val voiceSessionId = remember { mutableStateOf<Int?>(null) }
@@ -146,7 +147,8 @@ fun HistoryScreen(
                             "currency" -> Icons.Default.MonetizationOn
                             else -> Icons.Default.History
                         }
-                        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
+                        val itemColor = if (speakingItemId == item.timestamp) Color.Yellow else Color.White
+                        Icon(icon, contentDescription = null, tint = itemColor, modifier = Modifier.size(32.dp))
                         
                         Spacer(modifier = Modifier.width(16.dp))
                         
@@ -159,7 +161,7 @@ fun HistoryScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = item.content,
-                                color = Color.White,
+                                color = itemColor,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -169,9 +171,14 @@ fun HistoryScreen(
 
                         IconButton(onClick = {
                             if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
-                            ttsManager.speak(item.content, isVietnamese = useVietnamese)
+                            speakingItemId = item.timestamp
+                            ttsManager.speak(item.content, isVietnamese = useVietnamese) {
+                                if (speakingItemId == item.timestamp) {
+                                    speakingItemId = null
+                                }
+                            }
                         }) {
-                            Icon(Icons.Default.VolumeUp, contentDescription = "Speak", tint = Color.White, modifier = Modifier.size(32.dp))
+                            Icon(Icons.Default.VolumeUp, contentDescription = "Speak", tint = itemColor, modifier = Modifier.size(32.dp))
                         }
                     }
                 }
