@@ -24,6 +24,8 @@ class VoiceCommandManager(private val context: Context) {
     private val handler = Handler(Looper.getMainLooper())
     private var currentSessionId = 0
 
+    private val isTotallyBlind: Boolean get() = SettingsManager(context).impairmentLevel == ImpairmentLevel.TotallyImpaired
+
     init {
         handler.post {
             try {
@@ -133,6 +135,13 @@ class VoiceCommandManager(private val context: Context) {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, if (lastIsVietnamese) "vi-VN" else "en-US")
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            
+            // Optimization for Totally Blind: Be more aggressive
+            if (isTotallyBlind) {
+                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000L)
+                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
+                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
+            }
         }
         speechRecognizer?.startListening(intent)
     }

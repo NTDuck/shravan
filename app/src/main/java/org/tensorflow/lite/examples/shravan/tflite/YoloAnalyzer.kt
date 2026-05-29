@@ -22,7 +22,8 @@ class YoloAnalyzer(
     private val settingsManager: SettingsManager,
     private val historyManager: HistoryManager,
     private val modelName: String = "yolov5s-fp16.tflite",
-    var onResults: ((List<Classifier.Recognition>) -> Unit)? = null
+    var onResults: ((List<Classifier.Recognition>) -> Unit)? = null,
+    var onDarknessDetected: ((Boolean) -> Unit)? = null
 ) : ImageAnalysis.Analyzer {
 
     var allowedClasses: List<String>? = null
@@ -58,7 +59,6 @@ class YoloAnalyzer(
     }
 
     private val lastSeenTime = mutableMapOf<String, Long>()
-    private val DEBOUNCE_TIME = 2000L
     private var isClosed = false
     private val lock = Any()
 
@@ -83,8 +83,23 @@ class YoloAnalyzer(
                     rotatedBitmap, detector.inputSize, detector.inputSize, true
                 )
 
+                // Auto Flash detection based on luminance
+                if (settingsManager.flashMode == "auto") {
+                    val luminance = calculateLuminance(image)
+                    val isDark = luminance < 40.0 // Threshold for "dark"
+                    onDarknessDetected?.invoke(isDark)
+                }
+
                 val results = detector.recognizeImage(scaledBitmap)
                 val baseFiltered = results.filter { it.confidence > 0.25f }
+                
+                // Totally Blind Optimization: dynamic debounce
+                val currentDebounce = if (settingsManager.impairmentLevel == org.tensorflow.lite.examples.shravan.utils.ImpairmentLevel.TotallyImpaired) {
+                    1000L // Faster announcements for totally blind
+                } else {
+                    2000L
+                }
+
                 val filteredResults = if (allowedClasses != null) {
                     baseFiltered.filter { result ->
                         val title = if (result.detectedClass < labels.size) labels[result.detectedClass] else result.title
@@ -95,15 +110,12 @@ class YoloAnalyzer(
                 }
 
                 val currentTime = System.currentTimeMillis()
-                val currentTitles = mutableSetOf<String>()
-
                 filteredResults.forEach { result ->
                     val detectedClass = result.detectedClass
                     val title = if (detectedClass < labels.size) labels[detectedClass] else result.title
-                    currentTitles.add(title)
                     
                     val lastSeen = lastSeenTime[title] ?: 0L
-                    if (currentTime - lastSeen > DEBOUNCE_TIME) {
+                    if (currentTime - lastSeen > currentDebounce) {
                         val announcement = title
                         ttsManager.speak(announcement, isQueued = true, isVietnamese = settingsManager.useVietnamese)
                         historyManager.addHistory("Object", announcement)
@@ -121,6 +133,17 @@ class YoloAnalyzer(
                 image.close()
             }
         }
+    }
+
+    private fun calculateLuminance(image: ImageProxy): Double {
+        val buffer = image.planes[0].buffer
+        val data = ByteArray(buffer.remaining())
+        buffer.get(data)
+        var sum = 0L
+        for (b in data) {
+            sum += b.toInt() and 0xFF
+        }
+        return sum.toDouble() / data.size
     }
 
     fun close() {

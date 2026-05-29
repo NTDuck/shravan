@@ -53,13 +53,29 @@ fun MainScreen(
     val swipeThreshold = remember { with(density) { 50.dp.toPx() } }
     var totalDrag by remember { mutableStateOf(0f) }
     var isCameraReady by remember { mutableStateOf(false) }
+    var isTorchEnabled by remember { mutableStateOf(false) }
 
     // Cached Analyzers to avoid re-loading models
-    val yoloAnalyzer = remember { YoloAnalyzer(context, ttsManager, settingsManager, historyManager) }
-    val currencyAnalyzer = remember { YoloAnalyzer(context, ttsManager, settingsManager, historyManager, modelName = "currency.tflite") }
+    val yoloAnalyzer = remember { 
+        YoloAnalyzer(context, ttsManager, settingsManager, historyManager).apply {
+            this.onDarknessDetected = { isDark ->
+                if (settingsManager.flashMode == "auto") {
+                    isTorchEnabled = isDark
+                }
+            }
+        }
+    }
+    val currencyAnalyzer = remember { 
+        YoloAnalyzer(context, ttsManager, settingsManager, historyManager, modelName = "currency.tflite") 
+    }
     
     var activeAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
     var ocrAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
+
+    // Centralized Flash Control
+    LaunchedEffect(settingsManager.flashMode) {
+        isTorchEnabled = settingsManager.flashMode == "on"
+    }
 
     val screens = listOf(
         Triple(R.string.nav_explore, Icons.Default.CameraAlt, "explore"),
@@ -79,12 +95,12 @@ fun MainScreen(
 
     val navKeywords = remember(kExplore, kFind, kOcr, kCurrency, kSettings, kHistory) {
         listOf(
-            kExplore to 0,
-            kFind to 1,
-            kOcr to 2,
-            kCurrency to 3,
-            kSettings to 4,
-            kHistory to 5
+            listOf(kExplore, "explore", "khám phá") to 0,
+            listOf(kFind, "find", "tìm kiếm", "tìm") to 1,
+            listOf(kOcr, "ocr", "văn bản", "đọc") to 2,
+            listOf(kCurrency, "currency", "tiền", "nhận diện tiền") to 3,
+            listOf(kSettings, "settings", "cài đặt") to 4,
+            listOf(kHistory, "history", "lịch sử") to 5
         )
     }
 
@@ -118,15 +134,17 @@ fun MainScreen(
                 false
             } else {
                 val lowerResult = result.lowercase()
-                val matched = navKeywords.find { lowerResult.contains(it.first) }
-                if (matched != null) {
-                    if (currentPage != matched.second) {
-                        currentPage = matched.second
+                var handled = false
+                for (entry in navKeywords) {
+                    if (entry.first.any { lowerResult.contains(it) }) {
+                        if (currentPage != entry.second) {
+                            currentPage = entry.second
+                        }
+                        handled = true
+                        break
                     }
-                    true // handled
-                } else {
-                    false // not handled
                 }
+                handled
             }
         }
         onDispose {
@@ -195,11 +213,13 @@ fun MainScreen(
         ) {
             // Shared CameraPreview layer
             if (currentPage < 4) {
+                val zoom = if (currentPage == 0 || currentPage == 1) 0.6f else 1.0f
                 CameraPreview(
                     modifier = Modifier.fillMaxSize(),
-                    zoomRatio = 0.6f,
+                    zoomRatio = zoom,
                     imageAnalyzer = activeAnalyzer,
-                    onReady = { isCameraReady = true }
+                    onReady = { isCameraReady = true },
+                    torchEnabled = isTorchEnabled
                 )
             }
 
@@ -232,13 +252,13 @@ fun MainScreen(
                     val isFindTransition = targetState == 1 || initialState == 1
                     if (isFindTransition) {
                         // Fade only for Find Screen transitions
-                        fadeIn(animationSpec = tween(500)) with fadeOut(animationSpec = tween(500))
+                        fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
                     } else {
                         // Slide for everything else
                         if (targetState > initialState) {
-                            slideInHorizontally { it } + fadeIn() with slideOutHorizontally { -it } + fadeOut()
+                            slideInHorizontally { it } + fadeIn() togetherWith slideOutHorizontally { -it } + fadeOut()
                         } else {
-                            slideInHorizontally { -it } + fadeIn() with slideOutHorizontally { it } + fadeOut()
+                            slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut()
                         }
                     }.using(SizeTransform(clip = false))
                 }

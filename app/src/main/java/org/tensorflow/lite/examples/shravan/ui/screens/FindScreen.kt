@@ -164,21 +164,45 @@ fun FindScreen(
         if (isActive && activeMode != null && recognitions.isNotEmpty()) {
             while (true) {
                 val currentRecognitions = recognitions
-                if (currentRecognitions.isEmpty()) break
+                if (currentRecognitions.isEmpty() || !isActive || activeMode == null) break
                 
+                // Distance estimation based on bounding box area
+                // Larger area = closer object
                 val closest = currentRecognitions.maxByOrNull { it.location.width() * it.location.height() }
                 if (closest != null) {
                     val area = closest.location.width() * closest.location.height()
                     val maxArea = 416f * 416f
-                    val distanceRatio = (1f - (area / maxArea)).coerceIn(0f, 1f)
-                    val interval = (distanceRatio * 1000).toLong().coerceAtLeast(100L)
+                    val normalizedArea = (area / maxArea).coerceIn(0f, 1f)
+                    
+                    // Interval scales from 1000ms (far) to 100ms (very close)
+                    val interval = (1000 - (normalizedArea * 900)).toLong().coerceAtLeast(100L)
                     
                     if (settingsManager.hapticsEnabled) {
                         hapticManager.triggerHaptic()
                     }
                     delay(interval)
                 } else {
-                    break
+                    delay(500)
+                }
+            }
+        }
+    }
+
+    // Voice control for buttons
+    LaunchedEffect(isActive, activeMode) {
+        if (isActive) {
+            voiceSessionId = voiceCommandManager.startListening(isVietnamese = settingsManager.useVietnamese) { result ->
+                val lowerResult = result.lowercase()
+                val m1 = modeSeatingsTables.lowercase()
+                val m2 = modeDoorsWindows.lowercase()
+                val m3 = modePersonVehicles.lowercase()
+                
+                if (lowerResult.contains(m1) || lowerResult.contains("seat") || lowerResult.contains("table") || lowerResult.contains("bàn") || lowerResult.contains("ghế")) {
+                    activeMode = "seatings & tables"
+                } else if (lowerResult.contains(m2) || lowerResult.contains("door") || lowerResult.contains("window") || lowerResult.contains("cửa")) {
+                    activeMode = "doors & windows"
+                } else if (lowerResult.contains(m3) || lowerResult.contains("person") || lowerResult.contains("vehicle") || lowerResult.contains("người") || lowerResult.contains("xe")) {
+                    activeMode = "person & vehicles"
                 }
             }
         }

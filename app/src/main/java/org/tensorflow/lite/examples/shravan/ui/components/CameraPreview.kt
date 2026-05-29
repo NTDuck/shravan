@@ -2,6 +2,7 @@ package org.tensorflow.lite.examples.shravan.ui.components
 
 import android.util.Log
 import android.view.ViewGroup
+import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -25,16 +26,21 @@ fun CameraPreview(
     modifier: Modifier = Modifier,
     zoomRatio: Float = 1.0f,
     imageAnalyzer: ImageAnalysis.Analyzer? = null,
-    onReady: () -> Unit = {}
+    onReady: () -> Unit = {},
+    torchEnabled: Boolean = false
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraExecutor = CameraExecutorManager.executor
     val currentOnReady by rememberUpdatedState(onReady)
 
-    
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
+    var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
+
+    LaunchedEffect(torchEnabled, cameraControl) {
+        cameraControl?.enableTorch(torchEnabled)
+    }
 
     LaunchedEffect(context) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
@@ -54,8 +60,6 @@ fun CameraPreview(
         val provider = cameraProvider ?: return@LaunchedEffect
         val view = previewView ?: return@LaunchedEffect
         try {
-            // Force unbind everything from this provider before binding new ones
-            // This is safer when switching between screens in a HorizontalPager
             provider.unbindAll()
 
             val preview = Preview.Builder().build().also {
@@ -65,7 +69,6 @@ fun CameraPreview(
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-            Log.d("CameraPreview", "Binding use cases to lifecycle")
             val camera = if (imageAnalyzer != null) {
                 val analysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -86,7 +89,14 @@ fun CameraPreview(
                     preview
                 )
             }
-            camera.cameraControl.setZoomRatio(zoomRatio)
+            cameraControl = camera.cameraControl
+            
+            try {
+                camera.cameraControl.setZoomRatio(zoomRatio)
+            } catch (e: Exception) {
+                Log.e("CameraPreview", "Failed to set zoom", e)
+            }
+            
             currentOnReady()
         } catch (e: Exception) {
             Log.e("CameraPreview", "Use case binding failed", e)
@@ -111,8 +121,7 @@ fun CameraPreview(
         onDispose {
             try {
                 analysisUseCase?.clearAnalyzer()
-                previewUseCase?.let { cameraProvider?.unbind(it) }
-                analysisUseCase?.let { cameraProvider?.unbind(it) }
+                cameraProvider?.unbindAll()
             } catch (e: Exception) {
                 Log.e("CameraPreview", "Error unbinding on dispose", e)
             }
