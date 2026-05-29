@@ -30,7 +30,7 @@ class YoloAnalyzer(
 
     private val detector: YoloV5Classifier by lazy {
         val labelFile = when {
-            modelName == "currency.tflite" -> "file:///android_asset/currency_labels.txt"
+            modelName == "currency.tflite" -> if (settingsManager.useVietnamese) "file:///android_asset/currency_labels_vi.txt" else "file:///android_asset/currency_labels.txt"
             settingsManager.useVietnamese -> "file:///android_asset/coco_vi.txt"
             else -> "file:///android_asset/coco.txt"
         }
@@ -40,7 +40,7 @@ class YoloAnalyzer(
     private val labels: List<String> get() {
         val labelsList = mutableListOf<String>()
         val filename = when {
-            modelName == "currency.tflite" -> "currency_labels.txt"
+            modelName == "currency.tflite" -> if (settingsManager.useVietnamese) "currency_labels_vi.txt" else "currency_labels.txt"
             settingsManager.useVietnamese -> "coco_vi.txt"
             else -> "coco.txt"
         }
