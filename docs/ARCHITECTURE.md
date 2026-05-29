@@ -1,51 +1,37 @@
-# Shravan Architecture
+# System Architecture
 
-This document outlines the technical architecture and tech stack of the Shravan application.
+## Design Pattern
+Shravan follows a modern **MVVM/MVI** hybrid pattern. State is managed centrally via `SettingsManager` and `HistoryManager`, while Jetpack Compose handles the unidirectional data flow to the UI.
 
-## Tech Stack
-*   **Language**: Kotlin (1.8+)
-*   **UI Framework**: Jetpack Compose (Modern declarative UI)
-*   **Asynchronous Programming**: Kotlin Coroutines
-*   **Navigation**: Jetpack Compose Navigation
-*   **Machine Learning**: 
-    *   TensorFlow Lite (Object Detection)
-    *   Google ML Kit (Text Recognition)
-*   **Camera API**: CameraX (Analysis and Preview)
-*   **Build System**: Gradle (Kotlin DSL)
+## Component Breakdown
 
-## Core Components
+### 1. `MainActivity` (The Orchestrator)
+The entry point of the application responsible for:
+- **Locale Management**: Dynamically switching the app's internal locale between English and Vietnamese.
+- **Permission Handling**: Managing the critical CAMERA and RECORD_AUDIO permissions required for operation.
+- **Global Lifecycle**: Initializing all singleton Managers and passing them down the Compose tree.
 
-### 1. UI Layer (Jetpack Compose)
-The UI is built using a single-activity architecture with `MainActivity` serving as the entry point.
-*   **Screens**: Modular Composable functions located in `ui/screens/` (Home, Camera, OCR, Settings, History, Splash).
-*   **Theme**: `ShravanTheme` provides dynamic color schemes, supporting both standard Material 3 and a specialized High Contrast mode.
+### 2. `MainScreen` (The Navigation Hub)
+The `MainScreen` is the architectural heart of Shravan.
+- **Shared Camera Preview**: It hosts the persistent `CameraPreview` component, preventing expensive camera restarts during navigation.
+- **Global Voice Monitoring**: It registers a global listener with `VoiceCommandManager` to respond to navigation intents (e.g., "Settings", "Quay lại") regardless of the active sub-screen.
+- **State Synchronization**: Orchestrates the active `ImageAnalysis.Analyzer` based on the current page index.
 
-### 2. Machine Learning Engines
-*   **YoloAnalyzer**: Implements CameraX's `ImageAnalysis.Analyzer`. It handles image preprocessing (rotation, scaling), executes the TFLite model, and processes results for proximity alerts and guidance.
-*   **YoloV5Classifier**: A Java-based wrapper for the TFLite Interpreter, handling tensor mapping, Non-Maximum Suppression (NMS), and box de-normalization.
-*   **OCR Engine**: Utilizes Google ML Kit's `TextRecognition` client within the `OCRScreen` to process camera frames.
+### 3. `YoloAnalyzer` (The Processing Pipeline)
+A thread-safe, synchronized analyzer that pipes raw image buffers into the TFLite inference engine.
+- **Lock Management**: Uses a synchronized monitor (`synchronized(lock)`) to ensure that frames are dropped gracefully if the AI engine is still processing the previous frame, preventing memory backpressure.
+- **Result Piping**: Pushes detection results to a callback (`onResults`) which the UI screens observe to update bounding boxes or trigger haptics.
 
-### 3. Utility Managers
-Managers are provided via `remember` blocks in `MainActivity` and passed down to screens:
-*   **TTSManager**: Centralized wrapper for Android's `TextToSpeech` API. Handles queuing, language switching, and speech rate control.
-*   **SettingsManager**: Manages user preferences using `SharedPreferences`.
-*   **HistoryManager**: Handles local persistence of detection events.
+### 4. `TTSManager` (The Voice Engine)
+A specialized wrapper around the Android TextToSpeech API.
+- **Local Voice Selection**: Automatically chooses high-quality localized voices based on the user's language setting.
+- **Interference Prevention**: Implements a **500ms post-speech buffer**. The `isSpeaking()` method returns `true` for half a second after the actual speech ends to prevent the `VoiceCommandManager` from triggering on the app's own voice.
 
-## Data Flow
-1.  **CameraX** captures frames and passes them to the `ImageAnalysis` use case.
-2.  **Analyzers** (`YoloAnalyzer` or ML Kit) process the frame buffer.
-3.  **Inference results** are filtered by confidence and passed to the UI for drawing overlays.
-4.  **Logical triggers** (like proximity or new text) invoke the `TTSManager` for audio feedback.
-5.  **Events** are logged via `HistoryManager` if applicable.
+### 5. `VoiceCommandManager` (The Listening Ear)
+Optimized speech recognition for high-stress scenarios.
+- **Aggressive Polling**: In "Totally Blind" mode, the manager uses shorter silence thresholds to restart recognition faster, ensuring the app is always "listening."
+- **Intent Dispatcher**: Uses a priority-based intent system where global navigation commands are checked before screen-specific context commands.
 
-## Project Structure
-```text
-org.tensorflow.lite.examples.shravan
-├── MainActivity.kt          # Entry point and NavHost
-├── tflite/                  # ML inference logic and YOLO wrappers
-├── ui/
-│   ├── components/          # Reusable UI elements (CameraPreview)
-│   ├── screens/             # Feature-specific screens
-│   └── theme/               # Styling and Color definitions
-└── utils/                   # Business logic and managers (TTS, History, Settings)
-```
+## State Management
+- **`SettingsManager`**: Uses `mutableStateOf` to provide reactive access to user preferences (Theme, Flash, Language).
+- **`HistoryManager`**: Records detection events into a persistent JSON-backed store, allowing users to review what the app "saw" during their session.
