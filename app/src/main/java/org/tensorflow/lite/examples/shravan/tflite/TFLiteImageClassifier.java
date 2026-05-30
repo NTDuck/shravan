@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -121,7 +122,9 @@ public class TFLiteImageClassifier implements Classifier {
     public void close() { interpreter.close(); }
 
     @Override
-    public void setNumThreads(int num_threads) { interpreter.setThreads(num_threads); }
+    public void setNumThreads(int num_threads) {
+        // Threads are set during interpreter creation via Options
+    }
 
     @Override
     public void setUseNNAPI(boolean isChecked) {}
