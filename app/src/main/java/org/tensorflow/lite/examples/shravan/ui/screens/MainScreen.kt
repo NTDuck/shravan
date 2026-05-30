@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.R
+import org.tensorflow.lite.examples.shravan.tflite.ClassificationAnalyzer
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
 import org.tensorflow.lite.examples.shravan.utils.*
@@ -73,7 +74,7 @@ fun MainScreen(
         }
     }
     val currencyAnalyzer = remember { 
-        YoloAnalyzer(context, ttsManager, settingsManager, historyManager, modelName = "currency.tflite") 
+        ClassificationAnalyzer(context, ttsManager, settingsManager, historyManager, modelName = "currency.tflite") 
     }
     
     var activeAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }

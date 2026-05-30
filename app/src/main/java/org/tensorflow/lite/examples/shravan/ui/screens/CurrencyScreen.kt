@@ -20,6 +20,8 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.camera.core.ImageAnalysis
+import org.tensorflow.lite.examples.shravan.tflite.ClassificationAnalyzer
 import org.tensorflow.lite.examples.shravan.tflite.Classifier
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
@@ -36,7 +38,7 @@ fun CurrencyScreen(
     settingsManager: SettingsManager,
     historyManager: HistoryManager,
     isActive: Boolean = true,
-    yoloAnalyzer: YoloAnalyzer? = null
+    yoloAnalyzer: ImageAnalysis.Analyzer? = null
 ) {
     val context = LocalContext.current
     var recognitions by remember { mutableStateOf(emptyList<Classifier.Recognition>()) }
@@ -55,8 +57,17 @@ fun CurrencyScreen(
 
     LaunchedEffect(isActive, yoloAnalyzer) {
         if (isActive) {
-            yoloAnalyzer?.onResults = { results ->
-                recognitions = results
+            when (yoloAnalyzer) {
+                is YoloAnalyzer -> {
+                    yoloAnalyzer.onResults = { results ->
+                        recognitions = results
+                    }
+                }
+                is ClassificationAnalyzer -> {
+                    yoloAnalyzer.onResults = { results ->
+                        recognitions = results
+                    }
+                }
             }
         }
     }
@@ -73,34 +84,50 @@ fun CurrencyScreen(
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Transparent)) {
         if (isActive) {
-
             Canvas(modifier = Modifier.fillMaxSize()) {
                 recognitions.forEach { recognition ->
                     val rect = recognition.location
-                    val scaleX = size.width / 640f
-                    val scaleY = size.height / 640f
                     val color = DimmedPalette[recognition.detectedClass % DimmedPalette.size]
-                    
-                    val topLeft = Offset(rect.left * scaleX, rect.top * scaleY)
-                    val boxSize = Size(rect.width() * scaleX, rect.height() * scaleY)
 
-                    drawRect(
-                        color = color,
-                        topLeft = topLeft,
-                        size = boxSize,
-                        style = Stroke(width = 3.dp.toPx())
-                    )
-                    
-                    drawText(
-                        textMeasurer = textMeasurer,
-                        text = recognition.title,
-                        topLeft = Offset(topLeft.x, topLeft.y - 20.dp.toPx()),
-                        style = TextStyle(
-                            color = color, 
-                            fontSize = 16.sp,
-                            fontFamily = InterFontFamily
+                    if (rect != null) {
+                        // Draw Bounding Box (YOLO)
+                        val scaleX = size.width / 640f
+                        val scaleY = size.height / 640f
+                        
+                        val topLeft = Offset(rect.left * scaleX, rect.top * scaleY)
+                        val boxSize = Size(rect.width() * scaleX, rect.height() * scaleY)
+
+                        drawRect(
+                            color = color,
+                            topLeft = topLeft,
+                            size = boxSize,
+                            style = Stroke(width = 3.dp.toPx())
                         )
-                    )
+                        
+                        drawText(
+                            textMeasurer = textMeasurer,
+                            text = recognition.title,
+                            topLeft = Offset(topLeft.x, topLeft.y - 20.dp.toPx()),
+                            style = TextStyle(
+                                color = color, 
+                                fontSize = 16.sp,
+                                fontFamily = InterFontFamily
+                            )
+                        )
+                    } else if (recognition.confidence > 0.7f && recognition.title != "000000" && recognition.title != "Background") {
+                        // Draw prominent label for Classification
+                        drawText(
+                            textMeasurer = textMeasurer,
+                            text = recognition.title,
+                            topLeft = Offset(size.width / 2f - 50.dp.toPx(), size.height * 0.8f),
+                            style = TextStyle(
+                                color = Color.White,
+                                fontSize = 24.sp,
+                                fontFamily = InterFontFamily,
+                                background = Color.Black.copy(alpha = 0.5f)
+                            )
+                        )
+                    }
                 }
             }
         }
