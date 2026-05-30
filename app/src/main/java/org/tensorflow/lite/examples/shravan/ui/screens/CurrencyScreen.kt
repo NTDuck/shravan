@@ -57,6 +57,7 @@ fun CurrencyScreen(
 
     LaunchedEffect(isActive, yoloAnalyzer) {
         if (isActive) {
+            android.util.Log.d("CurrencyScreen", "Currency analyzer active: ${yoloAnalyzer?.javaClass?.simpleName}")
             when (yoloAnalyzer) {
                 is YoloAnalyzer -> {
                     yoloAnalyzer.onResults = { results ->
@@ -65,6 +66,7 @@ fun CurrencyScreen(
                 }
                 is RoboflowAnalyzer -> {
                     yoloAnalyzer.onResults = { results ->
+                        android.util.Log.d("CurrencyScreen", "Roboflow results: ${results.size} items")
                         recognitions = results
                     }
                 }
@@ -90,9 +92,11 @@ fun CurrencyScreen(
                     val color = DimmedPalette[recognition.detectedClass % DimmedPalette.size]
 
                     if (rect != null) {
-                        // Draw Bounding Box (YOLO)
-                        val scaleX = size.width / 640f
-                        val scaleY = size.height / 640f
+                        // Draw Bounding Box
+                        // Detect if normalized (Roboflow) or 640-based (YOLO)
+                        val isNormalized = rect.left <= 1.1f && rect.right <= 1.1f
+                        val scaleX = if (isNormalized) size.width else size.width / 640f
+                        val scaleY = if (isNormalized) size.height else size.height / 640f
                         
                         val topLeft = Offset(rect.left * scaleX, rect.top * scaleY)
                         val boxSize = Size(rect.width() * scaleX, rect.height() * scaleY)
@@ -114,7 +118,7 @@ fun CurrencyScreen(
                                 fontFamily = InterFontFamily
                             )
                         )
-                    } else if (recognition.confidence > 0.6f && recognition.title != "000000" && recognition.title != "Background") {
+                    } else if (recognition.confidence > 0.4f && recognition.title != "000000" && recognition.title != "Background") {
                         // Draw prominent label for Classification
                         drawText(
                             textMeasurer = textMeasurer,

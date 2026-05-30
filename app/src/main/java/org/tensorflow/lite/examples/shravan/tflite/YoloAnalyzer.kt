@@ -22,8 +22,7 @@ class YoloAnalyzer(
     private val settingsManager: SettingsManager,
     private val historyManager: HistoryManager,
     private val modelName: String = "yolov5s-fp16.tflite",
-    var onResults: ((List<Classifier.Recognition>) -> Unit)? = null,
-    var onDarknessDetected: ((Boolean) -> Unit)? = null
+    var onResults: ((List<Classifier.Recognition>) -> Unit)? = null
 ) : ImageAnalysis.Analyzer {
 
     var allowedClasses: List<String>? = null
@@ -87,13 +86,6 @@ class YoloAnalyzer(
                 val scaledBitmap = Bitmap.createScaledBitmap(
                     rotatedBitmap, detector.inputSize, detector.inputSize, true
                 )
-
-                // Auto Flash detection based on luminance
-                if (settingsManager.flashMode == "auto") {
-                    val luminance = calculateLuminance(image)
-                    val isDark = luminance < 40.0 // Threshold for "dark"
-                    onDarknessDetected?.invoke(isDark)
-                }
 
                 val results = detector.recognizeImage(scaledBitmap)
                 val baseFiltered = results.filter { it.confidence > 0.25f }
@@ -161,17 +153,6 @@ class YoloAnalyzer(
                 image.close()
             }
         }
-    }
-
-    private fun calculateLuminance(image: ImageProxy): Double {
-        val buffer = image.planes[0].buffer
-        val data = ByteArray(buffer.remaining())
-        buffer.get(data)
-        var sum = 0L
-        for (b in data) {
-            sum += b.toInt() and 0xFF
-        }
-        return sum.toDouble() / data.size
     }
 
     fun close() {

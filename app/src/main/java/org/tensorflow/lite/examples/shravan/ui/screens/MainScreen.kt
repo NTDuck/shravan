@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.R
+import org.tensorflow.lite.examples.shravan.tflite.CompositeAnalyzer
 import org.tensorflow.lite.examples.shravan.tflite.RoboflowAnalyzer
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
@@ -66,22 +67,17 @@ fun MainScreen(
     }
     val ocrManager = remember { OCRManager(context) }
     val yoloAnalyzer = remember { 
-        YoloAnalyzer(context, ttsManager, settingsManager, historyManager).apply {
-            this.onDarknessDetected = { isDark ->
-                if (settingsManager.flashMode == "auto") {
-                    isTorchEnabled = isDark
-                }
-            }
-        }
+        YoloAnalyzer(context, ttsManager, settingsManager, historyManager)
     }
     val currencyAnalyzer = remember { 
         RoboflowAnalyzer(context, ttsManager, settingsManager, historyManager) 
     }
     
     var ocrAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
+    
     val activeAnalyzer by remember(currentPage, ocrAnalyzer) {
         derivedStateOf {
-            when (currentPage) {
+            val delegate = when (currentPage) {
                 0 -> {
                     yoloAnalyzer.allowedClasses = null
                     yoloAnalyzer
@@ -91,12 +87,28 @@ fun MainScreen(
                 3 -> currencyAnalyzer
                 else -> null
             }
+            
+            if (delegate != null || currentPage < 4) {
+                CompositeAnalyzer(
+                    settingsManager = settingsManager,
+                    onDarknessDetected = { isDark ->
+                        if (settingsManager.flashMode == "auto") {
+                            isTorchEnabled = isDark
+                        }
+                    },
+                    delegate = delegate
+                )
+            } else {
+                null
+            }
         }
     }
 
     // Centralized Flash Control
     LaunchedEffect(settingsManager.flashMode) {
-        isTorchEnabled = settingsManager.flashMode == "on"
+        if (settingsManager.flashMode != "auto") {
+            isTorchEnabled = settingsManager.flashMode == "on"
+        }
     }
 
     val screens = listOf(
