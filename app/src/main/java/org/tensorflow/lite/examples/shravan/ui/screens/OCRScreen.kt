@@ -38,14 +38,21 @@ fun OCRScreen(
     }
     
     val useVietnamese = settingsManager.useVietnamese
+    var isProcessing by remember { mutableStateOf(false) }
 
     LaunchedEffect(isActive, recognizer) {
         if (isActive) {
             android.util.Log.d("OCRScreen", "Setting up OCR analyzer")
             onProvideAnalyzer { imageProxy ->
+                if (isProcessing) {
+                    imageProxy.close()
+                    return@onProvideAnalyzer
+                }
+
                 val mediaImage = imageProxy.image
                 val rec = recognizer
                 if (mediaImage != null && rec != null) {
+                    isProcessing = true
                     val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                     rec.process(inputImage)
                         .addOnSuccessListener { visionText ->
@@ -66,6 +73,7 @@ fun OCRScreen(
                             android.util.Log.e("OCRScreen", "OCR Failed", e)
                         }
                         .addOnCompleteListener {
+                            isProcessing = false
                             imageProxy.close()
                         }
                 } else {

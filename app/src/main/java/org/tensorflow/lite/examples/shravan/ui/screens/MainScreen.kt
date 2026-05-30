@@ -74,35 +74,33 @@ fun MainScreen(
     }
     
     var ocrAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
-    
-    val activeAnalyzer by remember(currentPage, ocrAnalyzer) {
-        derivedStateOf {
-            val delegate = when (currentPage) {
-                0 -> {
-                    yoloAnalyzer.allowedClasses = null
-                    yoloAnalyzer
+
+    val stableCompositeAnalyzer = remember {
+        CompositeAnalyzer(
+            settingsManager = settingsManager,
+            onDarknessDetected = { isDark ->
+                if (settingsManager.flashMode == "auto") {
+                    isTorchEnabled = isDark
                 }
-                1 -> yoloAnalyzer // FindScreen sets allowedClasses
-                2 -> ocrAnalyzer
-                3 -> currencyAnalyzer
-                else -> null
             }
-            
-            if (delegate != null || currentPage < 4) {
-                CompositeAnalyzer(
-                    settingsManager = settingsManager,
-                    onDarknessDetected = { isDark ->
-                        if (settingsManager.flashMode == "auto") {
-                            isTorchEnabled = isDark
-                        }
-                    },
-                    delegate = delegate
-                )
-            } else {
-                null
+        )
+    }
+
+    // Update the delegate reactively
+    LaunchedEffect(currentPage, ocrAnalyzer) {
+        stableCompositeAnalyzer.delegate = when (currentPage) {
+            0 -> {
+                yoloAnalyzer.allowedClasses = null
+                yoloAnalyzer
             }
+            1 -> yoloAnalyzer // FindScreen sets allowedClasses
+            2 -> ocrAnalyzer
+            3 -> currencyAnalyzer
+            else -> null
         }
     }
+
+    val activeAnalyzer = if (currentPage < 4) stableCompositeAnalyzer else null
 
     // Centralized Flash Control
     LaunchedEffect(settingsManager.flashMode) {

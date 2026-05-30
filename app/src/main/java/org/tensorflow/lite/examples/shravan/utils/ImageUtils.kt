@@ -10,6 +10,15 @@ object ImageUtils {
         return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
     }
 
+    fun toRotatedBitmap(image: ImageProxy): Bitmap? {
+        val bitmap = toBitmap(image) ?: return null
+        val matrix = Matrix()
+        matrix.postRotate(image.imageInfo.rotationDegrees.toFloat())
+        return Bitmap.createBitmap(
+            bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
+        )
+    }
+
     fun toJpegBytes(image: ImageProxy): ByteArray {
         val nv21 = yuv420888ToNv21(image)
         val yuvImage = YuvImage(nv21, ImageFormat.NV21, image.width, image.height, null)
