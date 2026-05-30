@@ -6,12 +6,16 @@ import java.io.ByteArrayOutputStream
 
 object ImageUtils {
     fun toBitmap(image: ImageProxy): Bitmap? {
+        val imageBytes = toJpegBytes(image)
+        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+    }
+
+    fun toJpegBytes(image: ImageProxy): ByteArray {
         val nv21 = yuv420888ToNv21(image)
         val yuvImage = YuvImage(nv21, ImageFormat.NV21, image.width, image.height, null)
         val out = ByteArrayOutputStream()
-        yuvImage.compressToJpeg(Rect(0, 0, yuvImage.width, yuvImage.height), 100, out)
-        val imageBytes = out.toByteArray()
-        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+        yuvImage.compressToJpeg(Rect(0, 0, yuvImage.width, yuvImage.height), 80, out)
+        return out.toByteArray()
     }
 
     private fun yuv420888ToNv21(image: ImageProxy): ByteArray {

@@ -21,7 +21,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.camera.core.ImageAnalysis
-import org.tensorflow.lite.examples.shravan.tflite.ClassificationAnalyzer
+import org.tensorflow.lite.examples.shravan.tflite.RoboflowAnalyzer
 import org.tensorflow.lite.examples.shravan.tflite.Classifier
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
@@ -63,7 +63,7 @@ fun CurrencyScreen(
                         recognitions = results
                     }
                 }
-                is ClassificationAnalyzer -> {
+                is RoboflowAnalyzer -> {
                     yoloAnalyzer.onResults = { results ->
                         recognitions = results
                     }
@@ -114,7 +114,7 @@ fun CurrencyScreen(
                                 fontFamily = InterFontFamily
                             )
                         )
-                    } else if (recognition.confidence > 0.7f && recognition.title != "000000" && recognition.title != "Background") {
+                    } else if (recognition.confidence > 0.6f && recognition.title != "000000" && recognition.title != "Background") {
                         // Draw prominent label for Classification
                         drawText(
                             textMeasurer = textMeasurer,

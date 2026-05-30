@@ -32,7 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.R
-import org.tensorflow.lite.examples.shravan.tflite.ClassificationAnalyzer
+import org.tensorflow.lite.examples.shravan.tflite.RoboflowAnalyzer
 import org.tensorflow.lite.examples.shravan.tflite.YoloAnalyzer
 import org.tensorflow.lite.examples.shravan.ui.components.CameraPreview
 import org.tensorflow.lite.examples.shravan.utils.*
@@ -64,6 +64,7 @@ fun MainScreen(
     LaunchedEffect(currentPage) {
         if (currentPage != 4) resetCount = 0
     }
+    val ocrManager = remember { OCRManager(context) }
     val yoloAnalyzer = remember { 
         YoloAnalyzer(context, ttsManager, settingsManager, historyManager).apply {
             this.onDarknessDetected = { isDark ->
@@ -74,7 +75,7 @@ fun MainScreen(
         }
     }
     val currencyAnalyzer = remember { 
-        ClassificationAnalyzer(context, ttsManager, settingsManager, historyManager, modelName = "currency.tflite") 
+        RoboflowAnalyzer(context, ttsManager, settingsManager, historyManager) 
     }
     
     var activeAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
@@ -300,6 +301,7 @@ fun MainScreen(
                             hapticManager = hapticManager,
                             voiceCommandManager = voiceCommandManager,
                             isActive = isActive,
+                            ocrManager = ocrManager,
                             onProvideAnalyzer = { ocrAnalyzer = it }
                         )
                         3 -> CurrencyScreen(
