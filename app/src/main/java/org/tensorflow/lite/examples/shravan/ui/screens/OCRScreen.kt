@@ -41,33 +41,39 @@ fun OCRScreen(
 
     LaunchedEffect(isActive, recognizer) {
         if (isActive) {
+            android.util.Log.d("OCRScreen", "Setting up OCR analyzer")
             onProvideAnalyzer { imageProxy ->
-                try {
-                    val mediaImage = imageProxy.image
-                    if (mediaImage != null) {
-                        val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                        recognizer?.process(inputImage)
-                            ?.addOnSuccessListener { visionText ->
+                val mediaImage = imageProxy.image
+                val rec = recognizer
+                if (mediaImage != null && rec != null) {
+                    val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                    rec.process(inputImage)
+                        .addOnSuccessListener { visionText ->
+                            val text = visionText.text
+                            if (text.isNotBlank()) {
+                                android.util.Log.d("OCRScreen", "OCR Success: ${text.take(20)}...")
                                 visionText.textBlocks.forEach { block ->
                                     val originalText = block.text.trim()
-                                    if (ocrManager?.shouldSpeak(originalText) == true) {
+                                    if (originalText.length > 2 && ocrManager?.shouldSpeak(originalText) == true) {
+                                        android.util.Log.d("OCRScreen", "Speaking OCR: $originalText")
                                         ttsManager.speak(originalText, isQueued = true, isVietnamese = containsVietnamese(originalText))
                                         historyManager.addHistory("OCR", originalText)
                                     }
                                 }
                             }
-                            ?.addOnCompleteListener {
-                                imageProxy.close()
-                            }
-                    } else {
-                        imageProxy.close()
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("OCRScreen", "Error during OCR processing", e)
+                        }
+                        .addOnFailureListener { e ->
+                            android.util.Log.e("OCRScreen", "OCR Failed", e)
+                        }
+                        .addOnCompleteListener {
+                            imageProxy.close()
+                        }
+                } else {
                     imageProxy.close()
                 }
             }
         } else {
+            android.util.Log.d("OCRScreen", "Removing OCR analyzer")
             onProvideAnalyzer(null)
         }
     }

@@ -78,8 +78,21 @@ fun MainScreen(
         RoboflowAnalyzer(context, ttsManager, settingsManager, historyManager) 
     }
     
-    var activeAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
     var ocrAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
+    val activeAnalyzer by remember(currentPage, ocrAnalyzer) {
+        derivedStateOf {
+            when (currentPage) {
+                0 -> {
+                    yoloAnalyzer.allowedClasses = null
+                    yoloAnalyzer
+                }
+                1 -> yoloAnalyzer // FindScreen sets allowedClasses
+                2 -> ocrAnalyzer
+                3 -> currencyAnalyzer
+                else -> null
+            }
+        }
+    }
 
     // Centralized Flash Control
     LaunchedEffect(settingsManager.flashMode) {
@@ -117,17 +130,6 @@ fun MainScreen(
     LaunchedEffect(currentPage) {
         if (settingsManager.hapticsEnabled) {
             hapticManager.triggerHaptic()
-        }
-        // Prepare analyzer for the new page
-        activeAnalyzer = when (currentPage) {
-            0 -> {
-                yoloAnalyzer.allowedClasses = null
-                yoloAnalyzer
-            }
-            1 -> yoloAnalyzer // FindScreen sets allowedClasses
-            2 -> ocrAnalyzer
-            3 -> currencyAnalyzer
-            else -> null
         }
         
         // If moving away from camera pages, reset camera ready
