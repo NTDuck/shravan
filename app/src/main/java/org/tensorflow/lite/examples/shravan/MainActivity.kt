@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.NavHost
@@ -86,8 +87,9 @@ class MainActivity : ComponentActivity() {
                     return@setContent
                 }
 val useVietnamese = settingsManager.useVietnamese
-LaunchedEffect(useVietnamese) {
-    val locale = if (useVietnamese) java.util.Locale("vi") else java.util.Locale.ENGLISH
+val locale = remember(useVietnamese) { if (useVietnamese) java.util.Locale("vi") else java.util.Locale.ENGLISH }
+
+LaunchedEffect(locale) {
     java.util.Locale.setDefault(locale)
     val resources = this@MainActivity.resources
     val configuration = android.content.res.Configuration(resources.configuration)
@@ -95,7 +97,15 @@ LaunchedEffect(useVietnamese) {
     resources.updateConfiguration(configuration, resources.displayMetrics)
 }
 
-ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
+val configuration = LocalConfiguration.current
+val overriddenConfiguration = remember(locale, configuration) {
+    android.content.res.Configuration(configuration).apply {
+        setLocale(locale)
+    }
+}
+
+CompositionLocalProvider(LocalConfiguration provides overriddenConfiguration) {
+    ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFF222222)
@@ -188,6 +198,7 @@ ShravanTheme(themeIndex = settingsManager.activeThemeIndex) {
                         }
                     }
                 }
+            }
             }
         } catch (e: Throwable) {
             android.util.Log.e("MainActivity", "CRITICAL ERROR DURING ONCREATE", e)

@@ -71,6 +71,10 @@ class VoiceCommandManager(private val context: Context) {
                     for (match in matches) {
                         if (onGlobalIntent?.invoke(match) == true) {
                             handled = true
+                            // If handled globally, we stop retrying for this specific session
+                            // as we might be redirecting
+                            shouldRetry = false
+                            speechRecognizer?.cancel()
                             break
                         }
                     }
@@ -86,14 +90,18 @@ class VoiceCommandManager(private val context: Context) {
             override fun onPartialResults(partialResults: Bundle?) {
                 val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
-                    var handled = false
                     for (match in matches) {
                         if (onGlobalIntent?.invoke(match) == true) {
-                            handled = true
+                            // If handled globally in partial results, stop immediately
+                            // to avoid duplicate handling in onResults and clear buffers
+                            shouldRetry = false
+                            speechRecognizer?.cancel()
+                            isListening = false
                             break
                         }
                     }
-                    if (!handled) {
+                    // Only call onPartialResult if not handled globally
+                    if (shouldRetry) {
                         onPartialResult?.invoke(matches[0])
                     }
                 }
@@ -117,6 +125,7 @@ class VoiceCommandManager(private val context: Context) {
 
                 if (speechRecognizer != null) {
                     speechRecognizer?.cancel()
+                    isListening = false
                     startListeningInternal()
                 } else {
                     Log.e("VoiceCommandManager", "Recognizer is null, cannot start")

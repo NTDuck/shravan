@@ -126,8 +126,16 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
                 // Set speakerphone on for VOICE_CALL stream
                 val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? android.media.AudioManager
                 audioManager?.isSpeakerphoneOn = true
+                
+                // Maximize volume for the stream (approx 200% effect if it was previously low)
+                val maxVolume = audioManager?.getStreamMaxVolume(android.media.AudioManager.STREAM_VOICE_CALL) ?: 0
+                if (maxVolume > 0) {
+                    audioManager?.setStreamVolume(android.media.AudioManager.STREAM_VOICE_CALL, maxVolume, 0)
+                }
+
                 params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "id")
                 params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_VOICE_CALL)
+                params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
             } catch (e: Exception) {
                 Log.e("TTSManager", "Error setting audio parameters", e)
             }

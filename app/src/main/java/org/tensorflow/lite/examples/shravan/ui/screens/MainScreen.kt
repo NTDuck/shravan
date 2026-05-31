@@ -69,10 +69,8 @@ fun MainScreen(
     val yoloAnalyzer = remember { 
         YoloAnalyzer(context, ttsManager, settingsManager, historyManager)
     }
-    val currencyAnalyzer = remember { 
-        RoboflowAnalyzer(context, ttsManager, settingsManager, historyManager) 
-    }
     
+    var currencyAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
     var ocrAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
 
     val stableCompositeAnalyzer = remember {
@@ -104,8 +102,10 @@ fun MainScreen(
 
     // Centralized Flash Control
     LaunchedEffect(settingsManager.flashMode) {
-        if (settingsManager.flashMode != "auto") {
-            isTorchEnabled = settingsManager.flashMode == "on"
+        isTorchEnabled = when (settingsManager.flashMode) {
+            "on" -> true
+            "off" -> false
+            else -> isTorchEnabled // keep current auto state or default to false
         }
     }
 
@@ -176,7 +176,6 @@ fun MainScreen(
     DisposableEffect(Unit) {
         onDispose {
             yoloAnalyzer.close()
-            currencyAnalyzer.close()
         }
     }
 
@@ -323,7 +322,7 @@ fun MainScreen(
                             settingsManager = settingsManager,
                             historyManager = historyManager,
                             isActive = isActive,
-                            yoloAnalyzer = currencyAnalyzer
+                            onProvideAnalyzer = { currencyAnalyzer = it }
                         )
                         4 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
                             SettingsScreen(

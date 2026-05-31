@@ -65,10 +65,16 @@ class YoloAnalyzer(
     private var persistentRecognitions = mutableListOf<Classifier.Recognition>()
     private val frameCountMap = mutableMapOf<String, Int>()
     private val PERSISTENCE_THRESHOLD = 5 // Stay detected for 5 frames if missing
+    private var frameCounter = 0
 
     override fun analyze(image: ImageProxy) {
         synchronized(lock) {
             if (isClosed) {
+                image.close()
+                return
+            }
+            frameCounter++
+            if (frameCounter % 5 != 0) {
                 image.close()
                 return
             }

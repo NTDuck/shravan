@@ -39,7 +39,14 @@ fun CameraPreview(
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
 
     LaunchedEffect(torchEnabled, cameraControl) {
-        cameraControl?.enableTorch(torchEnabled)
+        val control = cameraControl
+        if (control != null) {
+            try {
+                control.enableTorch(torchEnabled)
+            } catch (e: Exception) {
+                Log.e("CameraPreview", "Failed to enable torch", e)
+            }
+        }
     }
 
     LaunchedEffect(context) {
