@@ -24,15 +24,11 @@ import org.tensorflow.lite.examples.shravan.utils.*
 fun CurrencyScreen(
     ttsManager: TTSManager,
     hapticManager: HapticManager,
-    voiceCommandManager: VoiceCommandManager,
     settingsManager: SettingsManager,
     historyManager: HistoryManager,
     isActive: Boolean = true,
     onProvideAnalyzer: (ImageAnalysis.Analyzer?) -> Unit = {}
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    
     val recognizer = remember(isActive) {
         if (isActive) TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) else null
     }
@@ -95,7 +91,7 @@ fun CurrencyScreen(
                         .addOnSuccessListener { visionText ->
                             val fullText = visionText.text
                             // Regex to find potential currency numbers (e.g., 1000, 10.000, 500,000)
-                            val numberRegex = Regex("\\b(\\d{1,3}([.,]\\d{3})*|\\d+)\\b")
+                            val numberRegex = Regex("(\\d{1,3}([.,]\\d{3})*|\\d+)")
                             val matches = numberRegex.findAll(fullText)
                             
                             for (match in matches) {

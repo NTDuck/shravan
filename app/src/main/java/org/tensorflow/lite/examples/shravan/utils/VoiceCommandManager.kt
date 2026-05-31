@@ -124,12 +124,15 @@ class VoiceCommandManager(private val context: Context) {
                 shouldRetry = retry
 
                 if (speechRecognizer != null) {
-                    speechRecognizer?.cancel()
-                    isListening = false
-                    startListeningInternal()
+                    speechRecognizer?.destroy()
+                    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
+                    setupListener()
                 } else {
-                    Log.e("VoiceCommandManager", "Recognizer is null, cannot start")
+                    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
+                    setupListener()
                 }
+                isListening = false
+                startListeningInternal()
             } catch (e: Throwable) {
                 Log.e("VoiceCommandManager", "Error starting listener", e)
             }

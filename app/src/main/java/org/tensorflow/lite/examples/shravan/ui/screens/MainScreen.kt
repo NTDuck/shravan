@@ -50,7 +50,6 @@ fun MainScreen(
 ) {
     val context = LocalContext.current
     var currentPage by remember { mutableIntStateOf(0) }
-    val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
     val swipeThreshold = remember { with(density) { 50.dp.toPx() } }
     var totalDrag by remember { mutableStateOf(0f) }
@@ -318,7 +317,6 @@ fun MainScreen(
                         3 -> CurrencyScreen(
                             ttsManager = ttsManager,
                             hapticManager = hapticManager,
-                            voiceCommandManager = voiceCommandManager,
                             settingsManager = settingsManager,
                             historyManager = historyManager,
                             isActive = isActive,

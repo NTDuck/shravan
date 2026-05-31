@@ -16,6 +16,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import androidx.camera.camera2.interop.Camera2CameraInfo
+import android.hardware.camera2.CameraCharacteristics
 
 object CameraExecutorManager {
     val executor: ExecutorService = Executors.newSingleThreadExecutor()
@@ -74,7 +76,32 @@ fun CameraPreview(
             }
             previewUseCase = preview
 
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            val backCameraInfos = provider.availableCameraInfos.filter { info ->
+                CameraSelector.Builder()
+                    .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                    .build()
+                    .filter(listOf(info))
+                    .isNotEmpty()
+            }
+
+            val cameraSelector = if (zoomRatio < 1.0f && backCameraInfos.size > 1) {
+                // Try to find the ultra-wide camera
+                val ultraWide = backCameraInfos.find { info ->
+                    try {
+                        val characteristics = Camera2CameraInfo.from(info)
+                        val focalLengths = characteristics.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
+                        // Heuristic: focal length < 3mm is usually ultra-wide
+                        focalLengths?.any { it < 3.0f } == true
+                    } catch (e: Exception) {
+                        false
+                    }
+                }
+                ultraWide?.let { info ->
+                    CameraSelector.Builder().addCameraFilter { it.filter { i -> i == info } }.build()
+                } ?: CameraSelector.DEFAULT_BACK_CAMERA
+            } else {
+                CameraSelector.DEFAULT_BACK_CAMERA
+            }
 
             val camera = if (imageAnalyzer != null) {
                 val analysis = ImageAnalysis.Builder()
@@ -99,7 +126,10 @@ fun CameraPreview(
             cameraControl = camera.cameraControl
             
             try {
-                camera.cameraControl.setZoomRatio(zoomRatio)
+                val zoomState = camera.cameraInfo.zoomState.value
+                val minZoom = zoomState?.minZoomRatio ?: 1.0f
+                val maxZoom = zoomState?.maxZoomRatio ?: 1.0f
+                camera.cameraControl.setZoomRatio(zoomRatio.coerceIn(minZoom, maxZoom))
             } catch (e: Exception) {
                 Log.e("CameraPreview", "Failed to set zoom", e)
             }
