@@ -315,8 +315,10 @@ fun MainScreen(
                             onProvideAnalyzer = { ocrAnalyzer = it }
                         )
                         3 -> CurrencyScreen(
+                            onBack = { currentPage = 0 },
                             ttsManager = ttsManager,
                             hapticManager = hapticManager,
+                            voiceCommandManager = voiceCommandManager,
                             settingsManager = settingsManager,
                             historyManager = historyManager,
                             isActive = isActive,

@@ -22,8 +22,10 @@ import org.tensorflow.lite.examples.shravan.utils.*
 
 @Composable
 fun CurrencyScreen(
+    onBack: () -> Unit,
     ttsManager: TTSManager,
     hapticManager: HapticManager,
+    voiceCommandManager: VoiceCommandManager,
     settingsManager: SettingsManager,
     historyManager: HistoryManager,
     isActive: Boolean = true,
@@ -33,13 +35,18 @@ fun CurrencyScreen(
         if (isActive) TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) else null
     }
 
+    val useVietnamese = settingsManager.useVietnamese
     var isProcessing by remember { mutableStateOf(false) }
-    val lastDetectedAmount = remember { mutableStateOf("") }
-    val lastDetectionTime = remember { mutableLongStateOf(0L) }
-    val DEBOUNCE_MS = 3000L
+    val spokenTextTimes = remember { mutableMapOf<String, Long>() }
+    val DEBOUNCE_MS = 10000L // 10 seconds like OCR
+
+    val allowedDenominations = remember {
+        setOf(1000L, 2000L, 5000L, 10000L, 20000L, 50000L, 100000L, 200000L, 500000L)
+    }
 
     fun formatCurrency(amountStr: String, isVietnamese: Boolean): String {
         val amount = amountStr.replace(".", "").replace(",", "").toLongOrNull() ?: return ""
+        if (amount !in allowedDenominations) return ""
         
         if (isVietnamese) {
             return when (amount) {
@@ -52,10 +59,7 @@ fun CurrencyScreen(
                 100000L -> "một trăm nghìn đồng"
                 200000L -> "hai trăm nghìn đồng"
                 500000L -> "năm trăm nghìn đồng"
-                else -> {
-                    // Generic fallback for other numbers
-                    "$amount đồng"
-                }
+                else -> ""
             }
         } else {
             val words = when (amount) {
@@ -68,9 +72,9 @@ fun CurrencyScreen(
                 100000L -> "one hundred thousand"
                 200000L -> "two hundred thousand"
                 500000L -> "five hundred thousand"
-                else -> amount.toString()
+                else -> ""
             }
-            return "$words vietnamese dong"
+            return if (words.isNotEmpty()) "$words vietnamese dong" else ""
         }
     }
 
@@ -89,25 +93,23 @@ fun CurrencyScreen(
                     
                     recognizer.process(image)
                         .addOnSuccessListener { visionText ->
-                            val fullText = visionText.text
                             // Regex to find potential currency numbers (e.g., 1000, 10.000, 500,000)
                             val numberRegex = Regex("(\\d{1,3}([.,]\\d{3})*|\\d+)")
-                            val matches = numberRegex.findAll(fullText)
                             
-                            for (match in matches) {
-                                val found = match.value
-                                val cleanNum = found.replace(".", "").replace(",", "")
-                                
-                                // Basic filter to avoid small numbers or non-currency numbers
-                                if (cleanNum.length >= 4 && (cleanNum.startsWith("1") || cleanNum.startsWith("2") || cleanNum.startsWith("5"))) {
-                                    val currentTime = System.currentTimeMillis()
-                                    if (cleanNum != lastDetectedAmount.value || currentTime - lastDetectionTime.value > DEBOUNCE_MS) {
-                                        val spokenText = formatCurrency(cleanNum, settingsManager.useVietnamese)
-                                        if (spokenText.isNotEmpty()) {
+                            visionText.textBlocks.forEach { block ->
+                                val matches = numberRegex.findAll(block.text)
+                                for (match in matches) {
+                                    val cleanNum = match.value.replace(".", "").replace(",", "")
+                                    val spokenText = formatCurrency(cleanNum, settingsManager.useVietnamese)
+                                    
+                                    if (spokenText.isNotEmpty()) {
+                                        val currentTime = System.currentTimeMillis()
+                                        val lastSpoken = spokenTextTimes[cleanNum] ?: 0L
+                                        
+                                        if (currentTime - lastSpoken >= DEBOUNCE_MS) {
                                             ttsManager.speak(spokenText, isQueued = true, isVietnamese = settingsManager.useVietnamese)
                                             historyManager.addHistory("Currency", spokenText)
-                                            lastDetectedAmount.value = cleanNum
-                                            lastDetectionTime.value = currentTime
+                                            spokenTextTimes[cleanNum] = currentTime
                                             if (settingsManager.hapticsEnabled) {
                                                 hapticManager.triggerHaptic()
                                             }
@@ -135,13 +137,45 @@ fun CurrencyScreen(
         }
     }
 
+    val scope = rememberCoroutineScope()
+    var interactionsEnabled by remember { mutableStateOf(false) }
+    val voiceSessionId = remember { mutableStateOf<Int?>(null) }
+
+    androidx.activity.compose.BackHandler {
+        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+        onBack()
+    }
+
     val currencyGreeting = stringResource(R.string.currency_greeting)
+    val backCommand = stringResource(R.string.back_command)
+
     LaunchedEffect(isActive) {
         if (isActive) {
             ttsManager.speak(
                 currencyGreeting,
-                isVietnamese = settingsManager.useVietnamese
+                isVietnamese = useVietnamese,
+                onComplete = {
+                    scope.launch {
+                        delay(1000)
+                        interactionsEnabled = true
+                    }
+                }
             )
+            
+            voiceSessionId.value = voiceCommandManager.startListening(isVietnamese = useVietnamese) { result ->
+                val lowerResult = result.lowercase()
+                if (lowerResult.contains(backCommand.lowercase())) {
+                    ttsManager.speak(backCommand, isVietnamese = useVietnamese)
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    onBack()
+                }
+            }
+        } else {
+            interactionsEnabled = false
+            voiceSessionId.value?.let {
+                voiceCommandManager.stopListening(it)
+                voiceSessionId.value = null
+            }
         }
     }
 
