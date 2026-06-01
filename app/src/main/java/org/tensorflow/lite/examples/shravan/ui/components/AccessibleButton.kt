@@ -37,12 +37,12 @@ fun AccessibleButton(
                     detectTapGestures(
                         onTap = {
                             ttsManager.speak(speakLabel, isVietnamese = settingsManager.useVietnamese)
-                            if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                            hapticManager.triggerHaptic()
                             onClick()
                         },
                         onLongPress = {
                             ttsManager.speak(speakLabel, isVietnamese = settingsManager.useVietnamese)
-                            if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                            hapticManager.triggerHaptic()
                             onLongClick?.invoke()
                         }
                     )

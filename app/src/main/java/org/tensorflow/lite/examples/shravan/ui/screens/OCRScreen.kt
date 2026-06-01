@@ -97,7 +97,7 @@ fun OCRScreen(
     val voiceSessionId = remember { mutableStateOf<Int?>(null) }
 
     BackHandler {
-        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+        hapticManager.triggerHaptic()
         onBack()
     }
 
@@ -121,7 +121,7 @@ fun OCRScreen(
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains(backCommand.lowercase())) {
                     ttsManager.speak(backCommand, isVietnamese = useVietnamese)
-                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    hapticManager.triggerHaptic()
                     onBack()
                 }
             }

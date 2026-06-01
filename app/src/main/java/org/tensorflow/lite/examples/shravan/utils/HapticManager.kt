@@ -6,7 +6,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 
-class HapticManager(private val context: Context) {
+class HapticManager(private val context: Context, private val settingsManager: SettingsManager) {
     private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
         vibratorManager?.defaultVibrator
@@ -16,6 +16,7 @@ class HapticManager(private val context: Context) {
     }
 
     fun triggerHaptic() {
+        if (!settingsManager.hapticsEnabled) return
         try {
             vibrator?.let {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

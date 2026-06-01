@@ -126,12 +126,12 @@ fun MainScreen(
 
     val navKeywords = remember(kExplore, kFind, kOcr, kCurrency, kSettings, kHistory) {
         listOf(
-            listOf(kExplore, "explore", "khám phá") to 0,
-            listOf(kFind, "find", "tìm kiếm", "tìm") to 1,
-            listOf(kOcr, "ocr", "văn bản", "đọc") to 2,
-            listOf(kCurrency, "currency", "tiền", "nhận diện tiền") to 3,
-            listOf(kSettings, "settings", "cài đặt") to 4,
-            listOf(kHistory, "history", "lịch sử") to 5
+            kExplore to 0,
+            kFind to 1,
+            kOcr to 2,
+            kCurrency to 3,
+            kSettings to 4,
+            kHistory to 5
         )
     }
 
@@ -148,15 +148,15 @@ fun MainScreen(
     }
 
     // Centralized Voice Navigation Listener
-    DisposableEffect(settingsManager.useVietnamese) {
+    DisposableEffect(settingsManager.useVietnamese, navKeywords) {
         voiceCommandManager.onGlobalIntent = { result ->
             if (ttsManager.isSpeaking()) {
                 false
             } else {
-                val lowerResult = result.lowercase()
+                val trimmedResult = result.trim().lowercase()
                 var handled = false
                 for (entry in navKeywords) {
-                    if (entry.first.any { lowerResult.contains(it) }) {
+                    if (trimmedResult == entry.first) {
                         if (currentPage != entry.second) {
                             currentPage = entry.second
                         }

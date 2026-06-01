@@ -78,10 +78,10 @@ fun HistoryScreen(
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains("quay lại") || lowerResult.contains("back")) {
                     ttsManager.speak(backCommand, isVietnamese = useVietnamese)
-                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    hapticManager.triggerHaptic()
                     onBack()
                 } else if (lowerResult.contains("xóa") || lowerResult.contains("clear") || lowerResult.contains("delete")) {
-                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    hapticManager.triggerHaptic()
                     historyManager.clearHistory()
                     historyItems = emptyList()
                     val msg = if (useVietnamese) "Đã xóa lịch sử" else "History cleared"
@@ -112,7 +112,7 @@ fun HistoryScreen(
             )
             IconButton(
                 onClick = {
-                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    hapticManager.triggerHaptic()
                     historyManager.clearHistory()
                     historyItems = emptyList()
                     ttsManager.speak(if (useVietnamese) "Đã xóa lịch sử" else "History cleared", isVietnamese = useVietnamese)
@@ -170,7 +170,7 @@ fun HistoryScreen(
                         Spacer(modifier = Modifier.width(16.dp))
 
                         IconButton(onClick = {
-                            if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                            hapticManager.triggerHaptic()
                             speakingItemId = item.timestamp
                             ttsManager.speak(item.content, isVietnamese = useVietnamese) {
                                 if (speakingItemId == item.timestamp) {

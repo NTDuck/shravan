@@ -59,8 +59,10 @@ class MainActivity : ComponentActivity() {
                         null 
                     }
                 }
-                val hapticManager = remember { 
-                    try { HapticManager(context) } catch (e: Throwable) { 
+                val hapticManager = remember(settingsManager) { 
+                    try { 
+                        if (settingsManager != null) HapticManager(context, settingsManager) else null
+                    } catch (e: Throwable) { 
                         android.util.Log.e("MainActivity", "HapticManager init failed", e)
                         null 
                     }
@@ -147,7 +149,14 @@ CompositionLocalProvider(LocalConfiguration provides overriddenConfiguration) {
                             if (permissionsNeeded.isNotEmpty()) {
                                 launcher.launch(permissionsNeeded.toTypedArray())
                             }
+                        }
+
+                        LaunchedEffect(settingsManager.speechRate) {
                             ttsManager.setSpeechRate(settingsManager.speechRate)
+                        }
+
+                        LaunchedEffect(settingsManager.useVietnamese) {
+                            ttsManager.setLanguage(settingsManager.useVietnamese)
                         }
 
                         DisposableEffect(Unit) {

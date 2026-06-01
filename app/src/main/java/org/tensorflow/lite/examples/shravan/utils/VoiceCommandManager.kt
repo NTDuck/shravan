@@ -69,12 +69,10 @@ class VoiceCommandManager(private val context: Context) {
                 if (!matches.isNullOrEmpty()) {
                     var handled = false
                     for (match in matches) {
-                        if (onGlobalIntent?.invoke(match) == true) {
+                        val trimmedMatch = match.trim().lowercase()
+                        if (onGlobalIntent?.invoke(trimmedMatch) == true) {
                             handled = true
-                            // If handled globally, we stop retrying for this specific session
-                            // as we might be redirecting
                             shouldRetry = false
-                            speechRecognizer?.cancel()
                             break
                         }
                     }
@@ -91,16 +89,13 @@ class VoiceCommandManager(private val context: Context) {
                 val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
                     for (match in matches) {
-                        if (onGlobalIntent?.invoke(match) == true) {
-                            // If handled globally in partial results, stop immediately
-                            // to avoid duplicate handling in onResults and clear buffers
+                        val trimmedMatch = match.trim().lowercase()
+                        if (onGlobalIntent?.invoke(trimmedMatch) == true) {
                             shouldRetry = false
-                            speechRecognizer?.cancel()
                             isListening = false
                             break
                         }
                     }
-                    // Only call onPartialResult if not handled globally
                     if (shouldRetry) {
                         onPartialResult?.invoke(matches[0])
                     }

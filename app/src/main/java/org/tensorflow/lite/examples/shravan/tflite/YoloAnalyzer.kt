@@ -27,20 +27,33 @@ class YoloAnalyzer(
 
     var allowedClasses: List<String>? = null
 
-    private val detector: YoloV5Classifier by lazy {
-        val labelFile = when {
-            modelName == "currency.tflite" -> if (settingsManager.useVietnamese) "file:///android_asset/currency_labels_vi.txt" else "file:///android_asset/currency_labels.txt"
-            settingsManager.useVietnamese -> "file:///android_asset/coco_vi.txt"
-            else -> "file:///android_asset/coco.txt"
+    private var currentDetector: YoloV5Classifier? = null
+    private var currentLabels: List<String>? = null
+    private var lastUsedLanguage: Boolean? = null
+
+    private fun getDetector(): YoloV5Classifier {
+        val useVi = settingsManager.useVietnamese
+        if (currentDetector == null || lastUsedLanguage != useVi) {
+            val labelFile = when {
+                modelName == "currency.tflite" -> if (useVi) "file:///android_asset/currency_labels_vi.txt" else "file:///android_asset/currency_labels.txt"
+                useVi -> "file:///android_asset/coco_vi.txt"
+                else -> "file:///android_asset/coco.txt"
+            }
+            currentDetector?.close()
+            currentDetector = DetectorFactory.getDetector(context.assets, modelName, labelFile)
+            lastUsedLanguage = useVi
+            // Refresh labels as well
+            currentLabels = loadLabels()
         }
-        DetectorFactory.getDetector(context.assets, modelName, labelFile)
+        return currentDetector!!
     }
 
-    private val labels: List<String> get() {
+    private fun loadLabels(): List<String> {
         val labelsList = mutableListOf<String>()
+        val useVi = settingsManager.useVietnamese
         val filename = when {
-            modelName == "currency.tflite" -> if (settingsManager.useVietnamese) "currency_labels_vi.txt" else "currency_labels.txt"
-            settingsManager.useVietnamese -> "coco_vi.txt"
+            modelName == "currency.tflite" -> if (useVi) "currency_labels_vi.txt" else "currency_labels.txt"
+            useVi -> "coco_vi.txt"
             else -> "coco.txt"
         }
         try {
@@ -56,6 +69,8 @@ class YoloAnalyzer(
         }
         return labelsList
     }
+
+    private val labels: List<String> get() = currentLabels ?: loadLabels().also { currentLabels = it }
 
     private val lastSeenTime = mutableMapOf<String, Long>()
     private var isClosed = false
@@ -79,6 +94,7 @@ class YoloAnalyzer(
                 return
             }
             try {
+                val detector = getDetector()
                 val bitmap = ImageUtils.toBitmap(image)
                 if (bitmap == null) {
                     return
@@ -103,9 +119,10 @@ class YoloAnalyzer(
                     2000L
                 }
 
+                val currentLabelsList = labels
                 val currentFiltered = if (allowedClasses != null) {
                     baseFiltered.filter { result ->
-                        val title = if (result.detectedClass < labels.size) labels[result.detectedClass] else result.title
+                        val title = if (result.detectedClass < currentLabelsList.size) currentLabelsList[result.detectedClass] else result.title
                         allowedClasses!!.contains(title.lowercase())
                     }
                 } else {
@@ -138,7 +155,7 @@ class YoloAnalyzer(
                 val currentTime = System.currentTimeMillis()
                 persistentRecognitions.forEach { result ->
                     val detectedClass = result.detectedClass
-                    val title = if (detectedClass < labels.size) labels[detectedClass] else result.title
+                    val title = if (detectedClass < currentLabelsList.size) currentLabelsList[detectedClass] else result.title
                     
                     val lastSeen = lastSeenTime[title] ?: 0L
                     if (currentTime - lastSeen > currentDebounce) {
@@ -165,7 +182,7 @@ class YoloAnalyzer(
         synchronized(lock) {
             isClosed = true
             try {
-                detector.close()
+                currentDetector?.close()
             } catch (e: Exception) {
                 e.printStackTrace()
             }

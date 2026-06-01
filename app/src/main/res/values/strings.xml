@@ -1,6 +1,11 @@
 <resources>
     <string name="app_name">Shravan</string>
     <string name="welcome_text">Welcome to Shravan. Please speak your intent: are you partially blind or totally blind?</string>
+    <string name="setup_lang_prompt">Please choose your language: English or Vietnamese?</string>
+    <string name="lang_choice_en">English</string>
+    <string name="lang_choice_vi">Vietnamese</string>
+    <string name="voice_keyword_en">english</string>
+    <string name="voice_keyword_vi">vietnamese</string>
     <string name="nav_explore">Explore</string>
     <string name="nav_find">Find</string>
     <string name="nav_ocr">OCR</string>

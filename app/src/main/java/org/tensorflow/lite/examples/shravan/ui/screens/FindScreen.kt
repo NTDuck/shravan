@@ -96,13 +96,13 @@ fun FindScreen(
                     val lowerResult = result.lowercase()
                     if (lowerResult.contains(modeSeatingsTables.lowercase()) || lowerResult.contains("seat") || lowerResult.contains("table") || lowerResult.contains("bàn") || lowerResult.contains("ghế")) {
                         activeMode = "seatings & tables"
-                        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                        hapticManager.triggerHaptic()
                     } else if (lowerResult.contains(modeDoorsWindows.lowercase()) || lowerResult.contains("door") || lowerResult.contains("window") || lowerResult.contains("cửa")) {
                         activeMode = "doors & windows"
-                        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                        hapticManager.triggerHaptic()
                     } else if (lowerResult.contains(modePersonVehicles.lowercase()) || lowerResult.contains("person") || lowerResult.contains("vehicle") || lowerResult.contains("người") || lowerResult.contains("xe")) {
                         activeMode = "person & vehicles"
-                        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                        hapticManager.triggerHaptic()
                     }
                 }
             } else {
@@ -177,9 +177,7 @@ fun FindScreen(
                     // Interval scales from 1000ms (far) to 100ms (very close)
                     val interval = (1000 - (normalizedArea * 900)).toLong().coerceAtLeast(100L)
                     
-                    if (settingsManager.hapticsEnabled) {
-                        hapticManager.triggerHaptic()
-                    }
+                    hapticManager.triggerHaptic()
                     delay(interval)
                 } else {
                     delay(500)
@@ -252,7 +250,7 @@ fun FindScreen(
         ) {
             // Button 1
             Box(
-                modifier = Modifier.size(width = 80.dp, height = 50.dp).clip(RoundedCornerShape(12.dp)).background(seatingBgColor).clickable { activeMode = "seatings & tables"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 80.dp, height = 50.dp).clip(RoundedCornerShape(12.dp)).background(seatingBgColor).clickable { activeMode = "seatings & tables"; hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -263,7 +261,7 @@ fun FindScreen(
             }
             // Button 2
             Box(
-                modifier = Modifier.size(width = 80.dp, height = 50.dp).clip(RoundedCornerShape(12.dp)).background(doorsBgColor).clickable { activeMode = "doors & windows"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 80.dp, height = 50.dp).clip(RoundedCornerShape(12.dp)).background(doorsBgColor).clickable { activeMode = "doors & windows"; hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -274,7 +272,7 @@ fun FindScreen(
             }
             // Button 3
             Box(
-                modifier = Modifier.size(width = 80.dp, height = 50.dp).clip(RoundedCornerShape(12.dp)).background(personBgColor).clickable { activeMode = "person & vehicles"; if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic() },
+                modifier = Modifier.size(width = 80.dp, height = 50.dp).clip(RoundedCornerShape(12.dp)).background(personBgColor).clickable { activeMode = "person & vehicles"; hapticManager.triggerHaptic() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

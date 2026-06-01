@@ -110,9 +110,7 @@ fun CurrencyScreen(
                                             ttsManager.speak(spokenText, isQueued = true, isVietnamese = settingsManager.useVietnamese)
                                             historyManager.addHistory("Currency", spokenText)
                                             spokenTextTimes[cleanNum] = currentTime
-                                            if (settingsManager.hapticsEnabled) {
-                                                hapticManager.triggerHaptic()
-                                            }
+                                            hapticManager.triggerHaptic()
                                         }
                                     }
                                 }
@@ -142,7 +140,7 @@ fun CurrencyScreen(
     val voiceSessionId = remember { mutableStateOf<Int?>(null) }
 
     androidx.activity.compose.BackHandler {
-        if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+        hapticManager.triggerHaptic()
         onBack()
     }
 
@@ -166,7 +164,7 @@ fun CurrencyScreen(
                 val lowerResult = result.lowercase()
                 if (lowerResult.contains(backCommand.lowercase())) {
                     ttsManager.speak(backCommand, isVietnamese = useVietnamese)
-                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    hapticManager.triggerHaptic()
                     onBack()
                 }
             }

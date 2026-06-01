@@ -190,7 +190,7 @@ fun SettingsScreen(
             onClick = {
                 onResetClick()
                 if (resetCount + 1 >= 7) {
-                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    hapticManager.triggerHaptic()
                     onReset()
                 }
             },
