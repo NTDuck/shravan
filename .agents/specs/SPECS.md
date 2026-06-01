@@ -34,6 +34,7 @@
   - Swipe Left/Right: Trigger haptics, redirect to left/right screen using swipe animations (clamped at ends).
   - Voice Control: Listen for user speech in each screen; upon clear intent for screen X, trigger haptics and redirect.
   - Quick Status Voice Command: Support global commands for 'Time', 'Battery', or 'Status' to instantly read out current device time and/or battery level.
+  - Global Help/Orientation Command: Support global commands for 'Help' or 'Where am I' to instantly read out the current screen/mode the user is in.
 
 ### Screen-Specific Requirements
 

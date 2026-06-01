@@ -57,6 +57,9 @@
     <string name="voice_keyword_status">trạng thái</string>
     <string name="voice_keyword_time">thời gian</string>
     <string name="voice_keyword_battery">pin</string>
+    <string name="voice_keyword_help">giúp đỡ</string>
+    <string name="voice_keyword_where_am_i">tôi đang ở đâu</string>
     <string name="status_time">Bây giờ là %s</string>
     <string name="status_battery">Pin hiện tại %d phần trăm</string>
+    <string name="status_location">Bạn đang ở %s</string>
 </resources>

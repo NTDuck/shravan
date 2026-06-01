@@ -57,6 +57,9 @@
     <string name="voice_keyword_status">status</string>
     <string name="voice_keyword_time">time</string>
     <string name="voice_keyword_battery">battery</string>
+    <string name="voice_keyword_help">help</string>
+    <string name="voice_keyword_where_am_i">where am i</string>
     <string name="status_time">The time is %s</string>
     <string name="status_battery">Battery is at %d percent</string>
+    <string name="status_location">You are currently in %s</string>
 </resources>
