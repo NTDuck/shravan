@@ -9,7 +9,6 @@
     <string name="nav_explore">Khám phá</string>
     <string name="nav_find">Tìm kiếm</string>
     <string name="nav_ocr">Đọc văn bản</string>
-    <string name="nav_currency">Nhận diện tiền</string>
     <string name="nav_settings">Cài đặt</string>
     <string name="nav_history">Lịch sử</string>
     <string name="settings_language">Ngôn ngữ</string>
@@ -31,7 +30,6 @@
     <string name="voice_keyword_explore">khám phá</string>
     <string name="voice_keyword_find">tìm kiếm</string>
     <string name="voice_keyword_ocr">văn bản</string>
-    <string name="voice_keyword_currency">tiền</string>
     <string name="voice_keyword_settings">cài đặt</string>
     <string name="voice_keyword_history">lịch sử</string>
     <string name="find_prompt">Bạn đang tìm gì? Bàn ghế, cửa, hay người và xe?</string>
@@ -40,7 +38,6 @@
     <string name="mode_doors_windows">Cửa</string>
     <string name="mode_person_vehicles">Người và xe</string>
     <string name="explore_greeting">Chế độ khám phá</string>
-    <string name="currency_greeting">Chế độ nhận diện tiền</string>
     <string name="find_greeting">Chế độ tìm kiếm</string>
     <string name="ocr_greeting">Đọc văn bản</string>
     <string name="history_greeting">Lịch sử</string>

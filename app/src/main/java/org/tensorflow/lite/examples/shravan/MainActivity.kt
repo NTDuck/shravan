@@ -171,7 +171,7 @@ CompositionLocalProvider(LocalConfiguration provides overriddenConfiguration) {
                             }
                         }
 
-                        val startDestination = if (settingsManager.impairmentLevel == null) "setup" else "main"
+                        val startDestination = remember { if (settingsManager.impairmentLevel == null) "setup" else "main" }
 
                         NavHost(
                             navController = navController, 

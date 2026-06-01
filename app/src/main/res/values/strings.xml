@@ -9,7 +9,6 @@
     <string name="nav_explore">Explore</string>
     <string name="nav_find">Find</string>
     <string name="nav_ocr">OCR</string>
-    <string name="nav_currency">Currency</string>
     <string name="nav_settings">Settings</string>
     <string name="nav_history">History</string>
     <string name="settings_language">Language</string>
@@ -31,7 +30,6 @@
     <string name="voice_keyword_explore">explore</string>
     <string name="voice_keyword_find">find</string>
     <string name="voice_keyword_ocr">ocr</string>
-    <string name="voice_keyword_currency">currency</string>
     <string name="voice_keyword_settings">settings</string>
     <string name="voice_keyword_history">history</string>
     <string name="find_prompt">What are you looking for? Seatings and tables, doors and windows, or person and vehicles?</string>
@@ -40,7 +38,6 @@
     <string name="mode_doors_windows">Doors and windows</string>
     <string name="mode_person_vehicles">Person and vehicles</string>
     <string name="explore_greeting">Explore mode</string>
-    <string name="currency_greeting">Currency mode</string>
     <string name="find_greeting">Find mode</string>
     <string name="ocr_greeting">OCR</string>
     <string name="history_greeting">History</string>

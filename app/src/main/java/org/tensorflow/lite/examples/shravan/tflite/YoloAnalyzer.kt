@@ -35,7 +35,6 @@ class YoloAnalyzer(
         val useVi = settingsManager.useVietnamese
         if (currentDetector == null || lastUsedLanguage != useVi) {
             val labelFile = when {
-                modelName == "currency.tflite" -> if (useVi) "file:///android_asset/currency_labels_vi.txt" else "file:///android_asset/currency_labels.txt"
                 useVi -> "file:///android_asset/coco_vi.txt"
                 else -> "file:///android_asset/coco.txt"
             }
@@ -52,7 +51,6 @@ class YoloAnalyzer(
         val labelsList = mutableListOf<String>()
         val useVi = settingsManager.useVietnamese
         val filename = when {
-            modelName == "currency.tflite" -> if (useVi) "currency_labels_vi.txt" else "currency_labels.txt"
             useVi -> "coco_vi.txt"
             else -> "coco.txt"
         }
@@ -110,8 +108,7 @@ class YoloAnalyzer(
                 )
 
                 val results = detector.recognizeImage(scaledBitmap)
-                val threshold = if (modelName == "currency.tflite") 0.15f else 0.25f
-                val baseFiltered = results.filter { it.confidence > threshold }
+                val baseFiltered = results.filter { it.confidence > 0.25f }
                 
                 // Totally Blind Optimization: dynamic debounce
                 val currentDebounce = if (settingsManager.impairmentLevel == org.tensorflow.lite.examples.shravan.utils.ImpairmentLevel.TotallyImpaired) {
@@ -158,44 +155,12 @@ class YoloAnalyzer(
                     val detectedClass = result.detectedClass
                     val title = if (detectedClass < currentLabelsList.size) currentLabelsList[detectedClass] else result.title
                     
-                    var announcement = title
-                    if (modelName == "currency.tflite") {
-                        val amount = title.replace(".", "").replace(",", "").toLongOrNull()
-                        if (amount != null) {
-                            announcement = if (settingsManager.useVietnamese) {
-                                when (amount) {
-                                    1000L -> "một nghìn đồng"
-                                    2000L -> "hai nghìn đồng"
-                                    5000L -> "năm nghìn đồng"
-                                    10000L -> "mười nghìn đồng"
-                                    20000L -> "hai mươi nghìn đồng"
-                                    50000L -> "năm mươi nghìn đồng"
-                                    100000L -> "một trăm nghìn đồng"
-                                    200000L -> "hai trăm nghìn đồng"
-                                    500000L -> "năm trăm nghìn đồng"
-                                    else -> announcement
-                                }
-                            } else {
-                                when (amount) {
-                                    1000L -> "one thousand vietnamese dong"
-                                    2000L -> "two thousand vietnamese dong"
-                                    5000L -> "five thousand vietnamese dong"
-                                    10000L -> "ten thousand vietnamese dong"
-                                    20000L -> "twenty thousand vietnamese dong"
-                                    50000L -> "fifty thousand vietnamese dong"
-                                    100000L -> "one hundred thousand vietnamese dong"
-                                    200000L -> "two hundred thousand vietnamese dong"
-                                    500000L -> "five hundred thousand vietnamese dong"
-                                    else -> announcement
-                                }
-                            }
-                        }
-                    }
+                    val announcement = title
 
                     val lastSeen = lastSeenTime[announcement] ?: 0L
                     if (currentTime - lastSeen > currentDebounce) {
                         ttsManager.speak(announcement, isQueued = true, isVietnamese = settingsManager.useVietnamese)
-                        historyManager.addHistory(if (modelName == "currency.tflite") "Currency" else "Object", announcement)
+                        historyManager.addHistory("Object", announcement)
                     }
                     lastSeenTime[announcement] = currentTime
                 }

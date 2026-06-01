@@ -157,7 +157,6 @@ fun HistoryScreen(
                             "object", "explore" -> Icons.Default.CameraAlt
                             "find" -> Icons.Default.Search
                             "ocr" -> Icons.Default.TextFields
-                            "currency" -> Icons.Default.MonetizationOn
                             else -> Icons.Default.History
                         }
                         val itemColor = if (speakingItemId == item.timestamp) Color.Yellow else Color.White

@@ -69,7 +69,6 @@ fun MainScreen(
         YoloAnalyzer(context, ttsManager, settingsManager, historyManager)
     }
     
-    var currencyAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
     var ocrAnalyzer by remember { mutableStateOf<ImageAnalysis.Analyzer?>(null) }
 
     val stableCompositeAnalyzer = remember {
@@ -82,22 +81,20 @@ fun MainScreen(
             }
         )
     }
-
-    // Update the delegate reactively
-    LaunchedEffect(currentPage, ocrAnalyzer) {
-        stableCompositeAnalyzer.delegate = when (currentPage) {
-            0 -> {
-                yoloAnalyzer.allowedClasses = null
-                yoloAnalyzer
-            }
-            1 -> yoloAnalyzer // FindScreen sets allowedClasses
-            2 -> ocrAnalyzer
-            3 -> currencyAnalyzer
-            else -> null
+// Update the delegate reactively
+LaunchedEffect(currentPage, ocrAnalyzer) {
+    stableCompositeAnalyzer.delegate = when (currentPage) {
+        0 -> {
+            yoloAnalyzer.allowedClasses = null
+            yoloAnalyzer
         }
+        1 -> yoloAnalyzer // FindScreen sets allowedClasses
+        2 -> ocrAnalyzer
+        else -> null
     }
+}
 
-    val activeAnalyzer = if (currentPage < 4) stableCompositeAnalyzer else null
+val activeAnalyzer = if (currentPage < 3) stableCompositeAnalyzer else null
 
     // Centralized Flash Control
     LaunchedEffect(settingsManager.flashMode) {
@@ -112,7 +109,6 @@ fun MainScreen(
         Triple(R.string.nav_explore, Icons.Default.CameraAlt, "explore"),
         Triple(R.string.nav_find, Icons.Default.Search, "find"),
         Triple(R.string.nav_ocr, Icons.Default.TextFields, "ocr"),
-        Triple(R.string.nav_currency, Icons.Default.MonetizationOn, "currency"),
         Triple(R.string.nav_settings, Icons.Default.Settings, "settings"),
         Triple(R.string.nav_history, Icons.Default.History, "history")
     )
@@ -120,18 +116,16 @@ fun MainScreen(
     val kExplore = stringResource(R.string.voice_keyword_explore).lowercase()
     val kFind = stringResource(R.string.voice_keyword_find).lowercase()
     val kOcr = stringResource(R.string.voice_keyword_ocr).lowercase()
-    val kCurrency = stringResource(R.string.voice_keyword_currency).lowercase()
     val kSettings = stringResource(R.string.voice_keyword_settings).lowercase()
     val kHistory = stringResource(R.string.voice_keyword_history).lowercase()
 
-    val navKeywords = remember(kExplore, kFind, kOcr, kCurrency, kSettings, kHistory) {
+    val navKeywords = remember(kExplore, kFind, kOcr, kSettings, kHistory) {
         listOf(
             kExplore to 0,
             kFind to 1,
             kOcr to 2,
-            kCurrency to 3,
-            kSettings to 4,
-            kHistory to 5
+            kSettings to 3,
+            kHistory to 4
         )
     }
 
@@ -336,17 +330,7 @@ fun MainScreen(
                             ocrManager = ocrManager,
                             onProvideAnalyzer = { ocrAnalyzer = it }
                         )
-                        3 -> CurrencyScreen(
-                            onBack = { currentPage = 0 },
-                            ttsManager = ttsManager,
-                            hapticManager = hapticManager,
-                            voiceCommandManager = voiceCommandManager,
-                            settingsManager = settingsManager,
-                            historyManager = historyManager,
-                            isActive = isActive,
-                            onProvideAnalyzer = { currencyAnalyzer = it }
-                        )
-                        4 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
+                        3 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
                             SettingsScreen(
                                 ttsManager = ttsManager, 
                                 hapticManager = hapticManager, 
@@ -358,7 +342,7 @@ fun MainScreen(
                                 onResetClick = { resetCount++ }
                             )
                         }
-                        5 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
+                        4 -> Box(modifier = Modifier.fillMaxSize().background(Color(0xFF222222)).padding(innerPadding)) {
                             HistoryScreen(onBack = { currentPage = 0 }, historyManager = historyManager, settingsManager = settingsManager, ttsManager = ttsManager, hapticManager = hapticManager, voiceCommandManager = voiceCommandManager, isActive = isActive)
                         }
                     }

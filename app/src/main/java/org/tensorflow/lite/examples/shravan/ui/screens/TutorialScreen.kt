@@ -34,8 +34,8 @@ fun TutorialScreen(
     var isTutorialFinished by remember { mutableStateOf(false) }
     var requestingPermissions by remember { mutableStateOf(false) }
     
-    val tutorialEn = "Welcome to the tutorial. This app has 6 main screens: Explore to detect objects around you, Find to locate specific items, OCR to read text, Currency to detect Vietnamese banknotes, Settings to configure preferences, and History to view past detections. You can swipe left and right, or say the screen name to navigate. Say 'Skip' to end this tutorial and grant necessary permissions."
-    val tutorialVi = "Chào mừng bạn đến với hướng dẫn. Ứng dụng này có 6 màn hình chính: Khám phá để nhận diện vật thể xung quanh, Tìm kiếm để tìm vật thể cụ thể, Đọc văn bản để đọc chữ, Nhận diện tiền để nhận diện tiền giấy Việt Nam, Cài đặt để tùy chỉnh, và Lịch sử để xem lại. Bạn có thể vuốt trái phải, hoặc đọc tên màn hình để chuyển. Nói 'Bỏ qua' để kết thúc và cấp quyền."
+    val tutorialEn = "Welcome to the tutorial. This app has 5 main screens: Explore to detect objects around you, Find to locate specific items, OCR to read text, Settings to configure preferences, and History to view past detections. You can swipe left and right, or say the screen name to navigate. Say 'Skip' to end this tutorial and grant necessary permissions."
+    val tutorialVi = "Chào mừng bạn đến với hướng dẫn. Ứng dụng này có 5 màn hình chính: Khám phá để nhận diện vật thể xung quanh, Tìm kiếm để tìm vật thể cụ thể, Đọc văn bản để đọc chữ, Cài đặt để tùy chỉnh, và Lịch sử để xem lại. Bạn có thể vuốt trái phải, hoặc đọc tên màn hình để chuyển. Nói 'Bỏ qua' để kết thúc và cấp quyền."
     
     val textToSpeak = if (useVietnamese) tutorialVi else tutorialEn
     val skipKeyword = if (useVietnamese) "bỏ qua" else "skip"
