@@ -76,7 +76,7 @@ fun MainScreen(
         CompositeAnalyzer(
             settingsManager = settingsManager,
             onDarknessDetected = { isDark ->
-                if (settingsManager.flashMode == "auto") {
+                if (settingsManager.flashMode == "auto" || settingsManager.impairmentLevel == ImpairmentLevel.TotallyImpaired) {
                     isTorchEnabled = isDark
                 }
             }
@@ -167,19 +167,19 @@ fun MainScreen(
                 var handled = false
                 
                 // Quick Status & Help Check
-                if (trimmedResult == kTime || trimmedResult == kStatus || trimmedResult == "time" || trimmedResult == "status") {
+                if (trimmedResult.contains(kTime) || trimmedResult.contains(kStatus) || trimmedResult.contains("time") || trimmedResult.contains("status")) {
                     val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
                     val currentTime = sdf.format(java.util.Date())
                     ttsManager.speak(String.format(timeFormat, currentTime), isVietnamese = settingsManager.useVietnamese)
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     handled = true
-                } else if (trimmedResult == kBattery || trimmedResult == "battery") {
+                } else if (trimmedResult.contains(kBattery) || trimmedResult.contains("battery")) {
                     val bm = context.getSystemService(android.content.Context.BATTERY_SERVICE) as android.os.BatteryManager
                     val batLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
                     ttsManager.speak(String.format(batteryFormat, batLevel), isVietnamese = settingsManager.useVietnamese)
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
                     handled = true
-                } else if (trimmedResult == kHelp || trimmedResult == kWhereAmI || trimmedResult == "help" || trimmedResult == "where am i") {
+                } else if (trimmedResult.contains(kHelp) || trimmedResult.contains(kWhereAmI) || trimmedResult.contains("help") || trimmedResult.contains("where am i")) {
                     val currentScreenName = context.getString(screens[currentPage].first)
                     ttsManager.speak(String.format(locationFormat, currentScreenName), isVietnamese = settingsManager.useVietnamese)
                     if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
@@ -188,7 +188,7 @@ fun MainScreen(
 
                 if (!handled) {
                     for (entry in navKeywords) {
-                        if (trimmedResult == entry.first) {
+                        if (trimmedResult.contains(entry.first)) {
                             if (currentPage != entry.second) {
                                 currentPage = entry.second
                             }

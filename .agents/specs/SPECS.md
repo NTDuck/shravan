@@ -12,17 +12,19 @@
 ### Core Behaviors & Transitions
 - LLMs/AI models MUST NOT require an API key; all must be download/integrate and use locally with no restrictions.
 - Font: Inter MUST be used for all text.
-- Volume: Always use speaker volume (like in calls, `STREAM_VOICE_CALL`) instead of normal audio volume for TTS.
+- Volume: Use normal media volume instead of call volume for TTS.
 - Transitions: Use proper animations for every transition, prioritizing fade in/out where appropriate.
+- App Exit: TTS must stop immediately when the app exits or is backgrounded.
+- Permissions: Ask for permissions AFTER the setup screen (or tutorial), not during the very first startup moment.
 
 ### Startup & Setup
 - First startup:
-  1. Ask for every necessary permission (Camera, Record Audio, etc.).
-  2. Speak welcome text while the screen is dimmed.
-  3. Fade screen to normal and listen for user speech stream.
-  4. Run LLM/AI inference on speech stream to clarify intent (e.g., above some threshold).
-  5. Intent: User is "partially blind" or "totally blind".
-  6. Upon clear intent: Trigger haptics, fade screen to dimmed (not receiving input), and speak confirmation of received intent.
+  1. Speak language choice.
+  2. Speak welcome text.
+  3. Run inference on intent.
+  4. Upon clear intent: Trigger haptics, fade screen to dimmed (not receiving input), and speak confirmation of received intent.
+  5. Play a short tutorial describing the screens & their functions. Allow skip via voice.
+  6. Ask for necessary permissions (Camera, Record Audio, etc.).
   7. Redirect to Explore Screen.
 - Subsequent startups: Open directly on Explore Screen.
 
@@ -32,7 +34,7 @@
 - Interaction:
   - Click Icon: Trigger haptics and redirect to screen.
   - Swipe Left/Right: Trigger haptics, redirect to left/right screen using swipe animations (clamped at ends).
-  - Voice Control: Listen for user speech in each screen; upon clear intent for screen X, trigger haptics and redirect.
+  - Voice Control: Listen for user speech in each screen; upon clear intent for screen X, trigger haptics and redirect. Use relaxed matching (contains instead of exact equals) to lower recognition threshold.
   - Quick Status Voice Command: Support global commands for 'Time', 'Battery', or 'Status' to instantly read out current device time and/or battery level.
   - Global Help/Orientation Command: Support global commands for 'Help' or 'Where am I' to instantly read out the current screen/mode the user is in.
 
@@ -42,6 +44,7 @@
 - Camera feed: 0.6x zoom/lens.
 - Behavior: Surround detected objects with differently colored bounding boxes and labels (localized).
 - TTS: Speak aloud the object's label (localized) once per presence in the camera feed.
+- Totally Blind Mode: Enable auto-flash in dark environments. Enable spatial audio or proportional haptics.
 
 #### Find Screen
 - Camera feed: 0.6x zoom/lens.
@@ -49,7 +52,7 @@
 - Intents/Modes: "find seatings & tables", "find doors & windows", "find person & vehicles".
 - Upon intent: Trigger haptics and fade camera feed to normal coloring.
 - Behavior: Similar to Explore but only detects objects for the active mode.
-- Proximity Feedback: If objects detected, trigger haptics at an interval (default 1s); interval gets shorter as the nearest object gets closer to the camera.
+- Proximity Feedback: If objects detected, trigger haptics at an interval; interval gets shorter proportionately with bounding box size. Selected button text becomes black.
 
 #### OCR Screen
 - Camera feed: 1.0x zoom/lens.

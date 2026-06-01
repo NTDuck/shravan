@@ -72,7 +72,6 @@ class VoiceCommandManager(private val context: Context) {
                         val trimmedMatch = match.trim().lowercase()
                         if (onGlobalIntent?.invoke(trimmedMatch) == true) {
                             handled = true
-                            shouldRetry = false
                             break
                         }
                     }
@@ -91,7 +90,6 @@ class VoiceCommandManager(private val context: Context) {
                     for (match in matches) {
                         val trimmedMatch = match.trim().lowercase()
                         if (onGlobalIntent?.invoke(trimmedMatch) == true) {
-                            shouldRetry = false
                             isListening = false
                             break
                         }

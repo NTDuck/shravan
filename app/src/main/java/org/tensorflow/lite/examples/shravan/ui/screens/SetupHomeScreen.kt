@@ -1,5 +1,8 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -25,13 +28,17 @@ fun SetupHomeScreen(
     var setupStep by remember { mutableIntStateOf(0) } // 0: Language, 1: Impairment
     var interactionsEnabled by remember { mutableStateOf(false) }
     var isScreenDimmed by remember { mutableStateOf(true) }
+    
+    // State for styling selected item
+    var selectedLanguage by remember { mutableStateOf<Boolean?>(null) }
     var selectedLevel by remember { mutableStateOf<ImpairmentLevel?>(null) }
     
     val scope = rememberCoroutineScope()
     val voiceSessionId = remember { mutableStateOf<Int?>(null) }
 
     // String resources
-    val langPrompt = stringResource(R.string.setup_lang_prompt)
+    val langPromptEn = "Please choose your language: English or Vietnamese?"
+    val langPromptVi = "Vui lòng chọn ngôn ngữ: Tiếng Anh hay Tiếng Việt?"
     val langEn = stringResource(R.string.lang_choice_en)
     val langVi = stringResource(R.string.lang_choice_vi)
     val kwEn = stringResource(R.string.voice_keyword_en).lowercase()
@@ -49,26 +56,29 @@ fun SetupHomeScreen(
         interactionsEnabled = false
         isScreenDimmed = true
         
-        val textToSpeak = if (setupStep == 0) {
-            // Speak in a mix or just English then Vietnamese?
-            // Let's use the prompt which is localized but at step 0 it's usually English if not set.
-            // Actually, we should speak both for clarity.
-            "Please choose your language: English or Vietnamese? Vui lòng chọn ngôn ngữ: Tiếng Anh hay Tiếng Việt?"
-        } else {
-            greeting
-        }
-
-        ttsManager.speak(
-            textToSpeak,
-            isVietnamese = settingsManager.useVietnamese,
-            onComplete = {
-                scope.launch {
-                    isScreenDimmed = false
-                    delay(500)
-                    interactionsEnabled = true
+        if (setupStep == 0) {
+            ttsManager.speak(langPromptEn, isVietnamese = false) {
+                ttsManager.speak(langPromptVi, isVietnamese = true, isQueued = true) {
+                    scope.launch {
+                        isScreenDimmed = false
+                        delay(500)
+                        interactionsEnabled = true
+                    }
                 }
             }
-        )
+        } else {
+            ttsManager.speak(
+                greeting,
+                isVietnamese = settingsManager.useVietnamese,
+                onComplete = {
+                    scope.launch {
+                        isScreenDimmed = false
+                        delay(500)
+                        interactionsEnabled = true
+                    }
+                }
+            )
+        }
     }
 
     DisposableEffect(Unit) {
@@ -84,52 +94,56 @@ fun SetupHomeScreen(
                 partialCallback = { partial ->
                     val lowerPartial = partial.trim().lowercase()
                     if (setupStep == 0) {
-                        if (lowerPartial == kwEn || lowerPartial == "english") {
-                            settingsManager.useVietnamese = false
-                            ttsManager.setLanguage(false)
-                            setupStep = 1
-                        } else if (lowerPartial == kwVi || lowerPartial == "vietnamese" || lowerPartial == "tiếng việt") {
-                            settingsManager.useVietnamese = true
-                            ttsManager.setLanguage(true)
-                            setupStep = 1
+                        if (lowerPartial.contains(kwEn) || lowerPartial.contains("english")) {
+                            interactionsEnabled = false
+                            selectedLanguage = false
+                            scope.launch { handleLanguageSelection(false, settingsManager, ttsManager) { setupStep = 1 } }
+                        } else if (lowerPartial.contains(kwVi) || lowerPartial.contains("vietnamese") || lowerPartial.contains("tiếng việt")) {
+                            interactionsEnabled = false
+                            selectedLanguage = true
+                            scope.launch { handleLanguageSelection(true, settingsManager, ttsManager) { setupStep = 1 } }
                         }
                     } else {
-                        if (lowerPartial == keywordPartial) {
+                        if (lowerPartial.contains(keywordPartial)) {
                             interactionsEnabled = false
-                            isScreenDimmed = true
-                            hapticManager.triggerHaptic()
-                            handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, welcomePartial, settingsManager.useVietnamese)
-                        } else if (lowerPartial == keywordTotal) {
+                            selectedLevel = ImpairmentLevel.PartiallyImpaired
+                            scope.launch {
+                                handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, hapticManager, welcomePartial, settingsManager.useVietnamese)
+                            }
+                        } else if (lowerPartial.contains(keywordTotal)) {
                             interactionsEnabled = false
-                            isScreenDimmed = true
-                            hapticManager.triggerHaptic()
-                            handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, welcomeTotal, settingsManager.useVietnamese)
+                            selectedLevel = ImpairmentLevel.TotallyImpaired
+                            scope.launch {
+                                handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, hapticManager, welcomeTotal, settingsManager.useVietnamese)
+                            }
                         }
                     }
                 }
             ) { result ->
                 val lowerResult = result.trim().lowercase()
                 if (setupStep == 0) {
-                    if (lowerResult == kwEn || lowerResult == "english") {
-                        settingsManager.useVietnamese = false
-                        ttsManager.setLanguage(false)
-                        setupStep = 1
-                    } else if (lowerResult == kwVi || lowerResult == "vietnamese" || lowerResult == "tiếng việt") {
-                        settingsManager.useVietnamese = true
-                        ttsManager.setLanguage(true)
-                        setupStep = 1
+                    if (lowerResult.contains(kwEn) || lowerResult.contains("english")) {
+                        interactionsEnabled = false
+                        selectedLanguage = false
+                        scope.launch { handleLanguageSelection(false, settingsManager, ttsManager) { setupStep = 1 } }
+                    } else if (lowerResult.contains(kwVi) || lowerResult.contains("vietnamese") || lowerResult.contains("tiếng việt")) {
+                        interactionsEnabled = false
+                        selectedLanguage = true
+                        scope.launch { handleLanguageSelection(true, settingsManager, ttsManager) { setupStep = 1 } }
                     }
                 } else {
-                    if (lowerResult == keywordPartial) {
+                    if (lowerResult.contains(keywordPartial)) {
                         interactionsEnabled = false
-                        isScreenDimmed = true
-                        hapticManager.triggerHaptic()
-                        handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, welcomePartial, settingsManager.useVietnamese)
-                    } else if (lowerResult == keywordTotal) {
+                        selectedLevel = ImpairmentLevel.PartiallyImpaired
+                        scope.launch {
+                            handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, hapticManager, welcomePartial, settingsManager.useVietnamese)
+                        }
+                    } else if (lowerResult.contains(keywordTotal)) {
                         interactionsEnabled = false
-                        isScreenDimmed = true
-                        hapticManager.triggerHaptic()
-                        handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, welcomeTotal, settingsManager.useVietnamese)
+                        selectedLevel = ImpairmentLevel.TotallyImpaired
+                        scope.launch {
+                            handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, hapticManager, welcomeTotal, settingsManager.useVietnamese)
+                        }
                     }
                 }
             }
@@ -142,84 +156,124 @@ fun SetupHomeScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(if (isScreenDimmed) Color.Black.copy(alpha = 0.8f) else Color(0xFF333333))) {
-        Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-            if (setupStep == 0) {
-                AccessibleButton(
-                    label = langEn,
-                    speakLabel = langEn,
-                    enabled = interactionsEnabled,
-                    onClick = {
-                        settingsManager.useVietnamese = false
-                        ttsManager.setLanguage(false)
-                        setupStep = 1
-                    },
-                    ttsManager = ttsManager,
-                    settingsManager = settingsManager,
-                    hapticManager = hapticManager,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    backgroundColor = Color(0xFF222222)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                AccessibleButton(
-                    label = langVi,
-                    speakLabel = langVi,
-                    enabled = interactionsEnabled,
-                    onClick = {
-                        settingsManager.useVietnamese = true
-                        ttsManager.setLanguage(true)
-                        setupStep = 1
-                    },
-                    ttsManager = ttsManager,
-                    settingsManager = settingsManager,
-                    hapticManager = hapticManager,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    backgroundColor = Color(0xFF222222)
-                )
-            } else {
-                AccessibleButton(
-                    label = labelPartial,
-                    speakLabel = labelPartial,
-                    enabled = interactionsEnabled,
-                    onClick = {
-                        handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, welcomePartial, settingsManager.useVietnamese)
-                    },
-                    ttsManager = ttsManager,
-                    settingsManager = settingsManager,
-                    hapticManager = hapticManager,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    backgroundColor = Color(0xFF222222)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                AccessibleButton(
-                    label = labelTotal,
-                    speakLabel = labelTotal,
-                    enabled = interactionsEnabled,
-                    onClick = {
-                        handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, welcomeTotal, settingsManager.useVietnamese)
-                    },
-                    ttsManager = ttsManager,
-                    settingsManager = settingsManager,
-                    hapticManager = hapticManager,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    backgroundColor = Color(0xFF222222)
-                )
+        AnimatedVisibility(visible = !isScreenDimmed, enter = fadeIn(animationSpec = tween(500))) {
+            Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+                if (setupStep == 0) {
+                    val colorEn = if (selectedLanguage == false) Color.Yellow else if (selectedLanguage == null) Color.White else Color.Gray
+                    val colorVi = if (selectedLanguage == true) Color.Yellow else if (selectedLanguage == null) Color.White else Color.Gray
+
+                    AccessibleButton(
+                        label = langEn,
+                        speakLabel = langEn,
+                        enabled = interactionsEnabled,
+                        onClick = {
+                            interactionsEnabled = false
+                            selectedLanguage = false
+                            scope.launch { handleLanguageSelection(false, settingsManager, ttsManager) { setupStep = 1 } }
+                        },
+                        ttsManager = ttsManager,
+                        settingsManager = settingsManager,
+                        hapticManager = hapticManager,
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        backgroundColor = Color(0xFF222222),
+                        textColor = colorEn,
+                        fontSizeScale = 3f
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    AccessibleButton(
+                        label = langVi,
+                        speakLabel = langVi,
+                        enabled = interactionsEnabled,
+                        onClick = {
+                            interactionsEnabled = false
+                            selectedLanguage = true
+                            scope.launch { handleLanguageSelection(true, settingsManager, ttsManager) { setupStep = 1 } }
+                        },
+                        ttsManager = ttsManager,
+                        settingsManager = settingsManager,
+                        hapticManager = hapticManager,
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        backgroundColor = Color(0xFF222222),
+                        textColor = colorVi,
+                        fontSizeScale = 3f
+                    )
+                } else {
+                    val colorPartial = if (selectedLevel == ImpairmentLevel.PartiallyImpaired) Color.Yellow else if (selectedLevel == null) Color.White else Color.Gray
+                    val colorTotal = if (selectedLevel == ImpairmentLevel.TotallyImpaired) Color.Yellow else if (selectedLevel == null) Color.White else Color.Gray
+
+                    AccessibleButton(
+                        label = labelPartial,
+                        speakLabel = labelPartial,
+                        enabled = interactionsEnabled,
+                        onClick = {
+                            interactionsEnabled = false
+                            selectedLevel = ImpairmentLevel.PartiallyImpaired
+                            scope.launch {
+                                handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, hapticManager, welcomePartial, settingsManager.useVietnamese)
+                            }
+                        },
+                        ttsManager = ttsManager,
+                        settingsManager = settingsManager,
+                        hapticManager = hapticManager,
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        backgroundColor = Color(0xFF222222),
+                        textColor = colorPartial,
+                        fontSizeScale = 3f
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    AccessibleButton(
+                        label = labelTotal,
+                        speakLabel = labelTotal,
+                        enabled = interactionsEnabled,
+                        onClick = {
+                            interactionsEnabled = false
+                            selectedLevel = ImpairmentLevel.TotallyImpaired
+                            scope.launch {
+                                handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, hapticManager, welcomeTotal, settingsManager.useVietnamese)
+                            }
+                        },
+                        ttsManager = ttsManager,
+                        settingsManager = settingsManager,
+                        hapticManager = hapticManager,
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        backgroundColor = Color(0xFF222222),
+                        textColor = colorTotal,
+                        fontSizeScale = 3f
+                    )
+                }
             }
         }
     }
 }
 
-private fun handleSelection(
+private suspend fun handleLanguageSelection(
+    isVietnamese: Boolean,
+    settingsManager: SettingsManager,
+    ttsManager: TTSManager,
+    onComplete: () -> Unit
+) {
+    settingsManager.useVietnamese = isVietnamese
+    ttsManager.setLanguage(isVietnamese)
+    delay(1000)
+    onComplete()
+}
+
+private suspend fun handleSelection(
     level: ImpairmentLevel,
     settingsManager: SettingsManager,
     navController: NavController,
     ttsManager: TTSManager,
+    hapticManager: HapticManager,
     confirmationText: String,
     useVietnamese: Boolean
 ) {
     settingsManager.updateImpairmentLevel(level)
+    delay(1000)
+    
+    hapticManager.triggerHaptic()
     
     ttsManager.speak(confirmationText, isVietnamese = useVietnamese) {
-        navController.navigate("main") {
+        navController.navigate("tutorial") {
             popUpTo("setup") { inclusive = true }
         }
     }

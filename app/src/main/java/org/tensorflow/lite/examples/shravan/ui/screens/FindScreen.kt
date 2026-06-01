@@ -138,7 +138,7 @@ fun FindScreen(
         animationSpec = tween(durationMillis = 300)
     )
     val seatingContentColor by animateColorAsState(
-        targetValue = if (activeMode == "seatings & tables") Color.White else Color.LightGray,
+        targetValue = if (activeMode == "seatings & tables") Color.Black else Color.LightGray,
         animationSpec = tween(durationMillis = 300)
     )
 
@@ -147,7 +147,7 @@ fun FindScreen(
         animationSpec = tween(durationMillis = 300)
     )
     val doorsContentColor by animateColorAsState(
-        targetValue = if (activeMode == "doors & windows") Color.White else Color.LightGray,
+        targetValue = if (activeMode == "doors & windows") Color.Black else Color.LightGray,
         animationSpec = tween(durationMillis = 300)
     )
 
@@ -156,7 +156,7 @@ fun FindScreen(
         animationSpec = tween(durationMillis = 300)
     )
     val personContentColor by animateColorAsState(
-        targetValue = if (activeMode == "person & vehicles") Color.White else Color.LightGray,
+        targetValue = if (activeMode == "person & vehicles") Color.Black else Color.LightGray,
         animationSpec = tween(durationMillis = 300)
     )
 

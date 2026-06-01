@@ -29,6 +29,18 @@ import org.tensorflow.lite.examples.shravan.ui.theme.ShravanTheme
 import org.tensorflow.lite.examples.shravan.utils.*
 
 class MainActivity : ComponentActivity() {
+    private var ttsManagerInstance: TTSManager? = null
+
+    override fun onPause() {
+        super.onPause()
+        ttsManagerInstance?.stopAll()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ttsManagerInstance?.destroy()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         android.util.Log.d("SHRAVAN_DEBUG", "MainActivity onCreate started")
@@ -54,7 +66,11 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 val ttsManager = remember { 
-                    try { TTSManager(context) } catch (e: Throwable) { 
+                    try { 
+                        val manager = TTSManager(context)
+                        ttsManagerInstance = manager
+                        manager 
+                    } catch (e: Throwable) { 
                         android.util.Log.e("MainActivity", "TTSManager init failed", e)
                         null 
                     }
@@ -141,16 +157,6 @@ CompositionLocalProvider(LocalConfiguration provides overriddenConfiguration) {
                             }
                         )
 
-                        LaunchedEffect(Unit) {
-                            val permissionsNeeded = mutableListOf<String>()
-                            if (!hasCameraPermission) permissionsNeeded.add(Manifest.permission.CAMERA)
-                            if (!hasRecordAudioPermission) permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
-                            
-                            if (permissionsNeeded.isNotEmpty()) {
-                                launcher.launch(permissionsNeeded.toTypedArray())
-                            }
-                        }
-
                         LaunchedEffect(settingsManager.speechRate) {
                             ttsManager.setSpeechRate(settingsManager.speechRate)
                         }
@@ -161,7 +167,6 @@ CompositionLocalProvider(LocalConfiguration provides overriddenConfiguration) {
 
                         DisposableEffect(Unit) {
                             onDispose {
-                                ttsManager.destroy()
                                 voiceCommandManager.destroy()
                             }
                         }
@@ -183,6 +188,25 @@ CompositionLocalProvider(LocalConfiguration provides overriddenConfiguration) {
                                     voiceCommandManager = voiceCommandManager
                                 )
                             }
+                            composable("tutorial") {
+                                TutorialScreen(
+                                    navController = navController,
+                                    settingsManager = settingsManager,
+                                    ttsManager = ttsManager,
+                                    hapticManager = hapticManager,
+                                    voiceCommandManager = voiceCommandManager,
+                                    onRequestPermissions = {
+                                        val permissionsNeeded = mutableListOf<String>()
+                                        if (!hasCameraPermission) permissionsNeeded.add(Manifest.permission.CAMERA)
+                                        if (!hasRecordAudioPermission) permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
+                                        
+                                        if (permissionsNeeded.isNotEmpty()) {
+                                            launcher.launch(permissionsNeeded.toTypedArray())
+                                        }
+                                    },
+                                    hasPermissions = hasCameraPermission && hasRecordAudioPermission
+                                )
+                            }
                             composable("main") {
                                 if (hasCameraPermission && hasRecordAudioPermission) {
                                     MainScreen(
@@ -198,7 +222,7 @@ CompositionLocalProvider(LocalConfiguration provides overriddenConfiguration) {
                                         }
                                     )
                                 } else {
-                                    // Show loading or permission request state
+                                    // Show loading or permission request state if still missing
                                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
                                         CircularProgressIndicator()
                                     }

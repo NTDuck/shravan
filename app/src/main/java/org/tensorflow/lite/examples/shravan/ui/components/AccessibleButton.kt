@@ -27,7 +27,8 @@ fun AccessibleButton(
     hapticManager: HapticManager,
     modifier: Modifier = Modifier,
     backgroundColor: Color? = null,
-    textColor: Color = Color.White
+    textColor: Color = Color.White,
+    fontSizeScale: Float = 1f
 ) {
     Surface(
         modifier = modifier
@@ -55,8 +56,9 @@ fun AccessibleButton(
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 24.sp),
-                color = textColor
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = (24 * fontSizeScale).sp),
+                color = textColor,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
     }

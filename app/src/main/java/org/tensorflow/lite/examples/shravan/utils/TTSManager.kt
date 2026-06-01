@@ -126,37 +126,9 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
             
             val params = Bundle()
             try {
-                // Set speakerphone on for VOICE_CALL stream
-                val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? android.media.AudioManager
-                audioManager?.isSpeakerphoneOn = true
-                
-                // Maximize volume for the stream (approx 200% effect if it was previously low)
-                val maxVolume = audioManager?.getStreamMaxVolume(android.media.AudioManager.STREAM_VOICE_CALL) ?: 0
-                if (maxVolume > 0) {
-                    audioManager?.setStreamVolume(android.media.AudioManager.STREAM_VOICE_CALL, maxVolume, 0)
-                }
-
-                if (audioSessionId == -1) {
-                    audioSessionId = audioManager?.generateAudioSessionId() ?: -1
-                }
-
-                if (audioSessionId != -1 && loudnessEnhancer == null) {
-                    try {
-                        loudnessEnhancer = LoudnessEnhancer(audioSessionId).apply {
-                            setTargetGain(3000) // 3000mB boost
-                            enabled = true
-                        }
-                    } catch (e: Exception) {
-                        Log.e("TTSManager", "Failed to create LoudnessEnhancer", e)
-                    }
-                }
-
                 params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "id")
-                params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_VOICE_CALL)
+                params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_MUSIC)
                 params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
-                if (audioSessionId != -1) {
-                    params.putInt(TextToSpeech.Engine.KEY_PARAM_SESSION_ID, audioSessionId)
-                }
             } catch (e: Exception) {
                 Log.e("TTSManager", "Error setting audio parameters", e)
             }
@@ -171,6 +143,11 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
         } else {
             pendingRequests.add(PendingSpeakRequest(text, isQueued, isVietnamese, onComplete))
         }
+    }
+
+    fun stopAll() {
+        pendingRequests.clear()
+        tts?.stop()
     }
 
     fun repeatLast() {
@@ -194,7 +171,5 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
     fun destroy() {
         tts?.stop()
         tts?.shutdown()
-        loudnessEnhancer?.release()
-        loudnessEnhancer = null
     }
 }
