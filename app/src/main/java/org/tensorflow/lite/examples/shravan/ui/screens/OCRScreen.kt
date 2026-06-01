@@ -3,6 +3,7 @@ package org.tensorflow.lite.examples.shravan.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +21,7 @@ import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.R
 import org.tensorflow.lite.examples.shravan.utils.*
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, androidx.camera.core.ExperimentalGetImage::class)
 @Composable
 fun OCRScreen(
     onBack: () -> Unit,
@@ -39,10 +40,10 @@ fun OCRScreen(
     
     val useVietnamese = settingsManager.useVietnamese
     var isProcessing by remember { mutableStateOf(false) }
+    var currentText by remember { mutableStateOf("") }
 
     LaunchedEffect(isActive, recognizer) {
         if (isActive) {
-            android.util.Log.d("OCRScreen", "Setting up OCR analyzer")
             onProvideAnalyzer { imageProxy ->
                 if (isProcessing) {
                     imageProxy.close()
@@ -58,15 +59,7 @@ fun OCRScreen(
                         .addOnSuccessListener { visionText ->
                             val text = visionText.text
                             if (text.isNotBlank()) {
-                                android.util.Log.d("OCRScreen", "OCR Success: ${text.take(20)}...")
-                                visionText.textBlocks.forEach { block ->
-                                    val originalText = block.text.trim()
-                                    if (originalText.length > 2 && ocrManager?.shouldSpeak(originalText) == true) {
-                                        android.util.Log.d("OCRScreen", "Speaking OCR: $originalText")
-                                        ttsManager.speak(originalText, isQueued = true, isVietnamese = containsVietnamese(originalText))
-                                        historyManager.addHistory("OCR", originalText)
-                                    }
-                                }
+                                currentText = text
                             }
                         }
                         .addOnFailureListener { e ->
@@ -81,7 +74,6 @@ fun OCRScreen(
                 }
             }
         } else {
-            android.util.Log.d("OCRScreen", "Removing OCR analyzer")
             onProvideAnalyzer(null)
         }
     }
@@ -123,6 +115,14 @@ fun OCRScreen(
                     ttsManager.speak(backCommand, isVietnamese = useVietnamese)
                     hapticManager.triggerHaptic()
                     onBack()
+                } else if (lowerResult.contains("đọc") || lowerResult.contains("read")) {
+                    hapticManager.triggerHaptic()
+                    if (currentText.isBlank()) {
+                        ttsManager.speak(if (useVietnamese) "Không có văn bản nào" else "No text to read", isVietnamese = useVietnamese)
+                    } else {
+                        ttsManager.speak(currentText, isVietnamese = containsVietnamese(currentText))
+                        historyManager.addHistory("OCR", currentText)
+                    }
                 }
             }
         } else {
@@ -138,7 +138,33 @@ fun OCRScreen(
         modifier = Modifier.fillMaxSize(),
         color = Color.Transparent
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable {
+                    if (interactionsEnabled) {
+                        hapticManager.triggerHaptic()
+                        if (currentText.isBlank()) {
+                            ttsManager.speak(if (useVietnamese) "Không có văn bản nào" else "No text to read", isVietnamese = useVietnamese)
+                        } else {
+                            ttsManager.speak(currentText, isVietnamese = containsVietnamese(currentText))
+                            historyManager.addHistory("OCR", currentText)
+                        }
+                    }
+                },
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            if (currentText.isNotBlank()) {
+                Text(
+                    text = currentText,
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .padding(16.dp)
+                )
+            }
         }
     }
 }
