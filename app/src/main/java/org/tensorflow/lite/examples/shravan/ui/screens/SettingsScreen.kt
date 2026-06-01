@@ -71,45 +71,6 @@ fun SettingsScreen(
             textAlign = TextAlign.Center
         )
 
-        // Flash
-        Box(modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = flashes.find { it.second == settingsManager.flashMode }?.first ?: stringResource(R.string.flash_auto),
-                onValueChange = {},
-                readOnly = true,
-                enabled = false,
-                label = { Text(stringResource(R.string.settings_flash)) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = flashExpanded) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned { flashFieldSize = it.size.toSize() }
-                    .clickable { flashExpanded = true },
-                colors = OutlinedTextFieldDefaults.colors(
-                    disabledTextColor = Color.White,
-                    disabledBorderColor = Color.White,
-                    disabledLabelColor = Color.White,
-                    disabledTrailingIconColor = Color.White
-                )
-            )
-            DropdownMenu(
-                expanded = flashExpanded,
-                onDismissRequest = { flashExpanded = false },
-                modifier = Modifier
-                    .width(with(LocalDensity.current) { flashFieldSize.width.toDp() })
-                    .background(Color(0xFF333333))
-            ) {
-                flashes.forEach { (label, mode) ->
-                    DropdownMenuItem(
-                        text = { Text(label, color = if (settingsManager.flashMode == mode) Color.Yellow else Color.White, fontSize = 18.sp) },
-                        onClick = {
-                            settingsManager.flashMode = mode
-                            flashExpanded = false
-                        }
-                    )
-                }
-            }
-        }
-
         // Language
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
@@ -122,7 +83,10 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onGloballyPositioned { languageTextFieldSize = it.size.toSize() }
-                    .clickable { languageExpanded = true },
+                    .clickable { 
+                        hapticManager.triggerHaptic()
+                        languageExpanded = true 
+                    },
                 colors = OutlinedTextFieldDefaults.colors(
                     disabledTextColor = Color.White,
                     disabledBorderColor = Color.White,
@@ -141,6 +105,7 @@ fun SettingsScreen(
                     DropdownMenuItem(
                         text = { Text(label, color = if (settingsManager.useVietnamese == isVi) Color.Yellow else Color.White, fontSize = 18.sp) },
                         onClick = {
+                            hapticManager.triggerHaptic()
                             settingsManager.useVietnamese = isVi
                             ttsManager.setLanguage(isVi)
                             languageExpanded = false
@@ -159,7 +124,10 @@ fun SettingsScreen(
             Text(stringResource(R.string.settings_haptics), color = Color.White, fontSize = 18.sp)
             Switch(
                 checked = settingsManager.hapticsEnabled,
-                onCheckedChange = { settingsManager.hapticsEnabled = it },
+                onCheckedChange = { 
+                    settingsManager.hapticsEnabled = it
+                    hapticManager.triggerHaptic()
+                },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.White,
                     checkedTrackColor = Color.Gray,
@@ -177,10 +145,56 @@ fun SettingsScreen(
                 onValueChange = { 
                     settingsManager.speechRate = it
                     ttsManager.setSpeechRate(it)
+                    // Haptic omitted here to avoid continuous buzzing on slide, or we can add it?
+                    // "trigger haptic feedback for every user-initiated navigation, swipe, or confirmed intent"
+                    // Let's add a light one or omit. I will omit for continuous sliding.
                 },
                 valueRange = 0.5f..2.0f,
                 steps = 14
             )
+        }
+
+        // Flash
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = flashes.find { it.second == settingsManager.flashMode }?.first ?: stringResource(R.string.flash_auto),
+                onValueChange = {},
+                readOnly = true,
+                enabled = false,
+                label = { Text(stringResource(R.string.settings_flash)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = flashExpanded) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { flashFieldSize = it.size.toSize() }
+                    .clickable { 
+                        hapticManager.triggerHaptic()
+                        flashExpanded = true 
+                    },
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = Color.White,
+                    disabledBorderColor = Color.White,
+                    disabledLabelColor = Color.White,
+                    disabledTrailingIconColor = Color.White
+                )
+            )
+            DropdownMenu(
+                expanded = flashExpanded,
+                onDismissRequest = { flashExpanded = false },
+                modifier = Modifier
+                    .width(with(LocalDensity.current) { flashFieldSize.width.toDp() })
+                    .background(Color(0xFF333333))
+            ) {
+                flashes.forEach { (label, mode) ->
+                    DropdownMenuItem(
+                        text = { Text(label, color = if (settingsManager.flashMode == mode) Color.Yellow else Color.White, fontSize = 18.sp) },
+                        onClick = {
+                            hapticManager.triggerHaptic()
+                            settingsManager.flashMode = mode
+                            flashExpanded = false
+                        }
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))

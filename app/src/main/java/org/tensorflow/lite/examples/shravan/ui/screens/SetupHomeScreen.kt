@@ -95,8 +95,14 @@ fun SetupHomeScreen(
                         }
                     } else {
                         if (lowerPartial == keywordPartial) {
+                            interactionsEnabled = false
+                            isScreenDimmed = true
+                            hapticManager.triggerHaptic()
                             handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, welcomePartial, settingsManager.useVietnamese)
                         } else if (lowerPartial == keywordTotal) {
+                            interactionsEnabled = false
+                            isScreenDimmed = true
+                            hapticManager.triggerHaptic()
                             handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, welcomeTotal, settingsManager.useVietnamese)
                         }
                     }
@@ -115,8 +121,14 @@ fun SetupHomeScreen(
                     }
                 } else {
                     if (lowerResult == keywordPartial) {
+                        interactionsEnabled = false
+                        isScreenDimmed = true
+                        hapticManager.triggerHaptic()
                         handleSelection(ImpairmentLevel.PartiallyImpaired, settingsManager, navController, ttsManager, welcomePartial, settingsManager.useVietnamese)
                     } else if (lowerResult == keywordTotal) {
+                        interactionsEnabled = false
+                        isScreenDimmed = true
+                        hapticManager.triggerHaptic()
                         handleSelection(ImpairmentLevel.TotallyImpaired, settingsManager, navController, ttsManager, welcomeTotal, settingsManager.useVietnamese)
                     }
                 }

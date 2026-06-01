@@ -264,22 +264,11 @@ fun MainScreen(
                 }
             }
 
-            // Page Content with slide transitions
+            // Page Content with fade transitions
             AnimatedContent(
                 targetState = currentPage,
                 transitionSpec = {
-                    val isFindTransition = targetState == 1 || initialState == 1
-                    if (isFindTransition) {
-                        // Fade only for Find Screen transitions
-                        fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
-                    } else {
-                        // Slide for everything else
-                        if (targetState > initialState) {
-                            slideInHorizontally { it } + fadeIn() togetherWith slideOutHorizontally { -it } + fadeOut()
-                        } else {
-                            slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut()
-                        }
-                    }.using(SizeTransform(clip = false))
+                    fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
                 }
             ) { targetPage ->
                 Box(modifier = Modifier.fillMaxSize()) {

@@ -1,6 +1,7 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -90,6 +91,7 @@ fun HistoryScreen(
             }
         } else {
             interactionsEnabled = false
+            ttsManager.stop()
             voiceSessionId.value?.let {
                 voiceCommandManager.stopListening(it)
                 voiceSessionId.value = null
@@ -137,6 +139,15 @@ fun HistoryScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color(0xFF444444), RoundedCornerShape(12.dp))
+                            .clickable {
+                                hapticManager.triggerHaptic()
+                                speakingItemId = item.timestamp
+                                ttsManager.speak(item.content, isVietnamese = useVietnamese) {
+                                    if (speakingItemId == item.timestamp) {
+                                        speakingItemId = null
+                                    }
+                                }
+                            }
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -169,17 +180,7 @@ fun HistoryScreen(
 
                         Spacer(modifier = Modifier.width(16.dp))
 
-                        IconButton(onClick = {
-                            hapticManager.triggerHaptic()
-                            speakingItemId = item.timestamp
-                            ttsManager.speak(item.content, isVietnamese = useVietnamese) {
-                                if (speakingItemId == item.timestamp) {
-                                    speakingItemId = null
-                                }
-                            }
-                        }) {
-                            Icon(Icons.Default.VolumeUp, contentDescription = "Speak", tint = itemColor, modifier = Modifier.size(32.dp))
-                        }
+                        Icon(Icons.Default.VolumeUp, contentDescription = "Speak", tint = itemColor, modifier = Modifier.size(32.dp))
                     }
                 }
             }

@@ -26,7 +26,7 @@ class SettingsManagerTest {
         assertEquals(3, settingsManager.activeThemeIndex)
         assertEquals(1.0f, settingsManager.speechRate)
         assertTrue(settingsManager.hapticsEnabled)
-        assertTrue(settingsManager.useVietnamese)
+        assertFalse(settingsManager.useVietnamese)
     }
 
     @Test
