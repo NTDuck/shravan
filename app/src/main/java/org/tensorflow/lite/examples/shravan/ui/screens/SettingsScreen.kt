@@ -36,7 +36,9 @@ fun SettingsScreen(
     var languageTextFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
     var flashFieldSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
-    val languages = listOf("English" to false, "Tiếng Việt" to true)
+    val langEn = stringResource(R.string.lang_en)
+    val langVi = stringResource(R.string.lang_vi)
+    val languages = listOf(langEn to false, langVi to true)
     val flashes = listOf(
         stringResource(R.string.flash_auto) to "auto",
         stringResource(R.string.flash_on) to "on",
@@ -74,7 +76,7 @@ fun SettingsScreen(
         // Language
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
-                value = if (settingsManager.useVietnamese) "Tiếng Việt" else "English",
+                value = if (settingsManager.useVietnamese) langVi else langEn,
                 onValueChange = {},
                 readOnly = true,
                 enabled = false, // Use Box for click

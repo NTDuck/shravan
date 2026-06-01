@@ -135,6 +135,13 @@ fun MainScreen(
         )
     }
 
+    val kTime = stringResource(R.string.voice_keyword_time).lowercase()
+    val kBattery = stringResource(R.string.voice_keyword_battery).lowercase()
+    val kStatus = stringResource(R.string.voice_keyword_status).lowercase()
+
+    val timeFormat = stringResource(R.string.status_time)
+    val batteryFormat = stringResource(R.string.status_battery)
+
     // Single Haptic Trigger
     LaunchedEffect(currentPage) {
         if (settingsManager.hapticsEnabled) {
@@ -155,13 +162,31 @@ fun MainScreen(
             } else {
                 val trimmedResult = result.trim().lowercase()
                 var handled = false
-                for (entry in navKeywords) {
-                    if (trimmedResult == entry.first) {
-                        if (currentPage != entry.second) {
-                            currentPage = entry.second
+                
+                // Quick Status Check
+                if (trimmedResult == kTime || trimmedResult == kStatus || trimmedResult == "time" || trimmedResult == "status") {
+                    val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+                    val currentTime = sdf.format(java.util.Date())
+                    ttsManager.speak(String.format(timeFormat, currentTime), isVietnamese = settingsManager.useVietnamese)
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    handled = true
+                } else if (trimmedResult == kBattery || trimmedResult == "battery") {
+                    val bm = context.getSystemService(android.content.Context.BATTERY_SERVICE) as android.os.BatteryManager
+                    val batLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                    ttsManager.speak(String.format(batteryFormat, batLevel), isVietnamese = settingsManager.useVietnamese)
+                    if (settingsManager.hapticsEnabled) hapticManager.triggerHaptic()
+                    handled = true
+                }
+
+                if (!handled) {
+                    for (entry in navKeywords) {
+                        if (trimmedResult == entry.first) {
+                            if (currentPage != entry.second) {
+                                currentPage = entry.second
+                            }
+                            handled = true
+                            break
                         }
-                        handled = true
-                        break
                     }
                 }
                 handled

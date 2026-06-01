@@ -48,4 +48,15 @@
     <string name="back_command">Quay lại</string>
     <string name="history_empty">Chưa có lịch sử</string>
     <string name="too_close">%s quá gần!</string>
+    <string name="history_cleared">Đã xóa lịch sử</string>
+    <string name="history_clear_description">Xóa lịch sử</string>
+    <string name="speak_description">Đọc</string>
+    <string name="nav_themes">Thay đổi màu sắc</string>
+    <string name="voice_keyword_clear">xóa</string>
+    <string name="voice_keyword_delete">hủy</string>
+    <string name="voice_keyword_status">trạng thái</string>
+    <string name="voice_keyword_time">thời gian</string>
+    <string name="voice_keyword_battery">pin</string>
+    <string name="status_time">Bây giờ là %s</string>
+    <string name="status_battery">Pin hiện tại %d phần trăm</string>
 </resources>

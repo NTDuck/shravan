@@ -48,4 +48,15 @@
     <string name="back_command">Back</string>
     <string name="history_empty">No history yet</string>
     <string name="too_close">%s too close!</string>
+    <string name="history_cleared">History cleared</string>
+    <string name="history_clear_description">Clear History</string>
+    <string name="speak_description">Speak</string>
+    <string name="nav_themes">Themes</string>
+    <string name="voice_keyword_clear">clear</string>
+    <string name="voice_keyword_delete">delete</string>
+    <string name="voice_keyword_status">status</string>
+    <string name="voice_keyword_time">time</string>
+    <string name="voice_keyword_battery">battery</string>
+    <string name="status_time">The time is %s</string>
+    <string name="status_battery">Battery is at %d percent</string>
 </resources>

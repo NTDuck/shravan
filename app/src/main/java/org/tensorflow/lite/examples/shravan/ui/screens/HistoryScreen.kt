@@ -61,6 +61,9 @@ fun HistoryScreen(
     val historyGreetingTts = stringResource(R.string.history_greeting_tts)
     val backCommand = stringResource(R.string.back_command)
     val historyEmpty = stringResource(R.string.history_empty)
+    val historyCleared = stringResource(R.string.history_cleared)
+    val historyClearDesc = stringResource(R.string.history_clear_description)
+    val speakDesc = stringResource(R.string.speak_description)
 
     LaunchedEffect(isActive) {
         if (isActive) {
@@ -85,8 +88,7 @@ fun HistoryScreen(
                     hapticManager.triggerHaptic()
                     historyManager.clearHistory()
                     historyItems = emptyList()
-                    val msg = if (useVietnamese) "Đã xóa lịch sử" else "History cleared"
-                    ttsManager.speak(msg, isVietnamese = useVietnamese)
+                    ttsManager.speak(historyCleared, isVietnamese = useVietnamese)
                 }
             }
         } else {
@@ -117,11 +119,11 @@ fun HistoryScreen(
                     hapticManager.triggerHaptic()
                     historyManager.clearHistory()
                     historyItems = emptyList()
-                    ttsManager.speak(if (useVietnamese) "Đã xóa lịch sử" else "History cleared", isVietnamese = useVietnamese)
+                    ttsManager.speak(historyCleared, isVietnamese = useVietnamese)
                 },
                 modifier = Modifier.align(Alignment.CenterEnd)
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Clear History", tint = Color.White)
+                Icon(Icons.Default.Delete, contentDescription = historyClearDesc, tint = Color.White)
             }
         }
 
@@ -180,7 +182,7 @@ fun HistoryScreen(
 
                         Spacer(modifier = Modifier.width(16.dp))
 
-                        Icon(Icons.Default.VolumeUp, contentDescription = "Speak", tint = itemColor, modifier = Modifier.size(32.dp))
+                        Icon(Icons.Default.VolumeUp, contentDescription = speakDesc, tint = itemColor, modifier = Modifier.size(32.dp))
                     }
                 }
             }
