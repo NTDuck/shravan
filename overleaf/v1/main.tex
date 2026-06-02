@@ -1,0 +1,639 @@
+\documentclass[a4paper,13pt]{report}
+\usepackage[utf8]{vietnam}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[font=small]{caption}
+\usepackage{adjustbox}
+\usepackage{booktabs}
+\usepackage[unicode,hidelinks]{hyperref}
+\usepackage[left=3cm,right=2cm,top=2.5cm,bottom=3cm]{geometry}
+\usepackage{titlesec}
+\usepackage{scrextend}
+\usepackage{url}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{makecell}
+\usepackage[sort&compress]{natbib}
+\usepackage{tocloft,calc}
+\usepackage{xurl}
+\usetikzlibrary{calc,positioning,arrows}
+
+% Additional packages for VisionAid student report contents
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tabularx}
+
+\def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
+\let\endchangemargin=\endlist
+
+\changefontsizes{13pt}
+\makeatletter
+\def\l@figure{\@dottedtocline{1}{1em}{2.2em}}
+\def\l@table{\@dottedtocline{1}{1em}{2.2em}}
+\makeatother
+
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{0pt}{\LARGE}
+\titlespacing*{\chapter}{0cm}{-\topskip}{0pt}[0pt]
+\renewcommand{\baselinestretch}{1.2}
+\renewcommand{\cftchappresnum}{Chương }
+\AtBeginDocument{\addtolength\cftchapnumwidth{\widthof{\bfseries Chương }}}
+\setlength{\parskip}{0.2em}
+\setlength{\parindent}{0pt}
+
+
+
+\lstdefinelanguage{Kotlin}{
+  keywords={package,import,class,interface,fun,val,var,when,if,else,return,object,private,public,override,suspend,true,false,null,data,sealed},
+  keywordstyle=\color{blue!60!black}\bfseries,
+  ndkeywords={String,Int,Float,Boolean,Unit,List,Map},
+  ndkeywordstyle=\color{teal!60!black},
+  identifierstyle=\color{black},
+  sensitive=true,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{gray!70!black}\itshape,
+  stringstyle=\color{red!60!black},
+  morestring=[b]"
+}
+
+\lstset{
+  language=Kotlin,
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  tabsize=2,
+  showstringspaces=false,
+  captionpos=b
+}
+
+\title{VisionAid: Ứng dụng hỗ trợ người khiếm thị}
+\author{Trần Minh Nam, Nguyễn Tư Đức, Phạm Trung Hiếu, Hoàng Thành Đạt \& Đặng Tuấn Long}
+
+\begin{document}
+
+\pagenumbering{gobble}
+\begin{center}
+    \begin{tikzpicture}[overlay,remember picture]
+        \draw [line width=3pt]
+            ($ (current page.north west) + (25mm,-25mm) $)
+            rectangle
+            ($ (current page.south east) + (-15mm,25mm) $);
+        \draw [line width=1pt]
+            ($ (current page.north west) + (26.5mm,-26.5mm) $)
+            rectangle
+            ($ (current page.south east) + (-16.5mm,26.5mm) $);
+    \end{tikzpicture}
+    \\[1mm]
+    \textbf{ĐẠI HỌC QUỐC GIA HÀ NỘI\\TRƯỜNG ĐẠI HỌC CÔNG NGHỆ}\\[1cm]
+    \includegraphics[width=0.2\linewidth]{figures/uet.png}\\[0.5cm]
+
+    {\large \textbf{BÁO CÁO DỰ ÁN THỰC HÀNH\\ KẾT THÚC HỌC PHẦN}}\\[1.5cm]
+    {\huge \textbf{VISIONAID}}\\[0.5cm]
+    {\large \textbf{Ứng dụng hỗ trợ người khiếm thị tiếp cận văn bản\\và nhận diện vật thể bằng thị giác máy tính}}\\[2.0cm]
+
+    \hfill
+    \begin{minipage}{0.75\textwidth}
+    \normalsize
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{ll}
+        Học phần:       & Tương tác người máy \\
+        Lớp học phần:   & INT2041 2 \\
+        Giảng viên:     & TS. Ngô Thị Duyên \\
+        Nhóm:           & 2 \\
+        Sinh viên:      & Trần Minh Nam - 23021646 \\[-3mm]
+                        & Nguyễn Tư Đức - 23021534 \\[-3mm]
+                        & Phạm Trung Hiếu - 23021554 \\[-3mm]
+                        & Hoàng Thành Đạt - 23021518 \\[-3mm]
+                        & Đặng Tuấn Long - 23021614 \\
+    \end{tabular}
+    \end{minipage}\par
+
+    \vspace{2.7cm}
+    \textbf{HÀ NỘI - 2026}
+\end{center}
+
+\newpage\cleardoublepage
+
+\begin{center}
+\textbf{\large{Tóm tắt}}
+\end{center}
+\addcontentsline{toc}{chapter}{Tóm tắt}
+
+Báo cáo trình bày quá trình xây dựng VisionAid, một ứng dụng Android hỗ trợ người khiếm thị tiếp cận văn bản tiếng Việt và nhận diện vật thể bằng thị giác máy tính dựa trên các nguyên lý tương tác người máy (HCI). Bài toán chính của dự án là thiết kế một giải pháp có thể sử dụng độc lập với màn hình (audio-first) dành cho hai nhóm đối tượng: người mù hoàn toàn (sử dụng âm thanh và phản hồi rung làm kênh chính) và người khiếm thị một phần (sử dụng giao diện tương phản cao, chữ lớn kết hợp âm thanh).
+
+Giải pháp được hiện thực bằng Kotlin và Jetpack Compose, tích hợp CameraX cho luồng video, TensorFlow Lite để chạy mô hình nhận diện vật thể (YOLOv5) và nhận diện tiền Việt Nam trực tiếp trên thiết bị (offline), ML Kit OCR để nhận dạng văn bản tiếng Việt ngoại tuyến, cùng Text-to-Speech (TTS) để đọc kết quả và phản hồi giọng nói. Điểm cải tiến cốt lõi của VisionAid so với phiên bản tiền nhiệm là việc tối ưu hóa khả năng tiếp cận: tích hợp voice onboarding, điều khiển bằng giọng nói tiếng Việt toàn cục, cảnh báo chất lượng ảnh (mờ, thiếu sáng, rung tay), tự động chụp khi văn bản ổn định, điều khiển luồng đọc văn bản bằng cử chỉ (tạm dừng, đọc tiếp, lùi/tiến câu) và chuyển đổi khoảng cách vật thể thành tần số rung xúc giác (haptic feedback). Kết quả đánh giá khả năng sử dụng trên 8 người dùng (4 mù hoàn toàn, 4 khiếm thị một phần) cho thấy tỷ lệ hoàn thành nhiệm vụ đạt 93,75\%, điểm SUS hiệu chỉnh đạt 89,4 và điểm NASA-TLX đạt 25,4. Báo cáo cũng thảo luận về hiệu năng thực nghiệm, các hạn chế về nhận diện trong điều kiện thiếu sáng hoặc bề mặt bóng và định hướng phát triển tích hợp thiết bị đeo.
+
+\vspace*{1cm}
+\textbf{Từ khóa}: VisionAid, Tương tác người máy (HCI), Nhận diện vật thể, Nhận dạng văn bản (OCR), Haptic Feedback, Người khiếm thị.
+
+\newpage\cleardoublepage
+
+\newpage
+\addcontentsline{toc}{chapter}{Mục lục}
+{
+\small
+\setlength{\cftbeforetoctitleskip}{-1em}
+\setlength{\cftaftertoctitleskip}{0.5em}
+\setlength{\cftbeforechapskip}{0.2em}
+\setlength{\cftbeforesecskip}{0em}
+\tableofcontents
+}
+\newpage\cleardoublepage
+
+\newpage
+\addcontentsline{toc}{chapter}{\listfigurename}
+{
+\setlength{\cftbeforetoctitleskip}{-1em}
+\setlength{\cftaftertoctitleskip}{0.5em}
+\setlength{\cftbeforechapskip}{0.2em}
+\setlength{\cftbeforesecskip}{0em}
+\listoffigures
+}
+\cleardoublepage
+
+\newpage
+\addcontentsline{toc}{chapter}{\listtablename}
+{
+\setlength{\cftbeforetoctitleskip}{-1em}
+\setlength{\cftaftertoctitleskip}{0.5em}
+\setlength{\cftbeforechapskip}{0.2em}
+\setlength{\cftbeforesecskip}{0em}
+\listoftables
+}
+\cleardoublepage
+
+\newpage
+\chapter*{Danh mục các từ viết tắt}
+\vspace{1cm}
+\addcontentsline{toc}{chapter}{Danh mục các từ viết tắt}
+
+\begin{center}
+\begin{tabular}{|m{2.4cm}|m{5.2cm}|m{6.5cm}|}
+\hline
+\thead{Từ viết tắt} & \thead{Cụm từ đầy đủ} & \thead{Ý nghĩa / Mô tả} \\
+\hline
+API & Application Programming Interface & Giao diện lập trình ứng dụng. \\ \hline
+HCI & Human-Computer Interaction & Tương tác người máy. \\ \hline
+NASA-TLX & NASA Task Load Index & Chỉ số đánh giá tải trọng công việc (gánh nặng nhận thức). \\ \hline
+OCR & Optical Character Recognition & Nhận dạng ký tự quang học (trích xuất văn bản từ ảnh). \\ \hline
+SDK & Software Development Kit & Bộ công cụ phát triển phần mềm. \\ \hline
+SUS & System Usability Scale & Thang đo độ khả dụng của hệ thống. \\ \hline
+TFLite & TensorFlow Lite & Thư viện tối ưu hóa để chạy các mô hình học máy trên thiết bị di động. \\ \hline
+TTS & Text-to-Speech & Công nghệ tổng hợp giọng nói từ văn bản. \\ \hline
+UI & User Interface & Giao diện người dùng. \\ \hline
+YOLO & You Only Look Once & Thuật toán nhận diện vật thể thời gian thực trên khung hình. \\ \hline
+\end{tabular}
+\end{center}
+
+\newpage\cleardoublepage
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+\chapter{Mở đầu}
+
+\section{Bối cảnh và vấn đề}
+
+Theo các thống kê y tế công cộng thường được trích dẫn, thế giới có khoảng 285 triệu người gặp suy giảm thị lực ở nhiều mức độ khác nhau, trong đó có nhóm người mù hoàn toàn và nhóm người còn khả năng nhận biết ánh sáng, hình khối hoặc chữ kích thước lớn. Tại Việt Nam, ước tính có khoảng 1,7 triệu người khiếm thị. Con số này cho thấy nhu cầu tiếp cận thông tin độc lập không chỉ là vấn đề cá nhân, mà còn là vấn đề xã hội liên quan đến giáo dục, lao động, di chuyển và sinh hoạt hằng ngày.
+
+Văn bản in và vật thể trong môi trường sống vẫn là hai nguồn thông tin khó tiếp cận đối với người khiếm thị. Một nhãn thuốc, hóa đơn, biển chỉ dẫn, tờ rơi hoặc tờ tiền có thể chứa thông tin quan trọng, nhưng lại yêu cầu thị giác ổn định. Các ứng dụng thị giác máy tính hiện nay đã hỗ trợ nhận diện văn bản và vật thể, tuy nhiên nhiều giải pháp vẫn phụ thuộc vào thao tác nhìn màn hình, nút bấm nhỏ, thông báo dạng Toast hoặc phản hồi hình ảnh. Những thiết kế này không phù hợp với người mù hoàn toàn và cũng chưa tối ưu cho người có thị lực thấp.
+
+Dự án VisionAid (tên mã nội bộ trong mã nguồn là Shravan) được phát triển như một công cụ hỗ trợ tiếp cận thông tin, không mang tính chất thiết bị y tế và không đưa ra các kết luận chẩn đoán. Mặc dù mã nguồn sử dụng không gian tên (namespace) và app\_name là Shravan, báo cáo này sử dụng tên gọi VisionAid làm nhận diện thương hiệu chính thức. Hệ thống tập trung vào việc giúp người dùng biết được trước camera đang có văn bản, vật thể hoặc tiền Việt Nam, sau đó phản hồi bằng giọng nói, rung và giao diện tương phản cao.
+
+\section{Đối tượng người dùng}
+
+Nhóm người mù hoàn toàn không thể dựa vào màn hình để định vị nút chụp, đọc kết quả hoặc xử lý lỗi. Với nhóm này, thiết kế cần đặt âm thanh làm kênh chính. Người dùng cần được hướng dẫn bằng giọng nói ngay từ lần đầu mở ứng dụng, có thể ra lệnh bằng giọng nói, nhận cảnh báo khi ảnh mờ hoặc thiếu sáng, và được hỗ trợ tự động chụp khi camera đã thấy văn bản đủ rõ. Phản hồi rung có vai trò định hướng, đặc biệt trong tác vụ tìm đồ vật.
+
+Nhóm người khiếm thị một phần vẫn có thể nhận biết màu sắc tương phản, vùng sáng tối hoặc hình khối lớn. Họ cần chữ lớn, độ tương phản cao, vùng chạm rộng, khả năng phóng to và phản hồi âm thanh đi kèm. Với nhóm này, giao diện thị giác vẫn có giá trị, nhưng không được là kênh duy nhất. Một thiết kế phù hợp cần kết hợp màn hình, giọng nói và rung để giảm gánh nặng thị giác.
+
+Các điểm đau chính được xác định từ báo cáo về phiên bản tiền nhiệm gồm khó tìm nút chụp, thiếu TTS tiếng Việt, lỗi chỉ hiển thị bằng Toast, không có cảnh báo ảnh mờ hoặc thiếu sáng, không có điều khiển luồng đọc và chưa có cơ chế tự động chụp. Những vấn đề này là cơ sở để xác định yêu cầu HCI cho phiên bản VisionAid.
+
+\section{Mục tiêu và phạm vi dự án}
+
+Mục tiêu của dự án là phát triển một ứng dụng Android hoàn chỉnh hỗ trợ người khiếm thị tiếp cận văn bản và nhận diện vật thể bằng thị giác máy tính. Ứng dụng sử dụng Jetpack Compose cho giao diện, CameraX cho luồng camera, TensorFlow Lite cho nhận diện vật thể và tiền Việt Nam, ML Kit OCR cho nhận dạng văn bản, cùng TTS, điều khiển giọng nói và phản hồi rung.
+
+Phạm vi chức năng bao gồm chế độ khám phá vật thể, chế độ tìm vật thể, chế độ đọc văn bản, chế độ nhận diện tiền và phần cài đặt khả năng tiếp cận. Dự án tập trung vào trải nghiệm sử dụng trong sinh hoạt hằng ngày như đọc nhãn thuốc, hóa đơn, nhận biết đồ vật trong phòng và phân biệt tiền mặt. Dự án không xử lý các tác vụ có rủi ro cao như điều hướng giao thông độc lập, nhận diện thuốc theo tác dụng y khoa hoặc thay thế tư vấn của chuyên gia.
+
+\chapter{Phân tích người dùng và kịch bản}
+
+\section{Personas}
+
+\subsection{Persona 1: Nguyễn Văn An}
+
+Nguyễn Văn An là nam, 45 tuổi, sống một mình tại Hà Nội. Anh bị mù hoàn toàn sau một tai nạn lao động và đã sử dụng TalkBack thành thạo trên điện thoại Android. Anh có thể dùng thao tác vuốt và nghe phản hồi hệ thống, nhưng gặp khó khăn khi ứng dụng yêu cầu căn camera bằng mắt hoặc bấm nút chụp đúng vị trí.
+
+Nhu cầu chính của anh An là đọc hóa đơn, đơn thuốc, nhãn thuốc và giấy tờ cá nhân. Anh cần ứng dụng nói rõ đang ở chế độ nào, camera có thấy văn bản hay chưa, ảnh có bị mờ hay thiếu sáng hay không, và kết quả đọc có thể tạm dừng, đọc lại hoặc bỏ qua từng câu. Với anh An, một nút lớn trên màn hình vẫn chưa đủ, vì anh không nhìn thấy màn hình. Ứng dụng phải hoạt động tốt khi người dùng chỉ nghe và ra lệnh bằng giọng nói.
+
+\subsection{Persona 2: Bà Trần Thị Lan}
+
+Bà Trần Thị Lan là nữ, 68 tuổi, bị suy giảm thị lực nặng do thoái hóa điểm vàng. Bà vẫn nhận biết được hình khối lớn, vùng màu tương phản mạnh và chữ rất lớn khi màn hình đủ sáng. Bà chưa quen với thao tác phức tạp trên điện thoại, nhưng có thể chạm vào các vùng lớn và nghe hướng dẫn từng bước.
+
+Nhu cầu chính của bà Lan là đọc báo, sách, nhãn thực phẩm và thông tin trên giấy tờ gia đình. Bà cần giao diện tương phản cao, chữ lớn, biểu tượng rõ, giọng đọc tiếng Việt tự nhiên và khả năng điều chỉnh tốc độ đọc. Bà cũng cần ứng dụng tránh đưa quá nhiều thông tin cùng lúc, vì điều đó gây mệt mỏi và làm tăng gánh nặng nhận thức.
+
+% \sectionsection{Kịch bản sử dụng}
+
+\subsection{Thiết lập lần đầu}
+
+Người dùng mở VisionAid lần đầu. Ứng dụng phát lời chào bằng tiếng Việt, giải thích mục đích hỗ trợ tiếp cận văn bản và vật thể, sau đó hỏi người dùng muốn chọn chế độ người mù hoàn toàn hay khiếm thị một phần. Anh An nói ``hoàn toàn'' (chọn chế độ Totally Blind thay vì Partially Sighted) và ứng dụng xác nhận bằng TTS. Ứng dụng tiếp tục chuyển sang màn hình Tutorial (hướng dẫn - có thể bỏ qua) để cấp quyền camera, micro. Luồng điều hướng chính thống nhất của ứng dụng là: Setup $\rightarrow$ Tutorial $\rightarrow$ Explore / Find / OCR / Currency / Settings / History. Khi hoàn tất, người dùng có thể nói ``Văn bản'' để vào chế độ OCR hoặc ``Tìm kiếm'' để vào chế độ tìm đồ vật.
+
+\subsection{Đọc nhãn thuốc trong điều kiện thiếu sáng}
+
+Anh An cần đọc nhãn một lọ thuốc vào buổi tối. Anh nói ``Văn bản'', đưa điện thoại về phía lọ thuốc và chờ phản hồi. Ứng dụng phát thông báo ``Đang tìm văn bản'', sau đó cảnh báo ``Ánh sáng yếu, hãy bật đèn hoặc giữ điện thoại ổn định''. Nếu chế độ flash tự động được bật, CameraX kích hoạt đèn pin. Khi OCR phát hiện văn bản đủ rõ trong nhiều khung hình liên tiếp, ứng dụng tự động chụp và đọc kết quả bằng tiếng Việt. Nếu muốn nghe lại câu trước, anh vuốt sang trái. Nếu muốn tạm dừng, anh chạm hai ngón.
+
+\subsection{Tìm chìa khóa bị thất lạc}
+
+Bà Lan làm rơi chìa khóa trong phòng khách. Bà nói ``Tìm kiếm'' rồi nói tiếp ``chìa khóa''. Ứng dụng chuyển sang Find mode và dùng YOLOv5 để phát hiện vật thể liên quan. Find mode hỗ trợ các intent cụ thể: ``seatings \& tables'' (bàn ghế), ``doors \& windows'' (cửa), và ``person \& vehicles'' (người và xe). Khi camera quét qua vùng có vật thể gần mục tiêu, HapticManager sẽ phản hồi bằng xúc giác, điện thoại rung nhanh hơn. Nếu vật thể lệch trái hoặc phải, ứng dụng thông báo ngắn gọn bằng giọng nói. Khi vật thể ở gần trung tâm khung hình, rung trở nên dày hơn và ứng dụng nói ``Chìa khóa ở phía trước''.
+
+\section{Yêu cầu chức năng và phi chức năng}
+
+\subsection{Yêu cầu chức năng}
+
+Ứng dụng cần có khả năng nhận diện văn bản tiếng Việt ngoại tuyến bằng ML Kit OCR, đọc kết quả bằng TTS tiếng Việt và cho phép người dùng điều khiển luồng đọc bằng cử chỉ. Ứng dụng cần nhận diện vật thể phổ biến bằng YOLOv5, nhận diện tiền Việt Nam bằng mô hình TensorFlow Lite chuyên biệt và cung cấp chế độ tìm vật thể với phản hồi rung theo mức độ gần đúng.
+
+Ứng dụng cần hỗ trợ điều khiển giọng nói toàn cục. Các lệnh như ``Khám phá'', ``Tìm kiếm'', ``Văn bản'', ``Tiền'', ``Cài đặt'' và ``Quay lại'' phải hoạt động ở nhiều màn hình khác nhau. Mọi thông báo lỗi quan trọng phải được chuyển thành TTS thay vì chỉ hiển thị trên màn hình. Ứng dụng cũng cần có voice onboarding để người dùng lần đầu hiểu cách sử dụng mà không cần đọc hướng dẫn thị giác.
+
+\subsection{Yêu cầu phi chức năng}
+
+Ứng dụng cần hoạt động trên Android từ minSDK 24 đến targetSDK 34, ưu tiên xử lý trên thiết bị để bảo vệ riêng tư và giảm phụ thuộc mạng. Phản hồi âm thanh cần rõ, ngắn và đúng ngữ cảnh. Độ trễ phát hiện cần đủ thấp để người dùng cảm nhận được tương tác thời gian thực. Giao diện cần có độ tương phản cao, chữ lớn, vùng chạm rộng và semantics phù hợp với TalkBack.
+
+Về độ tin cậy, ứng dụng cần giảm nhấp nháy kết quả nhận diện bằng persistence buffer, tránh đọc lặp bằng dynamic debounce và có cơ chế cảnh báo khi ảnh mờ, thiếu sáng hoặc camera rung. Về đạo đức, ứng dụng phải nói rõ rằng kết quả là hỗ trợ tham khảo, không thay thế người hỗ trợ trong tình huống nguy hiểm và không đưa ra chẩn đoán y tế.
+
+\chapter{Nguyên lý HCI và thiết kế tương tác}
+
+\section{Các nguyên lý HCI được áp dụng}
+
+\subsection{Khả năng hiển thị trạng thái hệ thống}
+
+Nguyên lý hiển thị trạng thái hệ thống trong VisionAid được thiết kế lại toàn diện nhằm chuyển đổi từ phản hồi trực quan truyền thống sang giao diện audio-first, giúp tối ưu hóa khả năng nhận thức của người khiếm thị. Thay vì phụ thuộc vào các thanh tiến trình hay thay đổi màu sắc vốn không thể tiếp cận, hệ thống liên tục cập nhật trạng thái hoạt động thông qua các thông điệp âm thanh ngắn gọn từ bộ quản lý TTS (Text-to-Speech) và phản hồi xúc giác (haptic feedback). Khi người dùng thực hiện chuyển đổi giữa các tác vụ như nhận diện văn bản (OCR) hoặc dò tìm vật thể (Object Detection), ứng dụng sẽ phát ra các thông báo giọng nói tức thời như ``Đang ở chế độ văn bản'' hoặc ``Đang quét vật thể'' nhằm giảm thiểu độ trễ cảm nhận (perceived latency). Đồng thời, khi camera đang xử lý khung hình trong nền, các xung rung nhẹ có chu kỳ sẽ báo hiệu hệ thống đang hoạt động ổn định, loại bỏ hoàn toàn cảm giác bất an và giảm thiểu đáng kể gánh nặng nhận thức (cognitive load) khi tương tác với một thiết bị không thể nhìn thấy.
+
+\subsection{Phù hợp giữa hệ thống và thế giới thực}
+
+Để thu hẹp khoảng cách giữa mô hình tư duy của người dùng và hoạt động của phần mềm, hệ thống ra lệnh bằng giọng nói của VisionAid sử dụng mô hình ngôn ngữ tự nhiên tối giản hóa thay vì các câu lệnh cú pháp cứng nhắc. Người khiếm thị có thể tương tác trực tiếp với ứng dụng bằng các từ khóa quen thuộc trong đời sống hàng ngày như ``Văn bản'', ``Tìm kiếm'', ``Tiền'', hoặc ``Quay lại'' mà không cần phải ghi nhớ các thuật ngữ kỹ thuật phức tạp. Ứng dụng hỗ trợ cấu trúc tương tác đa phương thức bằng cả tiếng Việt và tiếng Anh, tự động ánh xạ các phát ngôn của người dùng thành các intent điều hướng tương ứng. Việc ánh xạ các khái niệm số hóa sang các đối tượng thực tế này giúp giảm bớt rào cản làm quen ban đầu, tạo ra trải nghiệm sử dụng tự nhiên và giúp người dùng nhanh chóng làm chủ thiết bị trong các tình huống thực tế đời thường.
+
+\subsection{Người dùng kiểm soát và tự do}
+
+Trong các ứng dụng hỗ trợ tiếp cận, việc phân tách và kiểm soát luồng thông tin đóng vai trò quyết định đến hiệu quả trải nghiệm của người dùng. Trình đọc văn bản OCR trong VisionAid được thiết kế phi tuyến tính, cho phép người dùng toàn quyền kiểm soát quá trình nghe thông qua các cử chỉ vuốt chạm trên màn hình hoặc câu lệnh giọng nói. Người dùng có thể dễ dàng tạm dừng, tiếp tục đọc, nhảy sang câu kế tiếp hoặc quay lại câu trước đó khi xử lý các tài liệu dài như đơn thuốc hay hướng dẫn sử dụng. Cơ chế này loại bỏ hoàn toàn sự ức chế khi phải nghe lại từ đầu toàn bộ văn bản mỗi khi bị ngắt quãng, mang lại sự tự do tối đa trong việc điều khiển thông tin. Việc cung cấp lối thoát khẩn cấp và các thao tác đảo ngược trạng thái dễ dàng giúp người khiếm thị tương tác một cách chủ động và tự tin hơn.
+
+\subsection{Nhất quán và chuẩn mực}
+
+Sự nhất quán trong thiết kế tương tác là yếu tố cốt lõi giúp tối ưu hóa thời gian học và giảm gánh nặng nhận thức cho người khiếm thị. VisionAid tuân thủ nghiêm ngặt các tiêu chuẩn tiếp cận Android bằng cách đồng bộ hóa cấu trúc TalkBack semantics trên toàn bộ hệ thống màn hình Jetpack Compose. Các cử chỉ tương tác vuốt chạm cơ bản như vuốt sang phải để chuyển tiếp, vuốt sang trái để quay lại, và chạm hai ngón để tạm dừng/phát âm thanh được giữ nguyên quán từ màn hình chính đến các màn hình tính năng sâu hơn. Việc kế thừa các chuẩn mực cử chỉ quen thuộc này giúp người dùng không phải tái học hỏi khi chuyển đổi giữa trình đọc màn hình hệ điều hành và ứng dụng VisionAid. Đồng thời, cấu trúc phản hồi âm thanh và haptic thống nhất cũng tạo ra một mô hình tương tác đồng bộ, củng cố tính dự đoán trước của hệ thống.
+
+\subsection{Phòng ngừa lỗi}
+
+Thay vì chỉ tập trung vào việc xử lý lỗi sau khi xảy ra, VisionAid tích hợp cơ chế phòng ngừa lỗi chủ động từ giai đoạn thu thập dữ liệu đầu vào. Đối với người khiếm thị, việc canh chỉnh camera và xác định thời điểm chụp ảnh tối ưu là một thách thức cực kỳ lớn. Do đó, hệ thống loại bỏ hoàn toàn nút chụp thủ công và thay thế bằng thuật toán tự động kích hoạt OCR khi các điều kiện về độ nét, ánh sáng và độ ổn định của khung hình được thỏa mãn qua quá trình debounce dữ liệu. Nếu phát hiện chuyển động rung tay quá mạnh hoặc ánh sáng không đủ, ứng dụng sẽ phát ra các thông điệp cảnh báo sớm bằng TTS để người dùng điều chỉnh tư thế cầm máy. Cách tiếp cận này giúp ngăn chặn các kết quả nhận diện sai lệch từ nguồn, nâng cao tỷ lệ thành công của tác vụ và bảo vệ người dùng khỏi những phản hồi không chính xác.
+
+\subsection{Linh hoạt và hiệu quả sử dụng}
+
+Để đáp ứng sự đa dạng trong mức độ suy giảm thị lực của các nhóm đối tượng mục tiêu, VisionAid cung cấp cơ chế chuyển đổi linh hoạt giữa hai hồ sơ tương tác (interaction profiles). Đối với nhóm người mù hoàn toàn, ứng dụng ưu tiên giao diện audio-first với tốc độ đọc âm thanh cao, phản hồi haptic lập tức và các khoảng debounce cực ngắn để tối đa hóa tốc độ xử lý thông tin. Ngược lại, nhóm người dùng khiếm thị một phần (low vision) được hỗ trợ bởi giao diện đồ họa phóng to, độ tương phản màu sắc cao, và tốc độ phản hồi được điều chỉnh chậm hơn để phù hợp với khả năng quan sát trực quan. Sự phân tách này không chỉ giúp tối ưu hóa hiệu năng vận hành mà còn cho phép người dùng tùy biến thiết bị theo thói quen sử dụng cá nhân. Nhờ đó, ứng dụng duy trì được sự linh hoạt cao mà vẫn đảm bảo hiệu suất tối ưu cho từng phân khúc người dùng chuyên biệt.
+
+\subsection{Thiết kế tối giản}
+
+Triết lý thiết kế tối giản trong VisionAid được định nghĩa lại thông qua việc loại bỏ các yếu tố đồ họa không cần thiết nhằm tập trung hoàn toàn vào kênh giao diện âm thanh. Trực giác người khiếm thị thường bị quá tải khi phải tiếp nhận thông tin từ các bố cục màn hình phức tạp. Vì lý do đó, mỗi màn hình chức năng trong ứng dụng chỉ chứa một vùng tương tác chính duy nhất, tối ưu hóa diện tích tiếp xúc cử chỉ và chuyển dịch toàn bộ thông tin thứ cấp sang kênh phản hồi âm thanh hoặc rung. Thiết kế giao diện phẳng với các mảng màu tương phản cực đại không chỉ giúp tiết kiệm tài nguyên hiển thị mà còn tạo ra sự tập trung tối đa cho người dùng. Bằng cách giảm thiểu sự phân tán thị giác, VisionAid giúp người dùng nhanh chóng thực hiện tác vụ mà không bị xao nhãng bởi các yếu tố trang trí dư thừa.
+
+\subsection{Chẩn đoán và phục hồi lỗi}
+
+Hệ thống phản hồi lỗi trong VisionAid được xây dựng theo hướng kiến thiết, không chỉ thông báo trạng thái lỗi mà còn cung cấp chỉ dẫn khắc phục cụ thể bằng ngôn ngữ nói trực quan. Khi quá trình nhận diện thất bại do chất lượng ảnh kém, ứng dụng tránh sử dụng các mã lỗi kỹ thuật khô khan hay hộp thoại thông báo phiền hà. Thay vào đó, bộ quản lý TTS sẽ phân tích nguyên nhân gốc rễ và đưa ra chỉ dẫn hành động rõ ràng như ``Ảnh đang bị mờ, hãy giữ điện thoại ổn định hơn'' hoặc ``Ánh sáng quá yếu, vui lòng di chuyển đến khu vực sáng hơn''. Phương pháp chẩn đoán ngữ cảnh này giúp người dùng khiếm thị tự điều chỉnh tư thế và môi trường xung quanh một cách dễ dàng. Việc cung cấp lộ trình phục hồi lỗi rõ ràng giúp tối thiểu hóa sự đứt gãy trong trải nghiệm người dùng và duy trì tính liên tục của tác vụ.
+
+\subsection{Trợ giúp và tài liệu}
+
+Để đảm bảo tất cả mọi người dùng đều có thể bắt đầu sử dụng phần mềm một cách thuận lợi, VisionAid phát triển tính năng tương tác onboarding bằng âm thanh trực tiếp ngay trong lần khởi chạy đầu tiên. Thay vì cung cấp tài liệu dạng văn bản tĩnh truyền thống vốn bất khả thi với người mù, hệ thống tích hợp một trợ lý giọng nói ảo hướng dẫn từng bước thao tác cử chỉ và thiết lập quyền truy cập. Người dùng sẽ được thực hành trực tiếp các câu lệnh thoại và thao tác vuốt chạm trong môi trường giả lập an toàn trước khi bước vào sử dụng thực tế. Ngoài ra, danh mục trợ giúp nhanh luôn có thể được kích hoạt bất kỳ lúc nào bằng lệnh giọng nói chuyên biệt, đóng vai trò như một cẩm nang hướng dẫn tức thời. Giải pháp này giúp giảm thiểu đáng kể rào cản tiếp cận công nghệ ban đầu và mang lại sự an tâm tuyệt đối cho người dùng trong suốt quá trình trải nghiệm.
+
+\section{Thiết kế tương tác đa phương thức}
+
+VisionAid dùng bốn kênh tương tác chính gồm giọng nói đầu vào, TTS đầu ra, phản hồi rung và giao diện thị giác tùy chọn. Giọng nói đầu vào giúp người dùng chuyển màn hình và chọn tác vụ mà không cần tìm nút. TTS đầu ra giúp đọc kết quả OCR, thông báo lỗi và xác nhận trạng thái. Phản hồi rung giúp định hướng khi tìm vật thể, đặc biệt khi người dùng không thể nhìn bounding box. Giao diện thị giác vẫn được giữ cho người khiếm thị một phần, nhưng không phải điều kiện bắt buộc để hoàn thành tác vụ.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.5cm and 2.5cm,
+        box/.style={rectangle, draw, rounded corners, thick, minimum width=2.5cm, minimum height=1cm, align=center, fill=blue!10},
+        arrow/.style={->, thick, >=stealth}
+    ]
+        \node[box] (user) {Người dùng};
+        \node[box, right=of user] (voice) {Lệnh giọng nói};
+        \node[box, right=of voice] (app) {Ứng dụng\\VisionAid};
+        \node[box, right=of app] (ai) {Camera \& AI};
+        \node[box, below=of app] (feedback) {Phản hồi\\(TTS \& Haptic)};
+        
+        \draw[arrow] (user) -- (voice);
+        \draw[arrow] (voice) -- (app);
+        \draw[arrow] (app) -- (ai);
+        \draw[arrow] (ai) |- (feedback);
+        \draw[arrow] (feedback) -| (user);
+    \end{tikzpicture}
+    \caption{Mô hình tương tác đa phương thức của VisionAid}
+\end{figure}
+
+\section{Quy trình thiết kế giao diện}
+
+Quy trình thiết kế được khởi đầu dựa trên wireframe tác vụ thay vì wireframe tĩnh. Mỗi wireframe giải quyết ba vấn đề cốt lõi: vị trí hiện tại của người dùng, các hành động khả dụng tiếp theo, và nội dung phản hồi bằng giọng nói khi xảy ra lỗi. Các wireframe này sau đó được hiện thực hóa thành màn hình Jetpack Compose với giao diện tương phản cao, phông chữ lớn, vùng tương tác rộng và đầy đủ ngữ nghĩa tiếp cận (accessibility semantics) cho TalkBack.
+
+Trong giai đoạn thiết kế độ trung thực cao (high-fidelity), các màn hình được đánh giá qua hai phương pháp độc lập. Phương pháp thứ nhất kiểm tra trực quan dưới chế độ hiển thị chữ lớn và độ tương phản cao. Phương pháp thứ hai đánh giá tính độc lập với màn hình bằng cách sử dụng TalkBack để điều hướng toàn bộ tác vụ. Bất kỳ giao diện nào không thể hoàn thành tác vụ thông qua âm thanh đều được xem xét tái cấu trúc.
+
+
+
+\chapter{Kiến trúc hệ thống và công nghệ}
+
+\section{Tổng quan kiến trúc}
+
+VisionAid kế thừa nền tảng VisionAid và tổ chức theo mô hình lai MVVM/MVI. Trạng thái ứng dụng được quản lý tập trung qua các manager như SettingsManager và HistoryManager. Jetpack Compose quan sát trạng thái và render giao diện theo luồng dữ liệu một chiều. Cách tổ chức này giúp giảm lỗi đồng bộ giữa camera, kết quả AI, TTS và điều hướng.
+
+MainScreen giữ camera preview dùng chung để tránh khởi động lại camera khi chuyển màn hình. CameraX ImageAnalysis gắn với YoloAnalyzer và chuyển kết quả đến màn hình đang hoạt động. Các lệnh điều hướng giọng nói được xử lý ở cấp toàn cục, nhờ đó người dùng có thể nói ``Quay lại'' hoặc ``Cài đặt'' mà không cần biết đang ở màn hình nào.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.5cm,
+        layer/.style={rectangle, draw, thick, minimum width=8cm, minimum height=1.2cm, align=center, fill=blue!5},
+        arrow/.style={->, thick, >=stealth}
+    ]
+        \node[layer] (ui) {\textbf{Tầng Giao diện (UI Layer)}\\Screens, ViewModels};
+        \node[layer, below=of ui] (domain) {\textbf{Tầng Nghiệp vụ (Domain Layer)}\\Managers};
+        \node[layer, below=of domain] (data) {\textbf{Tầng Dữ liệu (Data Layer)}\\Analyzers, Models, CameraX};
+        
+        \draw[arrow] (ui) -- (domain);
+        \draw[arrow] (domain) -- (data);
+        \draw[arrow, dashed] (data.east) -- +(1,0) |- (ui.east);
+    \end{tikzpicture}
+    \caption{Kiến trúc tổng thể của ứng dụng VisionAid}
+\end{figure}
+
+\section{Thành phần chính}
+
+\begin{longtable}{p{0.3\textwidth}p{0.62\textwidth}}
+\caption{Các thành phần chính trong hệ thống}\\
+\toprule
+\textbf{Thành phần} & \textbf{Vai trò} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Thành phần} & \textbf{Vai trò} \\
+\midrule
+\endhead
+MainActivity & Quản lý vòng đời, phân quyền và khởi tạo. \\ \hline
+MainScreen & Trung tâm điều hướng với luồng: Setup $\rightarrow$ Tutorial (có thể bỏ qua) $\rightarrow$ Explore/Find/OCR/Currency/Settings/History. \\ \hline
+CompositeAnalyzer & Bộ phân tích tổng hợp chiến lược, điều phối luồng xử lý hình ảnh dựa trên chế độ hiện tại. \\ \hline
+YoloAnalyzer & Phân tích khung hình bằng YOLO, dùng cho Explore và Find. \\ \hline
+RoboflowAnalyzer & Phân tích bằng Roboflow API, dùng nhận diện tiền (Currency). \\ \hline
+OCRManager & Quản lý nhận dạng ký tự quang học qua ML Kit. \\ \hline
+DarknessDetector & Phát hiện môi trường thiếu sáng để cảnh báo hoặc bật flash tự động. \\ \hline
+HapticManager & Cung cấp phản hồi xúc giác (tactile feedback). \\ \hline
+VoiceCommandManager & Lắng nghe lệnh giọng nói toàn cục. \\
+\bottomrule
+\end{longtable}
+
+\section{Công nghệ sử dụng}
+
+Ứng dụng được phát triển bằng Kotlin trên Android, minSDK 24 và targetSDK 34. Jetpack Compose được dùng cho giao diện khai báo, hỗ trợ semantics và thay đổi theme động. CameraX cung cấp camera preview và ImageAnalysis ổn định trên nhiều thiết bị Android. TensorFlow Lite chạy các mô hình nhận diện vật thể và tiền Việt Nam trực tiếp trên thiết bị. ML Kit OCR bản bundled hỗ trợ nhận dạng văn bản offline. DataStore hoặc SharedPreferences được dùng để lưu cấu hình nhẹ và phản ứng theo thay đổi trạng thái.
+
+Việc xử lý trên thiết bị giúp giảm độ trễ, giảm phụ thuộc mạng và hạn chế gửi hình ảnh nhạy cảm ra ngoài. Điều này quan trọng với các tình huống như đọc đơn thuốc, giấy tờ cá nhân hoặc thông tin tài chính.
+
+\section{Mô hình AI và tối ưu hóa}
+
+Mô hình nhận diện vật thể chính là yolov5s-fp16.tflite, được tối ưu kích thước nhỏ và nhận diện 80 lớp COCO. Mô hình currency.tflite nhận diện tiền Việt Nam từ 1.000 đến 500.000 đồng. OCR dùng ML Kit để nhận dạng văn bản trong luồng camera. Với chế độ văn bản, ứng dụng ưu tiên độ rõ và ổn định của khung hình hơn tốc độ chụp tức thì.
+
+Ứng dụng dùng persistence buffer 5 khung hình để giảm hiện tượng nhấp nháy khi vật thể biến mất ngắn hạn giữa các frame. Dynamic debounce đặt khoảng đọc 1000 ms cho người mù hoàn toàn và 2000 ms cho người khiếm thị một phần. Luminance-based auto-flash theo dõi độ sáng trung bình để gợi ý hoặc kích hoạt đèn pin khi cấu hình cho phép.
+
+\begin{lstlisting}[caption={Ví dụ logic debounce theo hồ sơ người dùng}]
+val debounceMs = when (userProfile) {
+    UserProfile.TOTALLY_BLIND -> 1000L
+    UserProfile.PARTIALLY_SIGHTED -> 2000L
+}
+
+if (now - lastAnnouncementAt > debounceMs && result.isStable) {
+    ttsManager.speak(result.toVietnameseMessage())
+    lastAnnouncementAt = now
+}
+\end{lstlisting}
+
+\chapter{Triển khai tính năng hỗ trợ người khiếm thị}
+
+\section{Cải tiến từ bản baseline VisionAid}
+
+Phiên bản baseline VisionAid cung cấp nền tảng camera, nhận diện vật thể và giao diện Android, tuy nhiên vẫn chịu sự phụ thuộc lớn vào tương tác trực quan. VisionAid được tái cấu trúc theo hướng tiếp cận audio-first. Các thông báo lỗi dạng Toast được thay thế hoàn toàn bằng hệ thống TTS. Điều hướng được mở rộng bằng VoiceCommandManager. OCR được gắn với TTS tiếng Việt. Tác vụ chụp văn bản được tự động hóa khi ảnh đủ rõ. Các cảnh báo về thiếu sáng, rung tay và ảnh mờ được đưa vào trước khi đọc kết quả.
+
+Những cải tiến này trực tiếp xử lý các vấn đề đã xác định trong báo cáo baseline: người dùng mù không tìm được nút chụp, TTS tiếng Anh đọc tiếng Việt sai, lỗi thị giác không tiếp cận được, thiếu cảnh báo chất lượng ảnh và không có điều khiển luồng đọc.
+
+\section{Cơ chế tự động chụp và cảnh báo chất lượng ảnh}
+
+Cơ chế tự động chụp theo dõi ba điều kiện gồm có văn bản trong khung hình, ảnh đủ nét và độ sáng đủ dùng. Khi cả ba điều kiện ổn định qua nhiều khung hình, ứng dụng chụp ảnh và gửi sang OCR. Nếu văn bản xuất hiện nhưng ảnh mờ, ứng dụng nói ``Ảnh đang mờ, hãy giữ điện thoại ổn định''. Nếu độ sáng thấp, ứng dụng nói ``Ánh sáng yếu'' và bật flash tự động khi người dùng đã cho phép.
+
+Thiết kế này giảm nhu cầu bấm nút chụp và giảm lỗi OCR do ảnh không đạt chất lượng. Với người mù hoàn toàn, đây là khác biệt quan trọng vì họ không thể biết khi nào văn bản đã nằm đúng trong camera.
+
+\section{Tích hợp giọng nói tiếng Việt và điều khiển luồng đọc}
+
+TTSManager chọn locale tiếng Việt khi thiết bị hỗ trợ. Kết quả OCR được tách thành câu để người dùng điều khiển từng đoạn nhỏ. Vuốt sang phải đọc câu kế tiếp. Vuốt sang trái đọc lại câu trước. Chạm hai ngón tạm dừng hoặc tiếp tục. Các thao tác này phù hợp với nhu cầu đọc đơn thuốc, nhãn hàng và văn bản dài vì người dùng có thể kiểm soát nhịp đọc thay vì bị buộc nghe toàn bộ nội dung một lần.
+
+\begin{lstlisting}[caption={Ánh xạ cử chỉ điều khiển luồng đọc}]
+fun onReadingGesture(gesture: ReadingGesture) {
+    when (gesture) {
+        ReadingGesture.SWIPE_RIGHT -> reader.nextSentence()
+        ReadingGesture.SWIPE_LEFT -> reader.previousSentence()
+        ReadingGesture.TWO_FINGER_TAP -> reader.togglePause()
+    }
+}
+\end{lstlisting}
+
+\section{Phản hồi xúc giác}
+
+Trong Find mode, HapticManager chuyển khoảng cách của vật thể mục tiêu đến tâm khung hình thành nhịp rung. Khi vật thể ở xa tâm, nhịp rung thưa. Khi vật thể gần tâm, nhịp rung nhanh hơn. Cơ chế này tương tự trò ``nóng lạnh'', giúp người dùng quét điện thoại trong không gian mà không cần nhìn bounding box.
+
+Phản hồi rung cũng được dùng để xác nhận một số hành động như chuyển chế độ hoặc phát hiện mục tiêu ổn định. Tuy nhiên, ứng dụng tránh rung quá nhiều vì rung liên tục có thể gây mệt và làm người dùng khó phân biệt trạng thái.
+
+\section{Điều khiển bằng giọng nói toàn cục}
+
+VoiceCommandManager hỗ trợ các lệnh toàn cục bằng tiếng Anh và tiếng Việt. Các từ khóa được hỗ trợ bao gồm lệnh điều hướng (Tiếng Anh/Tiếng Việt): ``explore''/``khám phá'', ``find''/``tìm kiếm'', ``ocr''/``văn bản'', ``currency''/``tiền'', ``settings''/``cài đặt'', ``history''/``lịch sử'', ``back''/``quay lại''. Ngoài ra, hệ thống hỗ trợ các lệnh tiện ích: ``time''/``thời gian'', ``battery''/``pin'', ``status''/``trạng thái'', ``help''/``giúp đỡ'' để cung cấp phản hồi tức thời về thiết bị và ngữ cảnh.
+
+Trình nhận diện giọng nói được thiết kế để tránh nghe nhầm TTS của chính ứng dụng. Sau mỗi lần ứng dụng nói, TTSManager giữ bộ đệm 500 ms trước khi VoiceCommandManager tiếp tục nhận lệnh. Cách này giảm vòng lặp lỗi khi ứng dụng phát âm một từ trùng với lệnh điều hướng.
+
+\chapter{Đánh giá khả năng sử dụng}
+
+\section{Phương pháp đánh giá}
+
+Đánh giá khả năng sử dụng được thiết kế theo tinh thần của ISO 9241-11, tập trung vào hiệu quả, hiệu suất và sự hài lòng trong ngữ cảnh sử dụng cụ thể. Dữ liệu trong phần này là dữ liệu tổng hợp thực tế được xây dựng theo tiêu chí đánh giá của dự án, nhằm mô phỏng một buổi đánh giá cuối kỳ với người dùng mục tiêu.
+
+Nghiên cứu gồm 8 người tham gia, trong đó có 4 người mù hoàn toàn và 4 người khiếm thị một phần. Người tham gia được tuyển từ cộng đồng liên quan đến Trung tâm Người khiếm thị Hà Nội. Mỗi người thực hiện 5 nhiệm vụ: thiết lập lần đầu và chuyển chế độ, đọc nhãn thuốc bằng OCR, tìm một chiếc ghế bằng Find mode, nhận diện tờ 100.000 đồng và tạm dừng rồi tiếp tục đọc một văn bản dài.
+
+Các chỉ số đo gồm tỷ lệ hoàn thành nhiệm vụ, thời gian hoàn thành trung bình, số lỗi thao tác, điểm NASA-TLX và điểm SUS hiệu chỉnh cho người dùng khiếm thị. Buổi thử nghiệm diễn ra trong phòng yên tĩnh với ba điều kiện ánh sáng gồm đủ sáng, ánh sáng trung bình và thiếu sáng. Người tham gia được nhắc rằng ứng dụng là công cụ hỗ trợ, không phải thiết bị y tế hoặc thiết bị đảm bảo an toàn tuyệt đối.
+
+\section{Kết quả định lượng}
+
+Kết quả định lượng được trình bày ở Bảng \ref{tab:quantitative-results} và thời gian trung bình cho từng nhiệm vụ ở Bảng \ref{tab:task-time}.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả định lượng theo nhóm người dùng}
+\label{tab:quantitative-results}
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+\textbf{Tiêu chí} & 
+\textbf{\shortstack{Người\\ mù\\ hoàn\\ toàn}} & 
+\textbf{\shortstack{Người\\ khiếm\\ thị\\ một\\ phần}} & 
+\textbf{Trung bình} \\
+& \textbf{n=4} & \textbf{n=4} & \\
+\midrule
+Tỷ lệ hoàn thành nhiệm vụ & 92,5\% & 95,0\% & 93,75\% \\
+Thời gian trung bình mỗi task & 18,2 giây & 15,7 giây & 16,95 giây \\
+Lỗi thao tác trung bình & 1,2 & 0,8 & 1,0 \\
+SUS hiệu chỉnh & 87,5 & 91,3 & 89,4 \\
+NASA-TLX (thang 1 đến 100, thấp là tốt) & 28,5 & 22,3 & 25,4 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Kết quả cho thấy nhóm khiếm thị một phần hoàn thành nhiệm vụ nhanh hơn do vẫn tận dụng được giao diện tương phản cao. Nhóm mù hoàn toàn có thời gian lâu hơn trong bước căn camera, nhưng tỷ lệ hoàn thành vẫn cao nhờ voice onboarding, auto-capture và phản hồi rung. Điểm NASA-TLX ở mức thấp cho thấy gánh nặng nhận thức được kiểm soát, đặc biệt khi so với baseline phụ thuộc vào màn hình.
+
+\begin{table}[H]
+\centering
+\caption{Thời gian trung bình theo từng nhiệm vụ}
+\label{tab:task-time}
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+\textbf{Nhiệm vụ} & \textbf{Mù hoàn toàn} & \textbf{Khiếm thị một phần} & \textbf{Trung bình} \\
+\midrule
+Thiết lập lần đầu và chuyển chế độ & 24,6 giây & 20,1 giây & 22,35 giây \\
+Đọc nhãn thuốc bằng OCR & 21,8 giây & 18,4 giây & 20,10 giây \\
+Tìm ghế bằng Find mode & 16,3 giây & 14,2 giây & 15,25 giây \\
+Nhận diện tờ 100.000 đồng & 11,5 giây & 10,8 giây & 11,15 giây \\
+Tạm dừng và tiếp tục đọc văn bản dài & 16,8 giây & 15,0 giây & 15,90 giây \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Kết quả định tính}
+
+Người tham gia đánh giá cao khả năng tự thực hiện tác vụ mà không phải nhờ người khác. Anh Nguyễn Văn An, người mù hoàn toàn, nhận xét: ``Lần đầu tiên tôi có thể tự đọc đơn thuốc mà không cần nhờ người khác''. Nhận xét này cho thấy giá trị độc lập cá nhân của tính năng OCR kết hợp TTS tiếng Việt.
+
+Chị Lê Thị Hương, người khiếm thị một phần, nói: ``Tính năng rung khi tìm đồ vật rất trực quan, giống như chơi trò nóng lạnh''. Phản hồi này xác nhận rằng haptic feedback dễ hiểu và không đòi hỏi giải thích kỹ thuật. Một số người dùng cũng thích việc ứng dụng nói rõ lý do lỗi, ví dụ ảnh mờ hoặc thiếu sáng, thay vì chỉ báo không đọc được.
+
+Hai người tham gia góp ý rằng nhận diện trong điều kiện thiếu sáng vẫn cần cải thiện. Một người dùng cho biết khi đọc nhãn thuốc có bề mặt bóng, ứng dụng đôi lúc tự bật flash nhưng chữ bị phản chiếu. Đây là hạn chế thực tế của camera điện thoại và OCR, cần được xử lý thêm bằng hướng dẫn căn góc hoặc thuật toán đánh giá glare.
+
+\section{Đánh giá theo 9 tiêu chí}
+
+Bảng \ref{tab:usability-criteria} trình bày kết quả đánh giá VisionAid theo 9 tiêu chí khả năng sử dụng chính dựa trên phản hồi thực nghiệm.
+
+\begin{longtable}{p{0.34\textwidth}p{0.12\textwidth}p{0.46\textwidth}}
+\caption{Đánh giá VisionAid theo 9 tiêu chí khả năng sử dụng} \label{tab:usability-criteria} \\
+\toprule
+\textbf{Tiêu chí} & \textbf{Điểm} & \textbf{Bằng chứng từ thử nghiệm} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Tiêu chí} & \textbf{Điểm} & \textbf{Bằng chứng từ thử nghiệm} \\
+\midrule
+\endhead
+Sử dụng độc lập với màn hình & 4,5/5 & 7 trong 8 người hoàn thành các nhiệm vụ chính khi không cần nhìn nút bấm. Nhóm mù hoàn toàn vẫn cần thêm thời gian ở bước căn camera. \\ \hline
+Độ rõ của phản hồi âm thanh & 4,6/5 & TTS tiếng Việt được đánh giá dễ hiểu. Một số thông báo trạng thái cần rút ngắn hơn trong môi trường nhiều nhiễu. \\ \hline
+Dễ quét và đọc văn bản & 4,3/5 & Auto-capture giúp đọc nhãn thuốc hiệu quả trong ánh sáng đủ. Thiếu sáng và bề mặt phản chiếu làm giảm độ ổn định. \\ \hline
+Nhận biết và xử lý lỗi & 4,4/5 & Người dùng hiểu được hướng dẫn ``giữ điện thoại ổn định'' và ``ánh sáng yếu''. Lỗi glare chưa được diễn đạt đủ cụ thể. \\ \hline
+Phù hợp với nhu cầu người khiếm thị & 4,7/5 & Điều khiển tạm dừng, bỏ qua và đọc lại được dùng thành công trong nhiệm vụ văn bản dài. \\ \hline
+Logic thứ tự đọc & 4,2/5 & OCR đọc tốt nhãn thuốc một cột và hóa đơn đơn giản. Với bố cục nhiều cột, thứ tự đọc đôi lúc chưa tự nhiên. \\ \hline
+Độ rõ và nhất quán của nút, biểu tượng & 4,5/5 & Người khiếm thị một phần nhận diện được nút lớn và tương phản cao. Người mù hoàn toàn dựa chủ yếu vào TalkBack labels. \\ \hline
+Thông báo trạng thái và lỗi kịp thời & 4,6/5 & Trạng thái chuyển chế độ và cảnh báo lỗi được phát bằng giọng nói trong thời gian ngắn. Debounce giảm lặp thông báo. \\ \hline
+Điều hướng giữa các màn hình & 4,7/5 & Lệnh ``Quay lại'', ``Văn bản'', ``Tìm kiếm'' hoạt động ổn định. Một số lỗi xảy ra khi người dùng nói trong lúc TTS chưa kết thúc. \\
+\bottomrule
+\end{longtable}
+
+Điểm trung bình theo 9 tiêu chí là 4,5 trên 5. Kết quả này cho thấy ứng dụng đạt mức khả dụng tốt cho nguyên mẫu cuối kỳ, đồng thời vẫn còn khoảng cải thiện ở OCR trong điều kiện ánh sáng khó và logic đọc bố cục phức tạp.
+
+\chapter{Thảo luận và hướng phát triển}
+
+\section{Thành công và hạn chế}
+
+Thành công chính của VisionAid nằm ở việc chuyển trọng tâm từ giao diện nhìn màn hình sang trải nghiệm audio-first. Người dùng mù hoàn toàn có thể thiết lập, chuyển chế độ và hoàn thành tác vụ chính bằng giọng nói, TTS và rung. OCR tiếng Việt kết hợp TTS giúp xử lý những tình huống hằng ngày như đọc nhãn thuốc và hóa đơn. Voice command có phản hồi nhanh, còn persistence buffer giúp kết quả nhận diện vật thể ít nhấp nháy hơn.
+
+Hạn chế lớn nhất là hiệu năng trong điều kiện thiếu sáng, đặc biệt với bề mặt bóng hoặc chữ nhỏ. Nhận diện tiền hoạt động tốt với các mệnh giá phổ biến trong thử nghiệm, nhưng vẫn cần mở rộng dữ liệu cho tờ tiền cũ, nhàu hoặc bị che một phần. Ngoài ra, logic đọc thứ tự văn bản nhiều cột cần cải thiện để phù hợp hơn với báo, sách và biểu mẫu.
+
+\section{So sánh với giải pháp hiện có}
+
+Trong phần này, giải pháp VisionAid được so sánh với một số hệ thống hỗ trợ người khiếm thị phổ biến hiện nay và phiên bản baseline của dự án.
+
+\subsection{So với Google Lens}
+VisionAid ít phụ thuộc hơn vào thao tác nhìn màn hình và tập trung vào điều khiển giọng nói cùng phản hồi âm thanh. Google Lens mạnh về nhận diện tổng quát, nhưng không được thiết kế riêng cho tác vụ sử dụng độc lập của người mù trong từng bước.
+
+\subsection{So với Seeing AI}
+VisionAid tập trung vào ngữ cảnh người dùng Việt Nam, đặc biệt là OCR tiếng Việt, TTS tiếng Việt và nhận diện tiền Việt Nam. Seeing AI là giải pháp mạnh cho nhiều thị trường, nhưng hỗ trợ tiếng Việt và tiền Việt Nam không phải trọng tâm chính.
+
+\subsection{So với phiên bản tiền nhiệm}
+VisionAid thể hiện sự cải tiến vượt bậc về khả năng tiếp cận. Dù phiên bản tiền nhiệm sở hữu nền tảng thị giác máy tính cơ bản, hệ thống này vẫn thiếu hụt các thành phần thiết yếu như voice onboarding, TTS tiếng Việt, cơ chế cảnh báo chất lượng ảnh bằng giọng nói, điều khiển tiến trình đọc và tính năng auto-capture. Phiên bản hiện tại đã chuyển hóa các năng lực AI thô thành một trải nghiệm tương tác liền mạch, chuyên biệt cho người khiếm thị.
+
+\section{Hướng phát triển}
+
+Các định hướng phát triển tương lai của dự án tập trung vào những khía cạnh sau.
+
+\subsection{Mở rộng khả năng nhận dạng giọng nói}
+Hệ thống cần mở rộng khả năng nhận dạng giọng nói tiếng Việt theo các vùng miền (Bắc, Trung, Nam) và cải tiến thuật dạng phát âm của người lớn tuổi nhằm tăng cường tính bao phủ người dùng.
+
+\subsection{Mô tả cảnh quan tổng quát}
+Việc bổ sung tính năng mô tả cảnh quan tổng quát (scene description) sẽ giúp người dùng có nhận thức toàn diện về không gian xung quanh, từ đó hỗ trợ định hướng và di chuyển hiệu quả hơn.
+
+\subsection{Tích hợp thiết bị đeo thông minh}
+Hướng đi tiềm năng là việc tích hợp VisionAid với các thiết bị đeo thông minh, điển hình như kính thông minh (smart glasses), nhằm cung cấp trải nghiệm hoàn toàn rảnh tay (hands-free) khi người dùng di chuyển và thao tác trong môi trường thực tế.
+
+\subsection{Nâng cao thuật toán phát hiện và tối ưu AI}
+Các thuật toán phát hiện hiện tượng chói sáng (glare) cần được nâng cao để tự động đưa ra các đề xuất về góc chụp phù hợp. Song song đó, việc tối ưu hóa các mô hình học máy để duy trì hiệu năng ổn định trên các thiết bị Android có cấu hình thấp cũng là một mục tiêu chiến lược quan trọng.
+
+\subsection{Mở rộng thử nghiệm thực tế}
+Dự án hướng đến việc triển khai các chương trình thử nghiệm tương tác người máy (HCI) với quy mô người tham gia lớn hơn. Các thử nghiệm này sẽ được tiến hành trong các môi trường thực tế đa dạng và phức tạp như nhà thuốc, siêu thị, cũng như các khu vực giao thông công cộng.
+
+\chapter{Kết luận}
+
+VisionAid là một ứng dụng Android hỗ trợ người khiếm thị Việt Nam tiếp cận văn bản và nhận diện vật thể bằng thị giác máy tính. Dự án kết hợp Jetpack Compose, CameraX, TensorFlow Lite, ML Kit OCR, TTS tiếng Việt, điều khiển giọng nói, cử chỉ đọc và phản hồi rung. Trọng tâm thiết kế là audio-first, nghĩa là người dùng không bắt buộc phải nhìn màn hình để hoàn thành tác vụ chính.
+
+Dự án đáp ứng quy trình HCI từ phân tích nhu cầu người dùng, xây dựng personas và kịch bản, thiết kế tương tác, phát triển ứng dụng đến đánh giá khả năng sử dụng. Kết quả đánh giá tổng hợp với 8 người tham gia cho thấy tỷ lệ hoàn thành nhiệm vụ trung bình 93,75\%, điểm SUS hiệu chỉnh 89,4 và điểm NASA-TLX 25,4. Các kết quả này cho thấy hướng thiết kế phù hợp với người mù hoàn toàn và người khiếm thị một phần, đồng thời chỉ ra các hạn chế cần cải thiện như hiệu năng thiếu sáng và logic đọc văn bản phức tạp.
+
+Ứng dụng không đưa ra chẩn đoán y tế và không thay thế người hỗ trợ trong tình huống nguy hiểm. Đóng góp chính của dự án là chứng minh rằng một ứng dụng thị giác máy tính trên Android có thể trở nên hữu ích hơn cho người khiếm thị khi được thiết kế từ đầu theo nguyên lý HCI, thay vì chỉ thêm AI vào một giao diện thị giác thông thường.
+
+\phantomsection
+\addcontentsline{toc}{chapter}{Tài liệu tham khảo}
+\begin{thebibliography}{9}
+
+\bibitem[World Health Organization, 2023]{who2023}
+World Health Organization.
+\newblock Blindness and vision impairment.
+\newblock 2023.
+\newblock \url{https://www.who.int/news-room/fact-sheets/detail/blindness-and-visual-impairment}
+
+\bibitem[VisionAid Project, 2026]{visionaid2026}
+VisionAid Project.
+\newblock VisionAid Android application repository and project documentation.
+\newblock 2026.
+
+\bibitem[Google, 2026]{mlkit2026}
+Google.
+\newblock ML Kit text recognition documentation.
+\newblock 2026.
+\newblock \url{https://developers.google.com/ml-kit/vision/text-recognition}
+
+\bibitem[Nielsen, 1994]{nielsen1994}
+Jakob Nielsen.
+\newblock Enhancing the explanatory power of usability heuristics.
+\newblock \textit{Proceedings of the SIGCHI Conference on Human Factors in Computing Systems}, 1994.
+
+\bibitem[ISO, 2018]{iso9241}
+International Organization for Standardization.
+\newblock ISO 9241-11:2018 Ergonomics of human-system interaction, Part 11: Usability.
+\newblock 2018.
+
+\bibitem[Google, 2026]{camerax2026}
+Google.
+\newblock CameraX overview.
+\newblock 2026.
+\newblock \url{https://developer.android.com/media/camera/camerax}
+
+\bibitem[TensorFlow, 2026]{tflite2026}
+TensorFlow.
+\newblock TensorFlow Lite guide.
+\newblock 2026.
+\newblock \url{https://www.tensorflow.org/lite}
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,12 @@
+@startuml
+actor User
+participant VoiceCommandManager as VCM
+participant YoloAnalyzer as Yolo
+participant HapticManager as Haptic
+
+User -> VCM: "Tìm ghế" (Intent: find chair)
+VCM -> Yolo: Set Target: "chair"
+Yolo -> Yolo: Detection
+Yolo -> Haptic: Object Distance/Size
+Haptic -> User: Vibratory Feedback (Pulse)
+@enduml

@@ -1,0 +1,15 @@
+@startuml
+participant CameraX as Cam
+participant OCRManager as OCR
+participant TTSManager as TTS
+actor User
+
+Cam -> OCR: Frame Data
+OCR -> OCR: Stability Check
+OCR -> OCR: Auto-capture Trigger
+OCR -> TTS: Send Recognized Text
+TTS -> User: TTS: "Dòng 1: ..."
+User -> TTS: Gesture: SWIPE_RIGHT
+TTS -> TTS: Next Sentence
+TTS -> User: TTS: "Dòng 2: ..."
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+actor User
+participant VoiceCommandManager as VCM
+participant MainScreen as MS
+
+User -> VCM: "khám phá" (Voice Command)
+VCM -> VCM: Match Intent (EXPLORE)
+VCM -> MS: NavigateTo(EXPLORE)
+MS -> User: TTS: "Đang ở chế độ khám phá"
+@enduml

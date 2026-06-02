@@ -1,0 +1,27 @@
+@startuml
+package "UI Layer (Jetpack Compose)" {
+    [Screens]
+    [ViewModels]
+}
+
+package "Domain/Logic Layer" {
+    [SettingsManager]
+    [HistoryManager]
+    [TTSManager]
+    [VoiceCommandManager]
+}
+
+package "Data Layer (AI/Camera)" {
+    [YoloAnalyzer]
+    [TFLite Models]
+    [ML Kit OCR]
+    [CameraX]
+}
+
+[Screens] --> [ViewModels]
+[ViewModels] --> [SettingsManager]
+[ViewModels] --> [YoloAnalyzer]
+[YoloAnalyzer] --> [TFLite Models]
+[YoloAnalyzer] --> [CameraX]
+[ViewModels] --> [TTSManager]
+@enduml

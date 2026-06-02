@@ -1,0 +1,15 @@
+@startuml
+skinparam handwritten false
+actor User
+participant "Voice Command" as Voice
+participant "VisionAid App" as App
+participant "Camera/AI" as AI
+participant "TTS/Haptic" as Feedback
+
+User -> Voice: Speaks command
+Voice -> App: Intent (Explore/Find/OCR)
+App -> AI: Process frame
+AI -> App: Detected Object/Text
+App -> Feedback: Speak result / Vibrate
+Feedback -> User: Audio/Tactile Feedback
+@enduml
