@@ -1,65 +1,84 @@
-# Shravan: Visually Impaired Guidance Application
+# VisionAid: Visually Impaired Assistance Application
 
-Shravan is an Android application that aims to provide guidance and assistance to visually impaired individuals. It leverages object detection using TensorFlow Lite to help users detect objects in their surroundings.
+VisionAid (Internal Code Name: **Shravan**) is an advanced Android application designed to empower individuals with visual impairments. Built with a "Human-Computer Interaction (HCI) First" philosophy, it provides independent access to text and object recognition through a seamless, audio-centric interface.
 
-## Features
-<!-- Add bullet points -->
-  - Real-time object detection using a pre-trained model
-  - Camera preview with object tracking overlay
-  - Customizable model selection and inference settings
+## 🌟 Overview
 
-[//]: # ()
-[//]: # (##Screenshots)
+VisionAid addresses the critical need for independent information access. Whether it's reading a medication label, finding a misplaced chair, or exploring a new environment, VisionAid transforms visual data into actionable audio and haptic feedback.
 
-[//]: # (<!-- Add screenshots of the app in action -->)
+Unlike traditional solutions, VisionAid is designed for **Screen-Independent Usage**, catering to two primary user groups:
+- **Totally Blind Users:** Audio-first interaction, voice commands, and haptic (vibration) feedback.
+- **Partially Sighted Users:** High-contrast interfaces, large typography, and assistive visuals.
 
-[//]: # ()
+## ✨ Key Features
 
-## Getting Started
+### 🔍 Vision & AI
+- **Explore Mode:** Real-time object detection using YOLOv5, announcing surroundings via Text-to-Speech (TTS).
+- **Find Mode:** Targeted object searching. Features **Haptic Pulse Guidance**—the phone's vibration frequency increases as the target object moves closer to the center of the frame.
+- **Advanced OCR (Vietnamese & English):** Offline text recognition with:
+  - **Auto-Capture:** Automatically triggers when the camera detects stable, clear text.
+  - **Quality Guard:** Voice warnings for blur, low light, or camera shake.
+  - **Reading Flow Control:** Navigate through long texts using gestures (Swipe right for next sentence, left for previous, two-finger tap to pause/resume).
 
-1. Clone the repository to your local machine.
+### 🎙️ Accessibility & Control
+- **Global Voice Commands:** Control the app entirely by voice ("Explore", "Find", "OCR", "Settings", "Back").
+- **Voice Onboarding:** A guided audio tutorial for first-time users to learn gestures and commands.
+- **Haptic Feedback:** Spatial orientation through vibration patterns.
+- **Offline First:** All AI processing (YOLO, OCR, TTS) happens on-device to ensure privacy and low latency.
 
-```shell
-git clone https://github.com/ssharmapavitra/Shravan.git
-```
+## 🛠️ Tech Stack
 
-2. Open the project in Android Studio.
+- **Language:** Kotlin
+- **UI Framework:** Jetpack Compose (Modern, accessible, and high-contrast)
+- **Camera:** Android CameraX
+- **Machine Learning:** 
+  - **TensorFlow Lite:** YOLOv5s for real-time object detection.
+  - **ML Kit:** For high-accuracy offline OCR.
+- **Speech:** Android Text-to-Speech (TTS) & Speech Recognizer.
+- **Architecture:** Hybrid MVVM/MVI for robust state management.
 
-3. Build and run the application on an Android device or emulator with a minimum SDK version of 21.
+## 🏗️ Architecture
 
-## Usage
+The system is organized into three main layers:
+1.  **UI Layer:** Jetpack Compose screens and ViewModels.
+2.  **Domain Layer:** Specialized Managers (SettingsManager, HistoryManager, VoiceCommandManager).
+3.  **Data Layer:** Image Analyzers (YoloAnalyzer, OCRManager) and CameraX integration.
 
-Once you have the Shravan application running on your Android device or emulator, it assists visually impaired individuals in detecting objects in their surroundings. The application provides a user-friendly interface for selecting images or accessing the device's camera.
+## 🚀 Getting Started
 
-1. Launch the app on your Android device.
+### Prerequisites
+- Android device running Android 7.0 (API 24) or higher.
+- Android Studio Ladybug or newer.
 
-2. The app will display a screen with two options: one for text reader and the other for object detection.
+### Installation
+1. Clone the repository:
+   ```shell
+   git clone https://github.com/ssharmapavitra/Shravan.git
+   ```
+2. Open in Android Studio.
+3. Sync Gradle and build the project.
 
-3. Choose the desired option:
+## 📖 Usage
 
-   a. Text Reader: If you select this option, the app will use Optical Character Recognition (OCR) technology to capture and read out text from documents, books, or any printed material in real-time. Simply point your device's camera towards the text, and the app will provide voice output, making it easier for visually impaired individuals to access written information.
+1.  **Setup & Onboarding:** On first launch, VisionAid will guide you through an audio-onboarding process.
+2.  **Navigation:** Use the bottom navigation bar or simply say a command like **"OCR"** or **"Find"**.
+3.  **Text Reading:** Point the camera at any text. The app will notify you if the lighting is too low or if the image is blurry. Once stable, it will read the text automatically.
+4.  **Object Search:** Say **"Find [Object Name]"**. Move your phone around; the vibration will guide you toward the target.
 
-   b. Object Detection: If you select this option, the app will utilize TensorFlow Lite's object detection model to identify objects in your surroundings. The camera preview will open, and object detection will start automatically. Detected objects will be highlighted with bounding boxes overlaid on the camera view. The app will provide real-time voice output, describing the objects it detects.
+## 📊 Research & Performance
 
-4. Customize the object detection settings using the provided options in the app. You can adjust the sensitivity, enable or disable audio feedback, and explore other configuration options to enhance the user experience.
+VisionAid was evaluated with 8 participants (4 totally blind, 4 partially sighted):
+- **Task Completion Rate:** 93.75%
+- **System Usability Scale (SUS):** 89.4 (Excellent)
+- **NASA-TLX (Cognitive Load):** 25.4 (Low)
 
-5. Enjoy real-time voice output and assistance as you use the Sharvan app to read text or detect objects around you.
+## 🤝 Contributing
 
-Feel free to explore the features and functionalities of the app to provide a seamless and enhanced experience for visually impaired users.
+We welcome contributions to enhance accessibility. Please feel free to open issues or submit pull requests.
 
-Note: The Shravan app does not require an internet connection for its core functionality. All processing and voice output are done locally on your Android device, ensuring privacy and reliable performance.
+## 📜 License
 
-## Customization
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-If you wish to use your own models for object detection, you can replace the default models used in the application. Place your custom models in the "assets" directory and modify the necessary code accordingly.
-
-## Contributing
-
-Contributions to the Shravan project are welcome. If you encounter any issues or have suggestions for improvements, please open an issue or submit a pull request.
-
-## Acknowledgments
-
-The Shravan application is built upon the TensorFlow Lite examples and incorporates various open-source libraries and resources.
-
-Feel free to customize and enhance the application based on your requirements.
-
+---
+*Developed as part of the Human-Computer Interaction (INT2041) course at VNU University of Engineering and Technology (UET).*
