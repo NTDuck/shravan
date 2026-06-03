@@ -36,23 +36,28 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
+            // Attempt to set default language, but don't block initialization if it fails
             val result = tts?.setLanguage(Locale.US)
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.e("TTSManager", "The Language not supported!")
-            } else {
-                tts?.setSpeechRate(currentSpeechRate)
-                setupProgressListener()
-                isInitialized = true
-                mainHandler.post {
-                    val requestsToPlay = ArrayList(pendingRequests)
-                    pendingRequests.clear()
-                    for (request in requestsToPlay) {
-                        speak(request.text, request.isQueued, request.isVietnamese, request.onComplete)
-                    }
+                Log.w("TTSManager", "Locale.US not supported, using default")
+                tts?.setLanguage(Locale.getDefault())
+            }
+            
+            tts?.setSpeechRate(currentSpeechRate)
+            setupProgressListener()
+            isInitialized = true
+            
+            // Process any requests that came in before initialization
+            mainHandler.post {
+                val requestsToPlay = ArrayList(pendingRequests)
+                pendingRequests.clear()
+                for (request in requestsToPlay) {
+                    speak(request.text, request.isQueued, request.isVietnamese, request.onComplete)
                 }
             }
         } else {
             Log.e("TTSManager", "Initialization Failed!")
+            // Fail gracefully by calling onComplete for pending requests
             mainHandler.post {
                 val requestsToPlay = ArrayList(pendingRequests)
                 pendingRequests.clear()
@@ -76,6 +81,7 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
                 }
             }
             override fun onError(utteranceId: String?) {
+                Log.e("TTSManager", "Utterance error: $utteranceId")
                 lastSpeechEndTime = System.currentTimeMillis()
                 mainHandler.post {
                     onCompletionListener?.invoke()
@@ -94,15 +100,19 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
 
     fun setLanguage(isVietnamese: Boolean) {
         lastIsVietnamese = isVietnamese
-        val locale = if (isVietnamese) Locale("vi") else Locale.US
+        if (!isInitialized) return
+
+        val locale = if (isVietnamese) localeVi else Locale.US
         val result = tts?.setLanguage(locale)
         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
             Log.e("TTSManager", "Language not supported: $locale")
             if (isVietnamese) {
-                // Fallback attempt
-                tts?.setLanguage(Locale("vi", "VN"))
+                // Fallback attempt with generic "vi"
+                tts?.setLanguage(Locale("vi"))
             }
         }
+        // Re-apply speech rate as setLanguage can sometimes reset it
+        tts?.setSpeechRate(currentSpeechRate)
     }
 
     fun setSpeechRate(rate: Float) {
@@ -122,6 +132,7 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
             lastSpokenText = text
             lastIsVietnamese = isVietnamese
             setLanguage(isVietnamese)
+            
             val queueMode = if (isQueued) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH
             
             val params = Bundle()
@@ -134,11 +145,20 @@ class TTSManager(private val context: Context) : TextToSpeech.OnInitListener {
             }
             
             try {
-                tts?.speak(text, queueMode, params, "id")
+                val result = tts?.speak(text, queueMode, params, "id")
+                if (result == TextToSpeech.ERROR) {
+                    Log.e("TTSManager", "speak call returned TextToSpeech.ERROR")
+                    mainHandler.post {
+                        onComplete?.invoke()
+                        onCompletionListener = null
+                    }
+                }
             } catch (e: Exception) {
                 Log.e("TTSManager", "Error in speak call", e)
-                onComplete?.invoke()
-                onCompletionListener = null
+                mainHandler.post {
+                    onComplete?.invoke()
+                    onCompletionListener = null
+                }
             }
         } else {
             pendingRequests.add(PendingSpeakRequest(text, isQueued, isVietnamese, onComplete))

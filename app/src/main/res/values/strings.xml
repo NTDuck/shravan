@@ -59,4 +59,7 @@
     <string name="status_time">The time is %s</string>
     <string name="status_battery">Battery is at %d percent</string>
     <string name="status_location">You are currently in %s</string>
+    <string name="tutorial_text">Welcome to the tutorial. This app has 5 main screens: Explore to detect objects around you, Find to locate specific items, OCR to read text, Settings to configure preferences, and History to view past detections. You can swipe left and right, or say the screen name to navigate. Say \'Skip\' to end this tutorial and grant necessary permissions.</string>
+    <string name="tutorial_skip_instruction">Playing tutorial...\nSay \'Skip\' or click screen to continue.</string>
+    <string name="tutorial_skip_keyword">skip</string>
 </resources>
