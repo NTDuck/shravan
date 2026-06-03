@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.examples.shravan.R
 import org.tensorflow.lite.examples.shravan.utils.HapticManager
@@ -47,12 +48,15 @@ fun TutorialScreen(
             ttsManager.stopAll()
             isTutorialFinished = true
             requestingPermissions = true
-            onRequestPermissions()
             hapticManager.triggerHaptic()
+            // Only request if needed, otherwise the LaunchedEffect will handle navigation
+            if (!hasPermissions) {
+                onRequestPermissions()
+            }
         }
     }
 
-    LaunchedEffect(hasPermissions) {
+    LaunchedEffect(hasPermissions, requestingPermissions) {
         if (hasPermissions && requestingPermissions) {
             navController.navigate("main") {
                 popUpTo("tutorial") { inclusive = true }
@@ -61,8 +65,8 @@ fun TutorialScreen(
     }
 
     LaunchedEffect(Unit) {
+        delay(800) // Slightly longer delay for stability
         interactionsEnabled = true
-        delay(500) // Small safety delay for navigation transition
         ttsManager.speak(tutorialText, isVietnamese = useVietnamese) {
             finishTutorial()
         }
@@ -104,15 +108,38 @@ fun TutorialScreen(
             ),
         contentAlignment = Alignment.Center
     ) {
-        if (requestingPermissions) {
-            CircularProgressIndicator(color = Color.White)
-        } else {
-            Text(
-                text = skipInstruction,
-                color = Color.White,
-                fontSize = 20.sp,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (requestingPermissions && !hasPermissions) {
+                CircularProgressIndicator(color = Color.White)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = if (useVietnamese) "Vui lòng cấp quyền để tiếp tục..." else "Please grant permissions to continue...",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            } else {
+                Text(
+                    text = if (isTutorialFinished) skipInstruction else tutorialText,
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    lineHeight = 28.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                
+                if (!isTutorialFinished) {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Text(
+                        text = skipInstruction,
+                        color = Color.Gray,
+                        fontSize = 16.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
         }
     }
 }
