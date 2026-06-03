@@ -54,9 +54,13 @@ fun AccessibleButton(
         tonalElevation = 4.dp
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            val fontSize = (24 * fontSizeScale).sp
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = (24 * fontSizeScale).sp),
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = fontSize,
+                    lineHeight = fontSize * 1.2f
+                ),
                 color = textColor,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )

@@ -60,6 +60,11 @@ fun OCRScreen(
                             val text = visionText.text
                             if (text.isNotBlank()) {
                                 currentText = text
+                                // Automatic reading logic
+                                if (ocrManager?.shouldSpeak(text) == true) {
+                                    ttsManager.speak(text, isVietnamese = containsVietnamese(text))
+                                    historyManager.addHistory("OCR", text)
+                                }
                             }
                         }
                         .addOnFailureListener { e ->
@@ -98,6 +103,7 @@ fun OCRScreen(
 
     LaunchedEffect(isActive) {
         if (isActive) {
+            ocrManager?.clear()
             ttsManager.speak(
                 ocrGreeting,
                 isVietnamese = useVietnamese,
