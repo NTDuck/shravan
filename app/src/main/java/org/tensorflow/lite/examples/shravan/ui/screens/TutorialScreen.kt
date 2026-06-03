@@ -63,9 +63,7 @@ fun TutorialScreen(
     LaunchedEffect(Unit) {
         delay(800) // Slightly longer delay for stability
         interactionsEnabled = true
-        ttsManager.speak(tutorialText, isVietnamese = useVietnamese) {
-            finishTutorial()
-        }
+        ttsManager.speak(tutorialText, isVietnamese = useVietnamese)
     }
 
     Box(
