@@ -59,7 +59,6 @@
     <string name="status_time">Bây giờ là %s</string>
     <string name="status_battery">Pin hiện tại %d phần trăm</string>
     <string name="status_location">Bạn đang ở %s</string>
-    <string name="tutorial_text">Chào mừng bạn đến với hướng dẫn. Ứng dụng này có 5 màn hình chính: Khám phá để nhận diện vật thể xung quanh, Tìm kiếm để tìm vật thể cụ thể, Đọc văn bản để đọc chữ, Cài đặt để tùy chỉnh, và Lịch sử để xem lại. Bạn có thể vuốt trái phải, hoặc đọc tên màn hình để chuyển. Nói \'Bỏ qua\' hoặc nhấn vào màn hình để kết thúc và cấp quyền.</string>
-    <string name="tutorial_skip_instruction">Đang phát hướng dẫn...\nNói \'Bỏ qua\' hoặc nhấn vào màn hình để chuyển tiếp.</string>
-    <string name="tutorial_skip_keyword">bỏ qua</string>
+    <string name="tutorial_text">Chào mừng bạn đến với hướng dẫn. Ứng dụng này có 5 màn hình chính: Khám phá để nhận diện vật thể xung quanh, Tìm kiếm để tìm vật thể cụ thể, Đọc văn bản để đọc chữ, Cài đặt để tùy chỉnh, và Lịch sử để xem lại. Bạn có thể vuốt trái phải, hoặc đọc tên màn hình để chuyển. Nhấn vào màn hình để kết thúc và cấp quyền.</string>
+    <string name="tutorial_skip_instruction">Đang phát hướng dẫn...\nNhấn vào màn hình để chuyển tiếp.</string>
 </resources>

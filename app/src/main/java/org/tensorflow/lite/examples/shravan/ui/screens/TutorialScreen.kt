@@ -19,7 +19,6 @@ import org.tensorflow.lite.examples.shravan.R
 import org.tensorflow.lite.examples.shravan.utils.HapticManager
 import org.tensorflow.lite.examples.shravan.utils.SettingsManager
 import org.tensorflow.lite.examples.shravan.utils.TTSManager
-import org.tensorflow.lite.examples.shravan.utils.VoiceCommandManager
 
 @Composable
 fun TutorialScreen(
@@ -27,7 +26,6 @@ fun TutorialScreen(
     settingsManager: SettingsManager,
     ttsManager: TTSManager,
     hapticManager: HapticManager,
-    voiceCommandManager: VoiceCommandManager,
     onRequestPermissions: () -> Unit,
     hasPermissions: Boolean
 ) {
@@ -38,9 +36,7 @@ fun TutorialScreen(
     
     val tutorialText = stringResource(R.string.tutorial_text)
     val skipInstruction = stringResource(R.string.tutorial_skip_instruction)
-    val skipKeyword = stringResource(R.string.tutorial_skip_keyword).lowercase()
     
-    val voiceSessionId = remember { mutableStateOf<Int?>(null) }
     var interactionsEnabled by remember { mutableStateOf(false) }
 
     fun finishTutorial() {
@@ -69,29 +65,6 @@ fun TutorialScreen(
         interactionsEnabled = true
         ttsManager.speak(tutorialText, isVietnamese = useVietnamese) {
             finishTutorial()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            voiceSessionId.value?.let { voiceCommandManager.stopListening(it) }
-        }
-    }
-
-    LaunchedEffect(interactionsEnabled) {
-        if (interactionsEnabled && !isTutorialFinished) {
-            voiceSessionId.value = voiceCommandManager.startListening(
-                isVietnamese = useVietnamese,
-                partialCallback = { partial ->
-                    if (partial.lowercase().contains(skipKeyword)) {
-                        finishTutorial()
-                    }
-                }
-            ) { result ->
-                if (result.lowercase().contains(skipKeyword)) {
-                    finishTutorial()
-                }
-            }
         }
     }
 

@@ -194,7 +194,6 @@ CompositionLocalProvider(LocalConfiguration provides overriddenConfiguration) {
                                     settingsManager = settingsManager,
                                     ttsManager = ttsManager,
                                     hapticManager = hapticManager,
-                                    voiceCommandManager = voiceCommandManager,
                                     onRequestPermissions = {
                                         val permissionsNeeded = mutableListOf<String>()
                                         if (!hasCameraPermission) permissionsNeeded.add(Manifest.permission.CAMERA)
