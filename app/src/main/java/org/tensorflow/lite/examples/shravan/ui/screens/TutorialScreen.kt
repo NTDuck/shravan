@@ -1,6 +1,7 @@
 package org.tensorflow.lite.examples.shravan.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -43,6 +44,16 @@ fun TutorialScreen(
     val voiceSessionId = remember { mutableStateOf<Int?>(null) }
     var interactionsEnabled by remember { mutableStateOf(false) }
 
+    fun finishTutorial() {
+        if (!isTutorialFinished) {
+            ttsManager.stopAll()
+            isTutorialFinished = true
+            requestingPermissions = true
+            onRequestPermissions()
+            hapticManager.triggerHaptic()
+        }
+    }
+
     LaunchedEffect(hasPermissions) {
         if (hasPermissions && requestingPermissions) {
             navController.navigate("main") {
@@ -53,11 +64,7 @@ fun TutorialScreen(
 
     LaunchedEffect(Unit) {
         ttsManager.speak(textToSpeak, isVietnamese = useVietnamese) {
-            if (!isTutorialFinished) {
-                isTutorialFinished = true
-                requestingPermissions = true
-                onRequestPermissions()
-            }
+            finishTutorial()
         }
         interactionsEnabled = true
     }
@@ -74,27 +81,28 @@ fun TutorialScreen(
                 isVietnamese = useVietnamese,
                 partialCallback = { partial ->
                     if (partial.lowercase().contains(skipKeyword)) {
-                        ttsManager.stopAll()
-                        isTutorialFinished = true
-                        requestingPermissions = true
-                        onRequestPermissions()
-                        hapticManager.triggerHaptic()
+                        finishTutorial()
                     }
                 }
             ) { result ->
                 if (result.lowercase().contains(skipKeyword)) {
-                    ttsManager.stopAll()
-                    isTutorialFinished = true
-                    requestingPermissions = true
-                    onRequestPermissions()
-                    hapticManager.triggerHaptic()
+                    finishTutorial()
                 }
             }
         }
     }
 
     Box(
-        modifier = Modifier.fillMaxSize().background(Color(0xFF222222)),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF222222))
+            .then(
+                if (interactionsEnabled && !isTutorialFinished) {
+                    Modifier.clickable { finishTutorial() }
+                } else {
+                    Modifier
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         if (requestingPermissions) {

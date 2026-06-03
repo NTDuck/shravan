@@ -23,7 +23,7 @@
   2. Speak welcome text.
   3. Run inference on intent.
   4. Upon clear intent: Trigger haptics, fade screen to dimmed (not receiving input), and speak confirmation of received intent.
-  5. Play a short tutorial describing the screens & their functions. Allow skip via voice.
+  5. Play a short tutorial describing the screens & their functions. Allow skip via voice or screen click.
   6. Ask for necessary permissions (Camera, Record Audio, etc.).
   7. Redirect to Explore Screen.
 - Subsequent startups: Open directly on Explore Screen.
